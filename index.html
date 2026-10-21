@@ -564,11 +564,11 @@ function vBill(){
 
 /* ----- settings ----- */
 function vSetBase(){
-  return {prices:'<div class="panel"><h3>単価表(税別)</h3><div class="set-row psearch"><input type="search" id="pq" placeholder="項目名で絞り込み" aria-label="項目名で絞り込み"><span class="sub">'+S.settings.prices.length+'項目</span></div><div class="set-row pr sh"><span>項目名</span><span>単価(税別)</span><span>税込(参考)</span><span>単位</span><span></span></div>'+
-   S.settings.prices.map(function(p,i){return '<div class="set-row pr'+(p.base?" base":"")+'" data-pn="'+esc(p.name)+'"><input type="text" data-pf="name:'+i+'" value="'+esc(p.name)+'" aria-label="項目名"><input type="number" data-pf="price:'+i+'" value="'+p.price+'" aria-label="単価"><span class="inc">'+yen(taxOf(+p.price||0))+'</span><input type="text" data-pf="unit:'+i+'" value="'+esc(p.unit)+'" style="width:56px" aria-label="単位"><button class="btn sm danger" data-pdel="'+i+'">削除</button></div>'}).join("")+
+  return {prices:'<div class="panel"><h3>単価表(税別)</h3><div class="set-row psearch"><input type="search" id="pq" placeholder="項目名で絞り込み" aria-label="項目名で絞り込み"><span class="sub">'+S.settings.prices.length+'項目</span><button type="button" class="btn sm" data-sb="prices">一括編集</button><button type="button" class="btn sm" id="ps-toggle">'+(PS.on?"選択を終了":"選択して削除・一括変更")+'</button></div>'+psBar()+'<div class="set-row pr sh"><span>項目名</span><span>単価(税別)</span><span>税込(参考)</span><span>単位</span><span></span></div>'+
+   S.settings.prices.map(function(p,i){return '<div class="set-row pr'+(p.base?" base":"")+'" data-pn="'+esc(p.name)+'"><input type="text" data-pf="name:'+i+'" value="'+esc(p.name)+'" aria-label="項目名"><input type="number" data-pf="price:'+i+'" value="'+p.price+'" aria-label="単価"><span class="inc">'+yen(taxOf(+p.price||0))+'</span><input type="text" data-pf="unit:'+i+'" value="'+esc(p.unit)+'" style="width:56px" aria-label="単位">'+(PS.on?'<label class="sub" style="white-space:nowrap"><input type="checkbox" data-psel="'+i+'"'+(PS.sel[i]?" checked":"")+(p.base?" disabled":"")+'> 選択</label>':'<button class="btn sm danger" data-pdel="'+i+'">削除</button>')+'</div>'}).join("")+
    '<div class="set-row"><button class="btn sm" id="padd">＋ 項目を追加</button><span class="sub">クリーニングの間取り別基本料金は、案件の「間取り」と連動します。</span></div></div>',
    staff:'<div class="panel"><h3>担当チーム・作業員</h3>'+S.settings.staff.map(function(s,i){return '<div class="set-row"><input type="text" data-sf="'+i+'" value="'+esc(s)+'" aria-label="担当名"><button class="btn sm danger" data-sdel="'+i+'">削除</button></div>'}).join("")+
-   '<div class="set-row"><button class="btn sm" id="sadd">＋ 追加</button></div></div>',
+   '<div class="set-row"><button class="btn sm" id="sadd">＋ 追加</button><button class="btn sm" data-sb="staff">一括編集</button></div></div>',
    note:'<div class="sub">単価は大東建託の単価表(クリーニング・内装工事)を初期値にしています。既存の案件の金額は登録時の単価で保持されます。</div>'};
 }
 
@@ -1180,7 +1180,7 @@ function vSet(){
    genopts:vListsTab(["kind","area"]),emopts:vListsTab(["emFrom","emRes"]),mtopts:vListsTab(["mtKind"]),wtopts:vListsTab(["wtMethod","wtOffice"]),
    genstat:vStatTab(["job"]),emstat:vStatTab(["em"]),mtstat:vStatTab(["mt"]),wtstat:vStatTab(["wt"]),
    chk:vChkTab(),emcat:vEmcatTab(),orgs:vOrgTab(),
-   mitems:'<div class="panel"><h3>維持管理の作業項目</h3>'+mi.map(function(m,i){return '<div class="set-row"><input type="text" data-mi="'+i+'" value="'+esc(m)+'" aria-label="作業項目"><button class="btn sm danger" data-midel="'+i+'">削除</button></div>'}).join("")+'<div class="set-row"><button class="btn sm" id="miadd">＋ 項目を追加</button><button class="btn sm" id="mi-sync"'+(mItemsMissing().length?"":" disabled")+'>委託業務一覧表の項目を追加('+mItemsMissing().length+'件)</button></div><div class="sub" style="padding:0 14px 10px">「07 排水管清掃費」のようにコード(2桁)から始まる名前は、建物維持管理の「業務内容」ページの項目コードと対応します。注文書の読み取りでも、このコードで項目を当てはめます。</div></div>',
+   mitems:'<div class="panel"><h3>維持管理の作業項目</h3>'+mi.map(function(m,i){return '<div class="set-row"><input type="text" data-mi="'+i+'" value="'+esc(m)+'" aria-label="作業項目"><button class="btn sm danger" data-midel="'+i+'">削除</button></div>'}).join("")+'<div class="set-row"><button class="btn sm" id="miadd">＋ 項目を追加</button><button class="btn sm" data-sb="mitems">一括編集</button><button class="btn sm" id="mi-sync"'+(mItemsMissing().length?"":" disabled")+'>委託業務一覧表の項目を追加('+mItemsMissing().length+'件)</button></div><div class="sub" style="padding:0 14px 10px">「07 排水管清掃費」のようにコード(2桁)から始まる名前は、建物維持管理の「業務内容」ページの項目コードと対応します。注文書の読み取りでも、このコードで項目を当てはめます。</div></div>',
    company:'<div class="panel"><h3>自社情報(水道の届出などの届出者)</h3><div class="fields" style="padding:12px">'+[["name","会社名(使用者氏名)"],["kana","フリガナ"],["tel","連絡先電話番号"],["addr","住所(転居先・連絡先の住所)"],["pay","支払い方法(例:納付書、口座振替)"]].map(function(r){return '<label class="'+(r[0]==="addr"?"wide":"")+'">'+r[1]+'<input type="text" data-co="'+r[0]+'" value="'+esc((S.settings.company||{})[r[0]]||"")+'"></label>'}).join("")+'</div><div class="sub" style="padding:0 12px 12px">水道の届出シートの初期値として使います。</div></div>',
    emfee:'<div class="panel"><h3>緊急出動費(税別)</h3><div class="set-row"><span style="flex:1">基本料金 日中(7:00〜19:00)</span><input type="number" data-ef="day" value="'+f.day+'"></div><div class="set-row"><span style="flex:1">基本料金 夜間(19:00〜7:00)</span><input type="number" data-ef="night" value="'+f.night+'"></div><div class="set-row"><span style="flex:1">2時間超の加算</span><input type="number" data-ef="over" value="'+f.over+'"></div></div>'}[t];
   var cur=SETTABS.find(function(x){return x[0]===t}),grp=SETGROUPS.find(function(g){return g[1].some(function(x){return x[0]===t})});
@@ -1572,7 +1572,7 @@ function vListsTab(keys){
   return '<div class="split" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">'+
    LISTS.filter(function(L){return !keys||keys.indexOf(L[0])>=0}).map(function(L){var k=L[0],vals=k==="wtOffice"?((S.settings.lists&&S.settings.lists.wtOffice)||[]):listVal(k);
     return '<div class="panel"><h3>'+L[1]+"</h3>"+vals.map(function(v,i){return '<div class="set-row"><input type="text" data-ls="'+k+":"+i+'" value="'+esc(v)+'" aria-label="選択肢"><button type="button" class="btn sm" data-lsup="'+k+":"+i+'" aria-label="上へ"'+(i?"":" disabled")+'>↑</button><button type="button" class="btn sm" data-lsdn="'+k+":"+i+'" aria-label="下へ"'+(i<vals.length-1?"":" disabled")+'>↓</button><button type="button" class="btn sm danger" data-lsdel="'+k+":"+i+'">削除</button></div>'}).join("")+
-     '<div class="set-row"><button type="button" class="btn sm" data-lsadd="'+k+'">＋ 項目を追加</button><button type="button" class="btn sm" data-lsrst="'+k+'">初期値に戻す</button></div>'+(L[3]?'<div class="sub" style="padding:0 12px 10px">'+L[3]+"</div>":"")+"</div>"}).join("")+"</div>";
+     '<div class="set-row"><button type="button" class="btn sm" data-lsadd="'+k+'">＋ 項目を追加</button><button type="button" class="btn sm" data-lsrst="'+k+'">初期値に戻す</button><button type="button" class="btn sm" data-sb="list:'+k+'">一括編集</button></div>'+(L[3]?'<div class="sub" style="padding:0 12px 10px">'+L[3]+"</div>":"")+"</div>"}).join("")+"</div>";
 }
 document.addEventListener("input",function(e){
   var d=e.target.dataset&&e.target.dataset.ls;if(!d||S.tab!=="set")return;var q=d.split(":");
@@ -1640,7 +1640,7 @@ function vChkTab(){
 function vEmcatTab(){
   return '<div class="panel scroll"><h3>緊急出動の対応区分</h3><div class="set-row psearch"><input type="search" id="eq" placeholder="No.・大分類・作業内容で絞り込み" aria-label="絞り込み"><span class="sub">'+EM_CATS.length+'区分</span></div><table style="min-width:640px"><thead><tr><th style="width:70px">No.</th><th style="width:130px">大分類</th><th>作業内容</th><th>一時対応作業内容</th><th></th></tr></thead><tbody>'+
    EM_CATS.map(function(c,i){return '<tr data-en="'+esc(c.join(" "))+'">'+[0,1,2,3].map(function(k){return '<td><input type="text" style="width:100%" data-mc="'+i+":"+k+'" value="'+esc(c[k])+'" aria-label="'+["No.","大分類","作業内容","一時対応作業内容"][k]+'"></td>'}).join("")+'<td><button type="button" class="btn sm danger" data-mcdel="'+i+'">削除</button></td></tr>'}).join("")+"</tbody></table>"+
-   '<div class="set-row"><button type="button" class="btn sm" id="mc-add">＋ 区分を追加</button><button type="button" class="btn sm" id="mc-rst">初期値に戻す</button></div><div class="sub" style="padding:0 12px 12px">出典:緊急出動対応表(大パ-300 23.09)。No.は出動一覧に保存されるため、使用中のNo.を消すと、その記録の区分が表示できなくなります。</div></div>';
+   '<div class="set-row"><button type="button" class="btn sm" id="mc-add">＋ 区分を追加</button><button type="button" class="btn sm" data-sb="emcat">一括編集</button><button type="button" class="btn sm" id="mc-rst">初期値に戻す</button></div><div class="sub" style="padding:0 12px 12px">出典:緊急出動対応表(大パ-300 23.09)。No.は出動一覧に保存されるため、使用中のNo.を消すと、その記録の区分が表示できなくなります。</div></div>';
 }
 function vOrgTab(){
   var ks=Object.keys(WT_ORG),sel=ks.indexOf(S.orgSel)>=0?S.orgSel:ks[0];
@@ -1680,7 +1680,9 @@ document.addEventListener("click",function(e){
 (function(){
   var tm=0;
   function chip(){var c=$("#savechip");if(!c)return;c.textContent="✓ 保存しました";c.classList.add("ok");clearTimeout(tm);tm=setTimeout(function(){var c2=$("#savechip");if(c2){c2.textContent="変更は自動で保存されます";c2.classList.remove("ok")}},2200)}
+  document.addEventListener("change",function(e){var c=e.target;if(c&&c.dataset&&c.dataset.psel!==undefined){PS.sel[c.dataset.psel]=c.checked;psSync()}});
   document.addEventListener("input",function(e){
+    if(e.target&&e.target.id==="sb-text"){sbDiff();return}
     if(S.tab!=="set")return;var t=e.target;
     if(t.id==="pq"){var q=t.value.trim().toLowerCase();[].forEach.call(document.querySelectorAll(".set-row.pr[data-pn]"),function(r){r.classList.toggle("hide",!!q&&r.dataset.pn.toLowerCase().indexOf(q)<0)});return}
     if(t.id==="eq"){var q2=t.value.trim().toLowerCase();[].forEach.call(document.querySelectorAll("tr[data-en]"),function(r){r.classList.toggle("hide",!!q2&&r.dataset.en.toLowerCase().indexOf(q2)<0)});return}
@@ -2399,6 +2401,73 @@ function ntHtml(){
   return h+"</div>";
 }
 
+/* ---------- 設定: 一括編集・CSV・選択削除 ---------- */
+var SB={cfg:null,arm:false,kind:""};
+function sbListGet(k){return k==="wtOffice"?((S.settings.lists&&S.settings.lists.wtOffice)||[]).slice():listVal(k)}
+function sbCfg(kind){
+  var s=S.settings;
+  if(kind==="staff")return {title:"担当チーム・作業員",cols:["名前"],file:"担当・作業員",rows:function(){return s.staff.map(function(x){return [x]})},apply:function(r){s.staff=r.map(function(x){return x[0]});return "担当"}};
+  if(kind==="mitems")return {title:"維持管理の作業項目",cols:["作業項目"],file:"維持管理の作業項目",rows:function(){return (s.mItems||DEF_MITEMS).map(function(x){return [x]})},apply:function(r){s.mItems=r.map(function(x){return x[0]});return "作業項目"}};
+  if(kind.indexOf("list:")===0){var k=kind.slice(5),L=LISTS.find(function(x){return x[0]===k})||[k,k];
+    return {title:L[1],cols:["選択肢"],file:L[1],rows:function(){return sbListGet(k).map(function(x){return [x]})},apply:function(r){if(!s.lists||typeof s.lists!=="object")s.lists={};s.lists[k]=r.map(function(x){return x[0]});applyLists();return L[1]}}}
+  if(kind==="emcat")return {title:"緊急出動の対応区分",cols:["No.","大分類","作業内容","一時対応作業内容"],min:3,file:"対応区分",rows:function(){return EM_CATS.map(function(c){return c.slice()})},apply:function(r){s.emCats=r.map(function(c){return [c[0],c[1]||"その他",c[2],c[3]||""]});return "対応区分"}};
+  if(kind==="prices")return {title:"単価表",cols:["名称","単価(税別)","単位","基本料金の間取り"],min:2,num:1,keep:function(name){var p=s.prices.find(function(x){return x.name===name});return p&&p.base},file:"単価マスタ",
+    rows:function(){return s.prices.map(function(p){return [p.name,p.price,p.unit,p.base?p.layout:""]})},
+    apply:function(r){var seen={};r.forEach(function(c){seen[c[0]]=1;var p=s.prices.find(function(x){return x.name===c[0]});
+        if(p){p.price=+c[1]||0;if(c[2])p.unit=c[2]}else s.prices.push({id:nid("p"),name:c[0],price:+c[1]||0,unit:c[2]||"式",base:false,layout:""})});
+      s.prices=s.prices.filter(function(p){return p.base||seen[p.name]});return "単価"}};
+  return null;
+}
+function sbParse(text,cfg){
+  var out=[];String(text||"").split(/\r?\n/).forEach(function(ln){
+    if(!ln.trim())return;var cells;
+    if(cfg.cols.length===1)cells=[ln.trim()];
+    else if(ln.indexOf("\t")>=0)cells=ln.split("\t");
+    else{var pr=parseCsv(ln);cells=pr[0]||[ln]}
+    cells=cells.map(function(x){return String(x==null?"":x).trim()});out.push(cells)});
+  return out;
+}
+function sbText(rows){return rows.map(function(r){return r.join("\t")}).join("\n")}
+function sbDiff(){
+  var cfg=SB.cfg,ta=$("#sb-text"),dv=$("#sb-diff");if(!cfg||!ta||!dv)return;
+  var nw=sbParse(ta.value,cfg),old=cfg.rows().map(function(r){return String(r[0])}),nk=nw.map(function(r){return r[0]});
+  var rem=old.filter(function(k){return nk.indexOf(k)<0&&!(cfg.keep&&cfg.keep(k))}),add=nk.filter(function(k,i){return old.indexOf(k)<0&&nk.indexOf(k)===i});
+  dv.innerHTML="現在 "+old.length+" 件 → "+nk.length+" 件(追加 "+add.length+"・削除 "+rem.length+")"+(cfg.keep&&old.some(function(k){return cfg.keep(k)&&nk.indexOf(k)<0})?' <span class="late">基本料金の項目は削除されません</span>':"");
+  SB.arm=false;var ok=$("#sb-ok");if(ok)ok.textContent="適用";
+}
+function openSb(kind){
+  var cfg=sbCfg(kind);if(!cfg)return;SB.cfg=cfg;SB.kind=kind;SB.arm=false;
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg lg"><h2>一括編集 — '+esc(cfg.title)+'</h2>'+
+   '<div class="sub">1行に1件です。'+(cfg.cols.length>1?"列は「"+cfg.cols.map(esc).join("」「")+"」の順で、タブ区切り(Excelからそのまま貼り付けできます)。":"")+'行を消すと削除、行を足すと追加になります。「CSV取込」で、ファイルの内容をここに読み込めます(適用するまで保存されません)。</div>'+
+   '<textarea id="sb-text" rows="16" spellcheck="false" style="width:100%;margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.5;white-space:pre"></textarea><div id="sb-diff" class="sub" style="margin-top:4px"></div>'+
+   '<div class="acts"><span><button type="button" class="btn" id="sb-exp">CSV出力</button> <button type="button" class="btn" id="sb-imp">CSV取込</button></span><span><button type="button" class="btn" id="sb-x">キャンセル</button> <button type="button" class="btn pri" id="sb-ok">適用</button></span></div></div></div>';
+  $("#sb-text").value=sbText(cfg.rows());sbDiff();
+}
+function sbApply(){
+  var cfg=SB.cfg;if(!cfg)return;var rows=sbParse($("#sb-text").value,cfg),seen={},errs=[];
+  var good=[];rows.forEach(function(r,i){var k=r[0];
+    if(!k){errs.push((i+1)+"行目: 空欄です");return}
+    if(cfg.min&&(r.length<cfg.min||!r[cfg.min-1])){errs.push((i+1)+"行目: 「"+cfg.cols[cfg.min-1]+"」が必要です");return}
+    if(cfg.num&&r[cfg.num]!==undefined&&!isFinite(+String(r[cfg.num]).replace(/[,，円¥]/g,""))){errs.push((i+1)+"行目: 「"+cfg.cols[cfg.num]+"」が数値ではありません");return}
+    if(cfg.num&&r[cfg.num]!==undefined)r[cfg.num]=+String(r[cfg.num]).replace(/[,，円¥]/g,"");
+    if(seen[k]){errs.push((i+1)+"行目: 「"+k+"」が重複しています");return}seen[k]=1;good.push(r)});
+  if(errs.length){toast(errs.slice(0,2).join(" / ")+(errs.length>2?" ほか"+(errs.length-2)+"件":""));return}
+  if(!good.length){toast("1件以上入力してください");return}
+  var old=cfg.rows().map(function(r){return String(r[0])}),rem=old.filter(function(k){return !seen[k]&&!(cfg.keep&&cfg.keep(k))}).length;
+  if(rem>0&&!SB.arm){SB.arm=true;$("#sb-ok").textContent=rem+"件を削除して適用";toast(rem+"件が削除されます。よければもう一度押してください");return}
+  cfg.apply(good);applyMasters();saveSettings();$("#modal").innerHTML="";toast("一括編集を適用しました")
+}
+/* 単価: 選択して削除・一括変更 */
+var PS={on:false,sel:{},arm:false};
+function psRows(){return [].slice.call(document.querySelectorAll(".set-row.pr[data-pn]"))}
+function psCount(){var n=0;Object.keys(PS.sel).forEach(function(k){if(PS.sel[k])n++});return n}
+function psBar(){
+  if(!PS.on)return "";
+  return '<div class="set-row" style="flex-wrap:wrap;background:var(--accent-soft)"><span class="sub" id="ps-n">選択 '+psCount()+' 件</span><button type="button" class="btn sm" id="ps-all">表示中を全選択</button><button type="button" class="btn sm" id="ps-none">選択解除</button><button type="button" class="btn sm danger" id="ps-del">選択を削除</button>'+
+   '<span class="sub" style="margin-left:auto">選択した単価を</span><input type="number" id="ps-val" value="0" style="width:84px" aria-label="変更量"><select id="ps-unit" aria-label="単位"><option value="pct">%</option><option value="yen">円</option></select><button type="button" class="btn sm" id="ps-chg">増減する</button></div>';
+}
+function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件";PS.arm=false;var d=$("#ps-del");if(d)d.textContent="選択を削除"}
+
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
@@ -2411,6 +2480,21 @@ function modClick(e,t,d){
   if(t.id==="nt-reload"){NT.state="idle";ntLoad();render();return true}
   if(t.id==="nt-all"){var dn=ntDone();NT.list.forEach(function(x){if(dn.indexOf(x.id)<0)dn.push(x.id)});if(dn.length>300)dn.splice(0,dn.length-300);saveSettings(true);render();return true}
   if(t.dataset&&t.dataset.nt){var dn2=ntDone();if(dn2.indexOf(t.dataset.nt)<0)dn2.push(t.dataset.nt);if(dn2.length>300)dn2.splice(0,dn2.length-300);saveSettings(true);render();return true}
+  if(d.sb){openSb(d.sb);return true}
+  if(t.id==="sb-x"){SB.cfg=null;$("#modal").innerHTML="";return true}
+  if(t.id==="sb-ok"){sbApply();return true}
+  if(t.id==="sb-exp"){var cf=SB.cfg;if(cf)saveCsv(cf.file+"_"+TODAY()+".csv",[cf.cols].concat(sbParse($("#sb-text").value,cf)));return true}
+  if(t.id==="sb-imp"){var cf2=SB.cfg;if(cf2)pickFile(".csv,text/csv,text/plain",function(f){f.arrayBuffer().then(function(b){var rr=parseCsv(decodeCsv(b));if(rr.length&&String(rr[0][0]).trim()===cf2.cols[0])rr=rr.slice(1);
+      rr=rr.filter(function(r){return r.some(function(x){return String(x).trim()})}).map(function(r){return cf2.cols.length===1?[String(r[0]).trim()]:r.slice(0,cf2.cols.length).map(function(x){return String(x).trim()})});
+      if(!rr.length){toast("データ行がありません");return}$("#sb-text").value=sbText(rr);sbDiff();toast(rr.length+"件を読み込みました。内容を確認して「適用」を押してください")},function(){toast("ファイルを読み込めませんでした")})});return true}
+  if(t.id==="ps-toggle"){PS.on=!PS.on;PS.sel={};PS.arm=false;render();return true}
+  if(t.id==="ps-all"){psRows().forEach(function(r){if(r.classList.contains("hide"))return;var c=r.querySelector("[data-psel]");if(c&&!c.disabled){c.checked=true;PS.sel[c.dataset.psel]=true}});psSync();return true}
+  if(t.id==="ps-none"){PS.sel={};psRows().forEach(function(r){var c=r.querySelector("[data-psel]");if(c)c.checked=false});psSync();return true}
+  if(t.id==="ps-del"){var n=psCount();if(!n){toast("削除する項目を選んでください");return true}
+    if(!PS.arm){PS.arm=true;t.textContent=n+"件を本当に削除";toast("もう一度押すと削除します");return true}
+    var del={};Object.keys(PS.sel).forEach(function(k){if(PS.sel[k])del[k]=1});S.settings.prices=S.settings.prices.filter(function(p,i){return !del[i]||p.base});PS.sel={};PS.arm=false;saveSettings();toast(n+"件を削除しました");return true}
+  if(t.id==="ps-chg"){var n2=psCount(),v=+($("#ps-val").value||0),u=$("#ps-unit").value;if(!n2){toast("変更する項目を選んでください");return true}if(!v){toast("変更量を入力してください");return true}
+    S.settings.prices.forEach(function(p,i){if(PS.sel[i]){var cur=+p.price||0;p.price=Math.max(0,Math.round(u==="pct"?cur*(1+v/100):cur+v))}});PS.sel={};saveSettings();toast(n2+"件の単価を変更しました");return true}
   if(t.id==="qa-f"){openFax();return true}
   if(t.id==="fx-close"){if(FX.ctl)FX.ctl.abort();$("#modal").innerHTML="";return true}
   if(t.id==="fx-stop"){if(FX.ctl)FX.ctl.abort();return true}
