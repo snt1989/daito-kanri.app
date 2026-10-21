@@ -382,7 +382,7 @@ var ICONS={
  menu:'<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
  tool:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'};
 function ic(n,sz){sz=sz||20;return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[n]+"</svg>"}
-var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"info",label:"お知らせ",ic:"bell"},
+var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"info",label:"お知らせ",ic:"bell"},{tab:"docs",label:"書類ボックス",ic:"book"},
  {g:"原状回復工事"},{tab:"jobs",label:"案件一覧",ic:"list",d:"genkyo"},{tab:"sched",label:"施工予定",ic:"calendar",d:"genkyo"},{tab:"report",label:"完了報告",ic:"check",d:"genkyo"},{tab:"bill",label:"請求・入金",ic:"yen",d:"genkyo"},{tab:"water",label:"水道開始・中止届",ic:"drop",d:"genkyo"},
  {g:"緊急対応"},{tab:"elog",label:"出動一覧",ic:"alert",d:"emerg"},{tab:"eguide",label:"対応区分ガイド",ic:"book",d:"emerg"},{tab:"esum",label:"月次集計",ic:"chart",d:"emerg"},
  {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mscope",label:"業務内容",ic:"book",d:"maint"},
@@ -405,7 +405,7 @@ function renderTabs(){
   var c=counts(),eAct=S.emerg.filter(function(x){return x.status<2}).length,mSei=S.maint.filter(function(x){return x.status===1}).length;
   var B={info:infoNew(),jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
   var sd=$("#side"),sTop=sd.scrollTop;
-  sd.innerHTML='<div class="brand"><i>'+ic("tool",20)+'</i><span>大東受注ナビ</span></div>'+NAV.map(function(n){
+  sd.innerHTML='<div class="brand"><i>'+ic("tool",20)+'</i><span>大東受注ナビ</span></div>'+NAV.filter(function(n){return n.tab!=="docs"||window.dsFiles}).map(function(n){
     if(n.g!==undefined)return n.g.trim()?'<div class="nv-g">'+n.g+"</div>":'<div class="nv-g" style="padding:6px"></div>';
     return '<button class="nv" data-tab="'+n.tab+'" title="'+n.label+'"'+(S.tab===n.tab?' aria-current="page"':"")+">"+ic(n.ic)+'<span class="lbl">'+n.label+"</span>"+(B[n.tab]?'<span class="n">'+B[n.tab]+"</span>":"")+"</button>"}).join("")+
     '<button class="fold" id="fold">'+(document.body.classList.contains("folded")?"›":"‹ 閉じる")+"</button>";
@@ -460,7 +460,7 @@ function render0(){
   var m=$("#main"),h="";
   if(!S.persist)h+='<div class="banner">共有保存が使えない表示です。入力内容はこのブラウザにだけ保存されます。</div>';
   h+=pageHead();
-  h+=({home:vHome,info:vInfo,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,water:vWater}[S.tab]||vJobs)();
+  h+=({home:vHome,info:vInfo,docs:vDocs,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,water:vWater}[S.tab]||vJobs)();
   m.innerHTML=h;
   decorate();
   if(fk){var fe=$(fk,m);if(fe){fe.focus();try{if(ss&&ss[0]!=null)fe.setSelectionRange(ss[0],ss[1])}catch(e){}}}
@@ -1173,6 +1173,7 @@ var SETGROUPS=[
   ["basic","基本設定","消費税率・支払日・期限が近いと扱う日数です。",[P("bill","請求・入金"),P("elog","出動一覧"),P("mmonth","作業一覧"),P("home","ホーム")]],
   ["staff","担当・作業員","担当に割り当てるチーム・作業員の名前です。",[P("jobs","案件一覧"),P("sched","施工予定"),P("elog","出動一覧")]],
   ["fxtype","FAX書類の種類","FAX取込で読み取る書類の種類を追加します。読み取った内容の保存先も、ここで確認できます。",[P("home","ホーム")]],
+  ["backup","バックアップ","データのコピーを自動・手動でサーバーに保存し、必要なときに戻せます(Web版・管理者のみ)。",[P("home","ホーム")]],
   ["company","自社情報","水道の届出などで、届出者として使う会社の情報です。",[P("water","水道開始・中止届")]]]]];
 var SETTABS=[];SETGROUPS.forEach(function(g){g[1].forEach(function(t){SETTABS.push(t)})});
 var SET_ONE=["prices","layout","chk","emfee","emcat","mitems","staff","company","mtopts"];
@@ -1182,7 +1183,7 @@ function vSet(){
   var body={prices:b.prices,staff:b.staff,layout:vLayoutTab(),basic:vBasicTab(),
    genopts:vListsTab(["kind","area"]),emopts:vListsTab(["emFrom","emRes"]),mtopts:vListsTab(["mtKind"]),wtopts:vListsTab(["wtMethod","wtOffice"]),
    genstat:vStatTab(["job"]),emstat:vStatTab(["em"]),mtstat:vStatTab(["mt"]),wtstat:vStatTab(["wt"]),
-   chk:vChkTab(),fxtype:vFxType(),emcat:vEmcatTab(),orgs:vOrgTab(),
+   chk:vChkTab(),fxtype:vFxType(),backup:vBackup(),emcat:vEmcatTab(),orgs:vOrgTab(),
    mitems:'<div class="panel"><h3>維持管理の作業項目</h3>'+mi.map(function(m,i){return '<div class="set-row"><input type="text" data-mi="'+i+'" value="'+esc(m)+'" aria-label="作業項目"><button class="btn sm danger" data-midel="'+i+'">削除</button></div>'}).join("")+'<div class="set-row"><button class="btn sm" id="miadd">＋ 項目を追加</button><button class="btn sm" data-sb="mitems">一括編集</button><button class="btn sm" id="mi-sync"'+(mItemsMissing().length?"":" disabled")+'>委託業務一覧表の項目を追加('+mItemsMissing().length+'件)</button></div><div class="sub" style="padding:0 14px 10px">「07 排水管清掃費」のようにコード(2桁)から始まる名前は、建物維持管理の「業務内容」ページの項目コードと対応します。注文書の読み取りでも、このコードで項目を当てはめます。</div></div>',
    company:'<div class="panel"><h3>自社情報(水道の届出などの届出者)</h3><div class="fields" style="padding:12px">'+[["name","会社名(使用者氏名)"],["kana","フリガナ"],["tel","連絡先電話番号"],["addr","住所(転居先・連絡先の住所)"],["pay","支払い方法(例:納付書、口座振替)"]].map(function(r){return '<label class="'+(r[0]==="addr"?"wide":"")+'">'+r[1]+'<input type="text" data-co="'+r[0]+'" value="'+esc((S.settings.company||{})[r[0]]||"")+'"></label>'}).join("")+'</div><div class="sub" style="padding:0 12px 12px">水道の届出シートの初期値として使います。</div></div>',
    emfee:'<div class="panel"><h3>緊急出動費(税別)</h3><div class="set-row"><span style="flex:1">基本料金 日中(7:00〜19:00)</span><input type="number" data-ef="day" value="'+f.day+'"></div><div class="set-row"><span style="flex:1">基本料金 夜間(19:00〜7:00)</span><input type="number" data-ef="night" value="'+f.night+'"></div><div class="set-row"><span style="flex:1">2時間超の加算</span><input type="number" data-ef="over" value="'+f.over+'"></div></div>'}[t];
@@ -2340,7 +2341,7 @@ async function fxRun(){
       if(!files.length){fxMark(x.id);continue}
       for(var fi=0;fi<files.length&&fi<4;fi++){
         var file=files[fi];
-        var row={id:x.id,date:ds,caller:head+(files.length>1?" ("+file.name.slice(0,30)+")":""),status:"run",file:file};
+        var row={id:x.id,fid:x.id+"-"+fi,isoDate:x.date||"",date:ds,caller:head+(files.length>1?" ("+file.name.slice(0,30)+")":""),status:"run",file:file};
         var i=FX.rows.push(row)-1;$("#fx-list").insertAdjacentHTML("beforeend",fxRowHtml(row,i));
         try{
           var blob0=null;
@@ -2349,6 +2350,7 @@ async function fxRun(){
           var a=await sample.json(fxPrompt()+"\n(参考: メール件名「"+x.subject.trim().slice(0,80)+"」 差出人 "+x.sender+")",{images:[blob0],signal:FX.ctl.signal,modelTier:"quick"});
           row.type=fxAll()[a&&a.docType]?a.docType:"other";row.summary=String((a&&a.summary)||"").slice(0,60);row.sender=String((a&&a.sender)||"").slice(0,60);row.status="ok";
           if(row.type==="other"){row.hidden=true;FX.skipped=(FX.skipped||0)+1;fxMark(x.id);var el0=$("#fx-r"+i);if(el0)el0.remove();continue}
+          fxStore(row,file,blob0);
         }catch(e){
           if(e&&(e.code==="cancelled"||e.name==="AbortError")){row.status="wait";fxDraw(i);break}
           row.status="err";row.err=fxErrMsg(e);
@@ -2369,7 +2371,7 @@ function fxGo(i){
   else if(t==="request"||t==="notice"){openEmImport();emoRun(f)}
   else if(t==="order"){openMtImport();mtiRun([f])}
   else if(t==="annual"){openMpImport();mpiRun([f])}
-  else if(/^c_/.test(t)){openFxc(f,t)}
+  else if(/^c_/.test(t)){openFxc(f,t,undefined,r.fid)}
 }
 
 /* ---------- FAX書類の種類(自分で追加) ---------- */
@@ -2412,17 +2414,17 @@ document.addEventListener("change",function(e){var t=e.target;if(t&&t.id==="fct-
 var FXC={rec:null,isNew:false,busy:false,ctl:null};
 function fxcHtml(){
   var r=FXC.rec,c=fxcType(r.typeId);
-  var h='<div class="mask" id="mask"><div class="dlg lg"><h2>'+esc(r.typeName)+(FXC.isNew?"の読み取り":"の編集")+'</h2><div id="fxc-prog" class="sub">'+(FXC.busy?'読み取り中…(数十秒かかります) <button type="button" class="btn sm" id="fxc-stop">中止</button>':"内容を確認して、必要なら直してから保存してください。")+"</div>";
+  var h='<div class="mask" id="mask"><div class="dlg lg"><h2>'+esc(r.typeName)+(FXC.isNew?"の読み取り":"の編集")+'</h2><div id="fxc-prog" class="sub">'+(FXC.busy?'読み取り中…(数十秒かかります) <button type="button" class="btn sm" id="fxc-stop">中止</button>':"内容を確認して、必要なら直してから保存してください。")+(r.fileId&&window.dsFiles?' <button type="button" class="btn sm" data-dfopen="'+esc(r.fileId)+'">元の書類を開く</button>':"")+"</div>";
   h+='<div class="fields"><label>題名<input type="text" data-fc="title" value="'+esc(r.title)+'"></label><label>書類の日付<input type="date" data-fc="date" value="'+esc(r.date)+'"></label></div>';
   h+='<div class="panel" style="padding:8px 12px">'+r.fields.map(function(f,i){return '<div class="set-row"><input type="text" data-fc="k:'+i+'" value="'+esc(f.k)+'" aria-label="項目名" style="width:34%"><input type="text" data-fc="v:'+i+'" value="'+esc(f.v)+'" aria-label="内容" style="flex:1"><button type="button" class="btn sm danger" data-fcrm="'+i+'">×</button></div>'}).join("")+'<div class="set-row"><button type="button" class="btn sm" id="fxc-addf">＋ 項目を追加</button></div></div>';
   h+='<label class="wide" style="display:block;margin-top:8px">メモ<textarea data-fc="memo" rows="3" style="width:100%">'+esc(r.memo)+"</textarea></label>";
   return h+'<div class="acts"><span></span><span><button type="button" class="btn" id="fxc-close">閉じる</button> <button type="button" class="btn pri" id="fxc-save">保存</button></span></div></div></div>';
 }
 function fxcDraw(){var m=$("#modal");if(m)m.innerHTML=fxcHtml()}
-function openFxc(file,tid,editId){
+function openFxc(file,tid,editId,fid){
   var ty=fxcType(tid),rec=null;
   if(editId){rec=fxDocs().find(function(x){return x.id===editId});if(rec){rec=JSON.parse(JSON.stringify(rec));ty=ty||{id:rec.typeId,name:rec.typeName,fields:[]}}}
-  else if(ty)rec={id:"fd"+Date.now().toString(36),typeId:tid,typeName:ty.name,title:"",date:"",fields:(ty.fields||[]).map(function(n){return {k:n,v:""}}),memo:"",at:TODAY()};
+  else if(ty)rec={id:"fd"+Date.now().toString(36),typeId:tid,typeName:ty.name,title:"",date:"",fields:(ty.fields||[]).map(function(n){return {k:n,v:""}}),memo:"",at:TODAY(),fileId:fid||""};
   if(!rec)return;
   FXC.rec=rec;FXC.isNew=!editId;FXC.busy=false;FXC.ctl=null;fxcDraw();
   if(file)fxcRun(file,ty);
@@ -2569,6 +2571,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"書類ボックスとバックアップ(Web版)",d:"FAX取込で読み取った書類のPDF・画像をサーバーに自動で保管し、「書類ボックス」からいつでも開けます。全データのバックアップは1日1回自動で保存され、設定の「バックアップ」から手動保存・ダウンロード・復元もできます。"},
  {v:"2026-10-22",t:"担当ごとにログイン(Web版)",d:"設定の「担当・作業員」で担当ごとにパスワードを発行すると、担当名とパスワードでログインできます。担当でログインすると、自分の担当分(担当未設定も含む)だけを初期表示し、「自分の担当のみ」で切り替えられます。管理者は従来のパスワードで担当名を空欄にしてログインします。"},
  {v:"2026-10-22",t:"FAX書類の種類を自由に追加",d:"設定「FAX書類の種類」で書類名・見分け方・読み取る項目を登録すると、FAX取込で読み取って保存できます。書類のサンプル(PDF・画像)を読み込むと、見分け方と項目を自動で入力します。登録前の編集や、書類の種類の選び直しもできます。"},
  {v:"2026-10-21",t:"お知らせ画面を追加",d:"大東建託からのメールとアプリの更新履歴を1か所で見られます。ホームには新着があるときだけ案内を出します。ベルからも開けます。"},
@@ -2620,6 +2623,71 @@ async function pwCall(data,msgId,okMsg){
   var el=$("#"+msgId);if(el)el.textContent="処理中…";
   try{var j=await window.dsAuth.call(data);if(j&&j.ok){if(el)el.textContent=okMsg;return true}if(el)el.textContent=(j&&j.error)||"失敗しました"}catch(e){if(el)el.textContent="通信に失敗しました"}
   return false}
+/* ---------- 書類ボックス・バックアップ(Web版のみ。サーバーに保管) ---------- */
+async function fitBlob(b,max){
+  if(b.size<=max)return b;
+  var bm=await createImageBitmap(b),k=1,out=b;
+  for(var i=0;i<5&&out.size>max;i++){k*=0.75;var c=document.createElement("canvas");c.width=Math.max(200,Math.round(bm.width*k));c.height=Math.max(200,Math.round(bm.height*k));
+    var x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(bm,0,0,c.width,c.height);
+    out=await new Promise(function(r){c.toBlob(r,"image/jpeg",0.8)})}
+  return out.size<=max?out:null;
+}
+var FXST={};
+async function fxStore(row,file,blob0){
+  if(!window.dsFiles||!row.fid||FXST[row.fid])return;
+  try{
+    var blob=file,name=file.name,mime=file.type||"application/octet-stream",max=650*1024;
+    if(file.size>max){blob=blob0?await fitBlob(blob0,max):null;name=name.replace(/\.[^.]+$/,"")+"_1ページ目.jpg";mime="image/jpeg"}
+    if(!blob)return;
+    var j=await window.dsFiles.put(row.fid,blob,{name:name,mime:mime,type:row.type,typeName:fxAll()[row.type]||"",summary:row.summary,sender:row.sender,date:row.isoDate||""});
+    if(j&&j.ok){FXST[row.fid]=1;row.stored=true;DF.state="idle"}
+  }catch(e){}
+}
+var DF={list:[],state:"idle",msg:"",q:""};
+function dfKick(force){
+  if(!window.dsFiles||DF.state==="load"||(DF.state!=="idle"&&!force))return;
+  DF.state="load";
+  window.dsFiles.list().then(function(j){DF.list=(j&&j.list)||[];DF.state=j&&j.ok?"ok":"err";DF.msg=j&&j.ok?"":((j&&j.error)||"読み込めませんでした");if(S.tab==="docs")render()}).catch(function(){DF.state="err";DF.msg="通信に失敗しました";if(S.tab==="docs")render()});
+}
+function dfSize(n){n=+n||0;return n>=1048576?(n/1048576).toFixed(1)+"MB":Math.max(1,Math.round(n/1024))+"KB"}
+function dfDate(m){var d=m.date||m.at;d=d?new Date(d):null;return d&&!isNaN(d)?d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate():""}
+function vDocs(){
+  dfKick();
+  var q=(DF.q||"").trim(),L=DF.list.filter(function(m){return !q||(m.name+m.typeName+m.summary+m.sender).indexOf(q)>=0});
+  var h='<div class="panel" style="padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="search" id="df-q" value="'+esc(DF.q)+'" placeholder="種類・内容・発信元で検索" style="flex:1;min-width:180px">'+
+   '<label class="btn pri" style="cursor:pointer">＋ ファイルを保管<input type="file" id="df-file" accept="application/pdf,image/*" style="display:none"></label><button type="button" class="btn" id="df-reload">更新</button></div>';
+  if(DF.msg)h+='<div class="banner">'+esc(DF.msg)+"</div>";
+  h+='<div class="panel scroll"><table><thead><tr><th>日付</th><th>種類</th><th>内容</th><th>発信元</th><th>ファイル</th><th class=num>サイズ</th><th></th></tr></thead><tbody>'+
+   (DF.state==="load"&&!DF.list.length?'<tr><td colspan="7" class="empty">読み込み中…</td></tr>':L.length?L.map(function(m){return "<tr><td>"+esc(dfDate(m))+'</td><td><span class="tag">'+esc(m.typeName||"書類")+"</span></td><td>"+esc(m.summary||"")+'</td><td class="sub">'+esc(m.sender||"")+'</td><td class="sub">'+esc(m.name||"")+'</td><td class="num">'+dfSize(m.size)+'</td><td style="white-space:nowrap"><button type="button" class="btn sm" data-dfopen="'+esc(m.id)+'">開く</button> <button type="button" class="btn sm danger" data-dfdel="'+esc(m.id)+'">削除</button></td></tr>'}).join(""):'<tr><td colspan="7" class="empty">保管した書類はまだありません。FAX取込で読み取った書類は、ここに自動で保管されます。</td></tr>')+"</tbody></table></div>";
+  h+='<div class="sub" style="padding:8px 2px">1ファイル約700KBまで。PDFが大きいときは1ページ目の画像を保管します。</div>';
+  return h;
+}
+async function dfUpload(file){
+  if(!window.dsFiles)return;
+  var isPdf=file.type==="application/pdf"||/\.pdf$/i.test(file.name),blob=file,max=650*1024;
+  if(!isPdf){try{blob=await fitBlob(file,max)}catch(e){blob=null}}
+  else if(file.size>max)blob=null;
+  if(!blob){toast("ファイルが大きすぎます(約700KBまで)。画像にするか、小さくしてください");return}
+  var j=await window.dsFiles.put("u_"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),blob,{name:file.name,mime:blob.type||file.type,type:"manual",typeName:"手動で保管",summary:file.name,date:new Date().toISOString()});
+  toast(j&&j.ok?"保管しました":((j&&j.error)||"保管できませんでした"));DF.state="idle";if(S.tab==="docs")render();
+}
+document.addEventListener("change",function(e){var t=e.target;if(t&&t.id==="df-file"&&t.files&&t.files[0]){var f=t.files[0];t.value="";dfUpload(f)}});
+var BKP={list:[],state:"idle",msg:""};
+function bkpKick(force){
+  if(!window.dsApi||BKP.state==="load"||(BKP.state!=="idle"&&!force))return;BKP.state="load";
+  window.dsApi("/api/backup",{op:"list"}).then(function(j){BKP.list=(j&&j.list)||[];BKP.state=j&&j.ok?"ok":"err";if(!(j&&j.ok))BKP.msg=(j&&j.error)||"読み込めませんでした";if(S.tab==="set")render()});
+}
+function vBackup(){
+  if(!window.dsApi)return '<div class="panel"><div class="empty">バックアップはWeb版(サーバー保存)で使えます。アーティファクト版では、Claudeのデータ保存が使われています。</div></div>';
+  if(!isAdmin())return '<div class="panel"><div class="empty">管理者でログインしたときだけ操作できます。</div></div>';
+  bkpKick();
+  var h='<div class="panel"><h3>バックアップ</h3><div class="sub" style="padding:0 12px 8px">案件・出動・維持管理・水道届・設定のすべてを、サーバーにコピーして保管します。自動では、データを更新した日の最初に1日1回保存され、直近14回分を残します。書類ファイルは対象外です(書類ボックスに残ります)。</div>'+
+   '<div class="set-row"><button type="button" class="btn pri" id="bkp-new">今すぐバックアップ</button><button type="button" class="btn sm" id="bkp-reload">更新</button></div>'+(BKP.msg?'<div class="sub" style="padding:4px 12px">'+esc(BKP.msg)+"</div>":"")+"</div>";
+  h+='<div class="panel scroll"><table><thead><tr><th>保存日時</th><th>種類</th><th>内訳</th><th class=num>サイズ</th><th></th></tr></thead><tbody>'+
+   (BKP.list.length?BKP.list.map(function(m){var d=new Date(m.at),c=m.counts||{};
+    return "<tr><td>"+esc(isNaN(d)?m.at:d.toLocaleString("ja-JP",{year:"numeric",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}))+'</td><td><span class="tag">'+esc(m.by||"")+'</span></td><td class="sub">案件 '+(c.jobs||0)+" / 出動 "+(c.emerg||0)+" / 維持管理 "+(c.maint||0)+" / 水道 "+(c.water||0)+'</td><td class="num">'+dfSize(m.size)+'</td><td style="white-space:nowrap"><button type="button" class="btn sm" data-bkdl="'+esc(m.id)+'">ダウンロード</button> <button type="button" class="btn sm" data-bkrs="'+esc(m.id)+'">この時点に戻す</button> <button type="button" class="btn sm danger" data-bkdel="'+esc(m.id)+'">削除</button></td></tr>'}).join(""):'<tr><td colspan="5" class="empty">'+(BKP.state==="load"?"読み込み中…":"まだバックアップがありません。")+"</td></tr>")+"</tbody></table></div>";
+  return h;
+}
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
@@ -2705,6 +2773,19 @@ function modClick(e,t,d){
   if(t.id==="mi-sync"){var n0=mItemsSync();saveSettings();toast(n0+"件の項目を追加しました");return true}
   if(t.id==="miadd"){S.settings.mItems.push("新しい項目");saveSettings();return true}
   if(d.fcsmp!==undefined){if(FCS.busy)return true;FCS.idx=+d.fcsmp;FCS.msg="";var fi=$("#fct-file");if(fi)fi.click();return true}
+  if(d.dfopen){window.dsFiles.open(d.dfopen).then(function(j){if(j&&!j.ok)toast(j.error||"開けませんでした")});return true}
+  if(d.dfdel){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に削除";return true}window.dsFiles.del(d.dfdel).then(function(){DF.state="idle";render()});return true}
+  if(t.id==="df-reload"){dfKick(true);render();return true}
+  if(t.id==="bkp-reload"){bkpKick(true);render();return true}
+  if(t.id==="bkp-new"){BKP.msg="バックアップ中…";render();window.dsApi("/api/backup",{op:"create"}).then(function(j){BKP.msg=j&&j.ok?"バックアップを保存しました":((j&&j.error)||"失敗しました");bkpKick(true);render()});return true}
+  if(d.bkdl){window.dsApi("/api/backup",{op:"get",id:d.bkdl}).then(async function(j){
+    if(!(j&&j.ok)){toast((j&&j.error)||"取得できませんでした");return}
+    var out={};Object.keys(j.data).forEach(function(c){out[c]=j.data[c].map(function(x){var v=x.data;try{v=JSON.parse(v)}catch(e){}return {id:x.id,data:v}})});
+    var dl=await claude_use("downloads");if(!dl){toast("ダウンロードできません");return}
+    var stamp=String(j.meta.at||"").slice(0,16).replace(/[-:T]/g,"");
+    await dl.save({data:new Blob([JSON.stringify(out)],{type:"application/json"}),filename:"daito-backup-"+stamp+".json"});toast("ダウンロードしました")});return true}
+  if(d.bkrs){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に戻す";return true}BKP.msg="戻しています…";render();window.dsApi("/api/backup",{op:"restore",id:d.bkrs}).then(function(j){if(j&&j.ok){toast("戻しました。再読み込みします");setTimeout(function(){location.reload()},900)}else{BKP.msg=(j&&j.error)||"戻せませんでした";render()}});return true}
+  if(d.bkdel){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に削除";return true}window.dsApi("/api/backup",{op:"delete",id:d.bkdel}).then(function(){bkpKick(true);render()});return true}
   if(t.id==="me-menu"){openMe();return true}
   if(t.id==="me-close"||t.id==="pw-close"){$("#modal").innerHTML="";return true}
   if(t.id==="me-out"){window.dsAuth.logout();return true}
@@ -2728,6 +2809,7 @@ function modClick(e,t,d){
   return false;
 }
 function modChange(t){
+  if(t.id==="df-q"){DF.q=t.value;render();return true}
   if(t.id==="mine-t"){S.mine=t.checked;render();return true}
   if(t.dataset.fct!==undefined){var a=t.dataset.fct.split(":"),c=fxCustom()[+a[1]];if(c){if(a[0]==="n")c.name=t.value.trim();else if(a[0]==="h")c.hint=t.value.trim();else c.fields=t.value.split(/\n/).map(function(x){return x.trim()}).filter(Boolean)}saveSettings(true);return true}
   if(t.dataset.fc!==undefined&&FXC.rec){var b=t.dataset.fc.split(":"),r=FXC.rec;if(b[0]==="k")r.fields[+b[1]].k=t.value.trim();else if(b[0]==="v")r.fields[+b[1]].v=t.value;else r[b[0]]=t.value;return true}

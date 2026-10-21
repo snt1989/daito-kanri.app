@@ -22,6 +22,26 @@
   var authP = null;
   var dsAuth = window.dsAuth = { me: null, call: function (data) { return post("/api/auth", data).then(function (r) { return r.json().then(function (j) { j.status = r.status; return j; }); }); },
     logout: function () { return post("/api/auth", { op: "logout" }).then(function () { location.reload(); }); } };
+  // 汎用API呼び出し(エラー時も { ok:false, error, status } を返す)
+  window.dsApi = function (path, data) {
+    return post(path, data).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j = j || {}; j.status = r.status; if (!r.ok && !j.error) j.error = "エラー(" + r.status + ")"; if (j.error && typeof j.error === "object") j.error = j.error.message || j.error.code; return j; }); });
+  };
+  function b64Of(blob) { return new Promise(function (res, rej2) { var fr = new FileReader(); fr.onload = function () { res(String(fr.result).split(",")[1] || ""); }; fr.onerror = function () { rej2(new Error("read")); }; fr.readAsDataURL(blob); }); }
+  window.dsFiles = {
+    put: async function (id, blob, meta) { return window.dsApi("/api/files", { op: "put", id: id, b64: await b64Of(blob), meta: meta }); },
+    list: function () { return window.dsApi("/api/files", { op: "list" }); },
+    exists: function (ids) { return window.dsApi("/api/files", { op: "exists", ids: ids }); },
+    del: function (id) { return window.dsApi("/api/files", { op: "del", id: id }); },
+    open: async function (id) {
+      var j = await window.dsApi("/api/files", { op: "get", id: id });
+      if (!j.ok) return j;
+      var bin = atob(j.b64), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      var blob = new Blob([u], { type: (j.meta && j.meta.mime) || "application/octet-stream" }), url = URL.createObjectURL(blob);
+      var w = window.open(url, "_blank"); if (!w) { var a = document.createElement("a"); a.href = url; a.download = (j.meta && j.meta.name) || "file"; document.body.appendChild(a); a.click(); a.remove(); }
+      setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+      return j;
+    },
+  };
   function setMe(j) { dsAuth.me = { role: j.role === "staff" ? "staff" : "admin", name: j.name || "" }; }
   function ensureAuth() {
     if (authP) return authP;

@@ -1,5 +1,6 @@
 // データ保存: コレクションごとに Redis の Hash(daito:<col>)。更新のたびに版番号(daito:ver:<col>)を増やす
 const { authed, pipeline, body } = require("./_lib");
+const { maybeDaily } = require("./_backup");
 const COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings"];
 const key = (c) => "daito:" + c;
 const vkey = (c) => "daito:ver:" + c;
@@ -34,6 +35,7 @@ module.exports = async (req, res) => {
         ? [["HSET", key(p.col), p.id, JSON.stringify(b.data == null ? {} : b.data)], ["INCR", vkey(p.col)]]
         : [["HDEL", key(p.col), p.id], ["INCR", vkey(p.col)]];
       const r = await pipeline(cmds);
+      await maybeDaily();
       return res.json({ ok: true, ver: Number(r[1]) });
     }
     if (b.op === "import") {
