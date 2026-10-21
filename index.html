@@ -2224,10 +2224,10 @@ var bkDelTm=0;
 
 /* ---------- eFax取込 ---------- */
 var FX={rows:[],busy:false,ctl:null,err:""};
-var FX_TYPES={koji:"工事予定書",request:"出動要請書",notice:"金額確定通知書",order:"注文書・作業依頼書",annual:"年間発注予定一覧表",other:"対象外"};
+var FX_TYPES={koji:"工事予定書",request:"出動要請書",notice:"金額確定通知書",order:"注文書・作業依頼書",annual:"年間発注予定一覧表",daito:"大東建託(その他の書類)",other:"対象外"};
 var FX_PROMPT='添付の画像は、受信したFAXの1ページ目です。大東建託パートナーズ関連の書類かどうかを判別し、次のJSONだけを出力してください。\n'+
- 'docType は次のいずれか1つ:\n- koji = 原状回復工事 工事予定書\n- request = 緊急対応の出動要請書\n- notice = 金額確定通知書\n- order = 維持管理作業注文書 または 作業依頼書\n- annual = 年間発注予定一覧表\n- other = 上記以外(入札・見積依頼・営業・広告・他社の書類など)\n'+
- '迷う場合や大東建託パートナーズの書類でない場合は other にする。\n{"docType":"other","sender":"発信元の会社名・部署(読めなければ空文字)","summary":"書類の内容を30字以内で"}';
+ 'docType は次のいずれか1つ:\n- koji = 原状回復工事 工事予定書\n- request = 緊急対応の出動要請書\n- notice = 金額確定通知書\n- order = 維持管理作業注文書 または 作業依頼書\n- annual = 年間発注予定一覧表\n- daito = 上記以外の、大東建託・大東建託パートナーズ(営業所・各部署)が発信元または宛先に関わる書類(お知らせ、見積依頼、請書、会議案内など)\n- other = 大東建託と関係のない書類(他社・官公庁の入札や見積依頼、営業・広告・請求など)\n'+
+ '大東建託に関わるかどうかを必ず判断する。少しでも大東建託に関係しそうなら daito にし、明らかに無関係な場合だけ other にする。\n{"docType":"other","sender":"発信元の会社名・部署(読めなければ空文字)","summary":"書類の内容を30字以内で"}';
 function fxSet(){var s=S.settings;if(!Array.isArray(s.fxDone))s.fxDone=[];return s.fxDone}
 function fxMark(id){var a=fxSet();if(a.indexOf(id)<0){a.push(id);if(a.length>400)a.splice(0,a.length-400);saveSettings(true)}}
 function b64bin(s){s=String(s||"").replace(/-/g,"+").replace(/_/g,"/").replace(/[^A-Za-z0-9+\/=]/g,"");while(s.length%4)s+="=";return atob(s)}
@@ -2273,8 +2273,8 @@ function fxRowHtml(r,i){
   else body='<span class="tag">'+esc(FX_TYPES[r.type]||"対象外")+"</span> <b>"+esc(r.summary||"")+'</b><div class="sub">'+esc(r.sender||"")+"</div>";
   var btn="";
   if(st==="ok"){
-    if(r.type!=="other")btn+='<button type="button" class="btn pri sm" data-fx="go:'+i+'">読み取って登録</button> ';
-    btn+='<button type="button" class="btn sm" data-fx="skip:'+i+'">'+(r.type==="other"?"対象外にする":"登録しない")+"</button>";
+    if(r.type!=="other"&&r.type!=="daito")btn+='<button type="button" class="btn pri sm" data-fx="go:'+i+'">読み取って登録</button> ';
+    btn+='<button type="button" class="btn sm" data-fx="skip:'+i+'">'+(r.type==="daito"?"確認済み":"登録しない")+"</button>";
   }else if(st==="err")btn='<button type="button" class="btn sm" data-fx="skip:'+i+'">非表示</button>';
   return '<div class="panel fxrow" id="fx-r'+i+'" style="display:flex;gap:12px;align-items:center;padding:8px 12px;margin:6px 0">'+
    (r.thumb?'<img src="'+r.thumb+'" alt="" style="width:56px;height:74px;object-fit:cover;border-radius:4px;background:#fff">':'<div style="width:56px;height:74px"></div>')+
@@ -2295,7 +2295,7 @@ async function fxRun(){
   if(sample){try{lim=await sample.limits()}catch(e){}}
   if(!mcp){fxProg("この表示ではGmailに接続できません。");return}
   if(!sample||!lim||!lim.images){fxProg("この表示では自動読み取りを使えません。");return}
-  FX.busy=true;FX.ctl=new AbortController();IM.ctl=FX.ctl;FX.rows=[];$("#fx-list").innerHTML="";
+  FX.busy=true;FX.skipped=0;FX.ctl=new AbortController();IM.ctl=FX.ctl;FX.rows=[];$("#fx-list").innerHTML="";
   try{
     fxProg("Gmailを検索中…",true);
     var r=await mcp.callTool("Gmail","search_threads",{query:"label:efax -label:efax-処理済み has:attachment newer_than:45d",pageSize:30,view:"THREAD_VIEW_MINIMAL"},{signal:FX.ctl.signal});
@@ -2336,6 +2336,7 @@ async function fxRun(){
           if(blob0)row.thumb=URL.createObjectURL(blob0);
           var a=await sample.json(FX_PROMPT+"\n(参考: メール件名「"+x.subject.trim().slice(0,80)+"」 差出人 "+x.sender+")",{images:[blob0],signal:FX.ctl.signal,modelTier:"quick"});
           row.type=FX_TYPES[a&&a.docType]?a.docType:"other";row.summary=String((a&&a.summary)||"").slice(0,60);row.sender=String((a&&a.sender)||"").slice(0,60);row.status="ok";
+          if(row.type==="other"){row.hidden=true;FX.skipped=(FX.skipped||0)+1;fxMark(x.id);var el0=$("#fx-r"+i);if(el0)el0.remove();continue}
         }catch(e){
           if(e&&(e.code==="cancelled"||e.name==="AbortError")){row.status="wait";fxDraw(i);break}
           row.status="err";row.err=fxErrMsg(e);
@@ -2344,8 +2345,8 @@ async function fxRun(){
         fxDraw(i);
       }
     }
-    var n=FX.rows.filter(function(x){return x.status==="ok"&&x.type!=="other"}).length;
-    fxProg(FX.ctl.signal.aborted?"中止しました。":("取込できる書類 "+n+" 件 / 対象外 "+FX.rows.filter(function(x){return x.status==="ok"&&x.type==="other"}).length+" 件"));
+    var n=FX.rows.filter(function(x){return x.status==="ok"&&x.type!=="other"&&x.type!=="daito"}).length;
+    fxProg(FX.ctl.signal.aborted?"中止しました。":((n||FX.rows.some(function(x){return !x.hidden})?"取込できる書類 "+n+" 件":"大東建託の書類はありません")+(FX.skipped?"(大東建託以外 "+FX.skipped+" 件は除外)":"")));
   }catch(e){fxProg(fxErrMsg(e))}
   FX.busy=false;
 }
