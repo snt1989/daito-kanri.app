@@ -82,7 +82,7 @@ module.exports = async (req, res) => {
         const t = await gget("threads/" + id + "?format=metadata&metadataHeaders=Subject&metadataHeaders=From", tok);
         return { id, messages: (t.messages || []).map((m) => ({
           id: m.id, date: new Date(Number(m.internalDate)).toISOString(), subject: hdr(m, "subject"),
-          sender: hdr(m, "from"), sizeEstimate: m.sizeEstimate, labelIds: m.labelIds,
+          sender: hdr(m, "from"), snippet: m.snippet, sizeEstimate: m.sizeEstimate, labelIds: m.labelIds,
         })) };
       }));
       return res.json({ threads });
