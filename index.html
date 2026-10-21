@@ -431,7 +431,7 @@ function vHome(){
   var up=S.jobs.filter(function(j){return j.status<4&&j.workDate&&j.workDate>=today}).sort(function(a,b){return a.workDate.localeCompare(b.workDate)}).slice(0,6);
   var rows=T.slice(0,12).map(function(t){var d=daysTo(t.date),lab=d>0?"あと"+d+"日":d===0?"今日":(-d)+"日超過";
     return '<button class="todo" data-todo="'+t.kind+":"+esc(t.id)+'"><span class="dt'+(d<0?" late":"")+'">'+t.date.replace(/-/g,"/")+"<br>"+lab+'</span><span class="tt"><span class="tag" style="margin:0 6px 0 0">'+t.tag+"</span>"+esc(t.title)+"<small>"+esc(t.note)+'</small></span><span class="go sub">開く ›</span></button>'}).join("");
-  var h='<div class="home"><div class="col">'+ntHtml()+'<div class="card2"><h3>対応が必要な案件(TODO)'+(T.length?' <span class="sub">'+T.length+"件</span>":"")+"</h3>"+(rows||'<div class="empty">いま対応が必要な項目はありません。</div>')+(T.length>12?'<div class="sub" style="padding-top:8px">ほか '+(T.length-12)+" 件は各画面で確認できます。</div>":"")+"</div></div>"+
+  var h='<div class="home"><div class="col">'+infoBanner()+'<div class="card2"><h3>対応が必要な案件(TODO)'+(T.length?' <span class="sub">'+T.length+"件</span>":"")+"</h3>"+(rows||'<div class="empty">いま対応が必要な項目はありません。</div>')+(T.length>12?'<div class="sub" style="padding-top:8px">ほか '+(T.length-12)+" 件は各画面で確認できます。</div>":"")+"</div></div>"+
    '<div class="col"><div class="card2"><h3>本日の稼働状況</h3>'+
    '<div class="stat"><span>施工予定の現場</span><b>'+S.jobs.filter(function(j){return j.status===3}).length+"</b></div>"+
    '<div class="stat"><span>本日の施工</span><b>'+S.jobs.filter(function(j){return j.workDate===today&&j.status<4}).length+"</b></div>"+
@@ -2546,23 +2546,24 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
  {v:"2026-10-22",t:"FAX書類の種類を自由に追加",d:"設定「FAX書類の種類」で書類名・見分け方・読み取る項目を登録すると、FAX取込で読み取って保存できます。登録前の編集や、書類の種類の選び直しもできます。"},
- {v:"2026-10-21",t:"お知らせ画面を追加",d:"通知(対応が必要な項目)・大東建託からのメール・アプリの更新履歴を1か所で見られます。ベルからも開けます。"},
+ {v:"2026-10-21",t:"お知らせ画面を追加",d:"大東建託からのメールとアプリの更新履歴を1か所で見られます。ホームには新着があるときだけ案内を出します。ベルからも開けます。"},
  {v:"2026-10-20",t:"設定の一括編集・CSV・選択削除",d:"設定の各一覧で、表形式の一括編集、CSV出力/取込、複数選択しての削除・一括変更ができます。"},
- {v:"2026-10-19",t:"大東建託からのメールをホームに表示",d:"Gmailのラベル「100_業者別/大東建託パートナーズ」の直近14日のメールをお知らせとして表示します。"},
+ {v:"2026-10-19",t:"大東建託からのメールをお知らせに表示",d:"Gmailのラベル「100_業者別/大東建託パートナーズ」の直近14日のメールをお知らせとして表示します。"},
  {v:"2026-10-18",t:"FAX取込(eFax)",d:"上部の「📠 FAX取込」からeFaxラベルのFAXを読み取り、案件登録などに使えます。大東建託関連の書類のみ表示します。"},
  {v:"2026-10-17",t:"Web版(Vercel)を公開",d:"パスワードログイン付きでブラウザから利用できます。データはクラウドに保存されます。"}
 ];
 function infoSeen(){var v=lsGet("infoSeen");return typeof v==="string"?v:""}
 function infoNew(){var s=infoSeen();return CHANGELOG.filter(function(c){return c.v>s}).length}
+function infoBanner(){
+  var n=NT.list.filter(function(x){return ntDone().indexOf(x.id)<0}).length,u=infoNew();
+  if(!n&&!u)return "";
+  return '<button class="todo" data-tab="info"><span class="dt">お知らせ</span><span class="tt">'+(n?"大東建託からのメール "+n+"件":"")+(n&&u?" ／ ":"")+(u?"アプリの更新 "+u+"件":"")+'<small>お知らせ画面で内容を確認できます</small></span><span class="go sub">開く ›</span></button>'}
 function vInfo(){
   ntKick();
-  var seen=infoSeen(),T=todos(),today=TODAY();
-  var groups={};T.forEach(function(t){(groups[t.tag]=groups[t.tag]||[]).push(t)});
-  var rows=T.length?Object.keys(groups).map(function(g){
-    return '<div class="sub" style="margin:8px 0 2px"><b>'+g+" "+groups[g].length+"件</b></div>"+groups[g].slice(0,10).map(function(t){var d=daysTo(t.date),lab=d>0?"あと"+d+"日":d===0?"今日":(-d)+"日超過";
-      return '<button class="todo" data-todo="'+t.kind+":"+esc(t.id)+'"><span class="dt'+(d<0?" late":"")+'">'+t.date.replace(/-/g,"/")+"<br>"+lab+'</span><span class="tt">'+esc(t.title)+"<small>"+esc(t.note)+'</small></span><span class="go sub">開く ›</span></button>'}).join("")+(groups[g].length>10?'<div class="sub">ほか '+(groups[g].length-10)+" 件</div>":"")}).join(""):'<div class="empty">いま対応が必要な項目はありません。</div>';
+  var seen=infoSeen(),T=todos();
   var log=CHANGELOG.map(function(c){return '<div class="up" style="align-items:flex-start"><span class="d">'+c.v.slice(5).replace("-","/")+'</span><span style="flex:1;min-width:0"><b>'+esc(c.t)+(c.v>seen?' <span class="tag" style="background:#c0392b;color:#fff">NEW</span>':"")+'</b><div class="sub">'+esc(c.d)+"</div></span></div>"}).join("");
-  return '<div class="home"><div class="col">'+ntHtml()+'<div class="card2"><h3>対応が必要な通知'+(T.length?' <span class="sub">'+T.length+"件</span>":"")+"</h3>"+rows+'</div></div><div class="col"><div class="card2"><h3>アプリの更新履歴'+(infoNew()?' <button type="button" class="btn sm" id="info-read" style="float:right">既読にする</button>':"")+"</h3>"+log+"</div></div></div>";
+  var todo='<button class="todo" data-tab="home"><span class="dt">TODO</span><span class="tt">'+(T.length?"対応が必要な案件が "+T.length+" 件あります":"いま対応が必要な項目はありません")+'<small>ホームの一覧で確認・対応できます</small></span><span class="go sub">ホームへ ›</span></button>';
+  return '<div class="home"><div class="col">'+todo+ntHtml()+'</div><div class="col"><div class="card2"><h3>アプリの更新履歴'+(infoNew()?' <button type="button" class="btn sm" id="info-read" style="float:right">既読にする</button>':"")+"</h3>"+log+"</div></div></div>";
 }
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
