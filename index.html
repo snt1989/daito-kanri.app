@@ -1166,9 +1166,8 @@ var SETGROUPS=[
   ["mtopts","発注区分","維持管理の「発注区分」のプルダウンです。",[P("mmonth","作業一覧")]],
   ["mtstat","維持管理の状況名","維持管理の、進捗の段階の名前とボタンの文言です。",[P("mmonth","作業一覧")]]]],
  ["水道開始・中止届",[
-  ["orgs","水道事業者","届出シートに出す窓口の情報です。自治体を追加できます。",[P("water","水道開始・中止届")]],
+  ["orgs","水道事業者","届出シートに出す窓口の情報と、自治体の公式様式(PDF・画像)の登録です。自治体を追加できます。",[P("water","水道開始・中止届")]],
   ["wtopts","届出の選択肢","「申請方法」と、候補に足す水道事業者のプルダウンです。",[P("water","水道開始・中止届")]],
-  ["wform","届出の様式","自治体の公式様式(PDF・画像)を登録し、記入位置を設定すると、届出の内容を様式に書き込んで出力できます。",[P("water","水道開始・中止届")]],
   ["wtstat","届出の状況名","届出の進捗の段階の名前と、次へ進めるボタンの文言です。",[P("water","水道開始・中止届")]]]],
  ["全体共通",[
   ["basic","基本設定","消費税率・支払日・期限が近いと扱う日数です。",[P("bill","請求・入金"),P("elog","出動一覧"),P("mmonth","作業一覧"),P("home","ホーム")]],
@@ -1184,7 +1183,7 @@ function vSet(){
   var body={prices:b.prices,staff:b.staff,layout:vLayoutTab(),basic:vBasicTab(),
    genopts:vListsTab(["kind","area"]),emopts:vListsTab(["emFrom","emRes"]),mtopts:vListsTab(["mtKind"]),wtopts:vListsTab(["wtMethod","wtOffice"]),
    genstat:vStatTab(["job"]),emstat:vStatTab(["em"]),mtstat:vStatTab(["mt"]),wtstat:vStatTab(["wt"]),
-   chk:vChkTab(),fxtype:vFxType(),wform:vWform(),backup:vBackup(),emcat:vEmcatTab(),orgs:vOrgTab(),
+   chk:vChkTab(),fxtype:vFxType(),backup:vBackup(),emcat:vEmcatTab(),orgs:vOrgTab()+vWform(),
    mitems:'<div class="panel"><h3>維持管理の作業項目</h3>'+mi.map(function(m,i){return '<div class="set-row"><input type="text" data-mi="'+i+'" value="'+esc(m)+'" aria-label="作業項目"><button class="btn sm danger" data-midel="'+i+'">削除</button></div>'}).join("")+'<div class="set-row"><button class="btn sm" id="miadd">＋ 項目を追加</button><button class="btn sm" data-sb="mitems">一括編集</button><button class="btn sm" id="mi-sync"'+(mItemsMissing().length?"":" disabled")+'>委託業務一覧表の項目を追加('+mItemsMissing().length+'件)</button></div><div class="sub" style="padding:0 14px 10px">「07 排水管清掃費」のようにコード(2桁)から始まる名前は、建物維持管理の「業務内容」ページの項目コードと対応します。注文書の読み取りでも、このコードで項目を当てはめます。</div></div>',
    company:'<div class="panel"><h3>自社情報(水道の届出などの届出者)</h3><div class="fields" style="padding:12px">'+[["name","会社名(使用者氏名)"],["kana","フリガナ"],["tel","連絡先電話番号"],["addr","住所(転居先・連絡先の住所)"],["pay","支払い方法(例:納付書、口座振替)"]].map(function(r){return '<label class="'+(r[0]==="addr"?"wide":"")+'">'+r[1]+'<input type="text" data-co="'+r[0]+'" value="'+esc((S.settings.company||{})[r[0]]||"")+'"></label>'}).join("")+'</div><div class="sub" style="padding:0 12px 12px">水道の届出シートの初期値として使います。</div></div>',
    emfee:'<div class="panel"><h3>緊急出動費(税別)</h3><div class="set-row"><span style="flex:1">基本料金 日中(7:00〜19:00)</span><input type="number" data-ef="day" value="'+f.day+'"></div><div class="set-row"><span style="flex:1">基本料金 夜間(19:00〜7:00)</span><input type="number" data-ef="night" value="'+f.night+'"></div><div class="set-row"><span style="flex:1">2時間超の加算</span><input type="number" data-ef="over" value="'+f.over+'"></div></div>'}[t];
@@ -1529,7 +1528,7 @@ function openWtpl(id){
       h+='<label class="lab sub" style="display:flex;flex-direction:column;gap:3px">コピー用の文面(電話・WEB・FAXで伝える内容)<textarea id="tp-text" rows="9" readonly style="font-size:13px">'+esc(wtText(w,org,tpVals()))+"</textarea></label>";
     }
     var fl=wtfFormsFor(w);
-    h+=fl.length?'<div class="panel" style="padding:8px 12px"><b>公式様式に記入</b> <select id="tp-form">'+fl.map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.name)+(x.org?"("+esc(x.org)+")":"")+"</option>"}).join("")+'</select> <button type="button" class="btn sm pri" id="tp-fill">様式に記入して確認</button><div id="tp-prev"></div></div>':'<div class="sub">設定の「届出の様式」に公式様式をアップロードすると、この内容を様式に書き込んで出力できます。</div>';
+    h+=fl.length?'<div class="panel" style="padding:8px 12px"><b>公式様式に記入</b> <select id="tp-form">'+fl.map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.name)+(x.org?"("+esc(x.org)+")":"")+"</option>"}).join("")+'</select> <button type="button" class="btn sm pri" id="tp-fill">様式に記入して確認</button><div id="tp-prev"></div></div>':'<div class="sub">設定の「水道事業者」に公式様式をアップロードすると、この内容を様式に書き込んで出力できます。</div>';
     h+='<div class="sub">項目と窓口の情報は各自治体の公式ページ(2026年10月に確認)に基づきます。窓口・様式は変更されることがあるため、提出前に公式の案内で確認してください。</div>'+
      '<div class="acts"><span>'+(o?'<button type="button" class="btn sm" id="tp-copy">文面をコピー</button> <button type="button" class="btn sm" id="tp-save">テキストで保存</button>':"")+'</span><span><button type="button" class="btn" id="tp-x">閉じる</button> <button type="button" class="btn pri" id="tp-ok">入力内容を保存</button></span></div></div></div>';
     el.innerHTML=h;
@@ -1548,7 +1547,7 @@ function openWtpl(id){
     if(t.id==="tp-ok"){readInputs();if(org)w.office=org;w.status=+w.status;saveDoc("water",normDoc("water",w.id,w),true);el.innerHTML="";el.onclick=el.oninput=el.onchange=null;render();toast("保存しました");return}
     if(t.id==="tp-fill"){readInputs();var fm=S.wform.find(function(x){return x.id===$("#tp-form",el).value});if(!fm)return;t.textContent="作成中…";
       wtfRender(fm,w).then(function(b){last={blob:b,form:fm};var u=URL.createObjectURL(b);t.textContent="様式に記入して確認";
-        $("#tp-prev",el).innerHTML='<img src="'+u+'" alt="記入した様式" style="width:100%;border:1px solid var(--line);margin-top:6px"><div class="acts"><span class="sub">位置がずれていたら、設定の「届出の様式」→「記入位置を設定」で直せます。</span><span><button type="button" class="btn sm" id="tp-img">画像で保存</button> <button type="button" class="btn sm pri" id="tp-pdf">PDFで保存</button></span></div>'},function(){t.textContent="様式に記入して確認";toast("作成できませんでした")});return}
+        $("#tp-prev",el).innerHTML='<img src="'+u+'" alt="記入した様式" style="width:100%;border:1px solid var(--line);margin-top:6px"><div class="acts"><span class="sub">位置がずれていたら、設定の「水道事業者」→「記入位置を設定」で直せます。</span><span><button type="button" class="btn sm" id="tp-img">画像で保存</button> <button type="button" class="btn sm pri" id="tp-pdf">PDFで保存</button></span></div>'},function(){t.textContent="様式に記入して確認";toast("作成できませんでした")});return}
     if((t.id==="tp-pdf"||t.id==="tp-img")&&last){var isP=t.id==="tp-pdf",nm="水道"+(w.kind==="使用中止"?"中止":"開始")+"届_"+(w.site||"")+(w.room||"");
       (isP?wtfPdf(last.blob,last.form.w,last.form.h):Promise.resolve(last.blob)).then(function(bl){return claude_use("downloads").then(function(d){if(!d){toast("この表示では保存できません");return}return d.save({filename:nm+(isP?".pdf":".jpg"),data:bl}).then(function(){toast("保存しました")},function(e2){if(e2&&e2.code!=="declined")toast("保存できませんでした")})})});return}
     if(t.id==="tp-copy"){var ta=$("#tp-text",el);ta.select();var ok=false;try{ok=document.execCommand("copy")}catch(x){}
@@ -2580,7 +2579,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
- {v:"2026-10-22",t:"水道届の様式に記入して出力",d:"設定「届出の様式」に自治体の公式様式(PDF・画像)をアップロードし、記入位置を設定すると、水道届の「申込内容シート」から様式に氏名・住所・日付などを書き込んでPDF・画像で出力できます。"},
+ {v:"2026-10-22",t:"水道届の様式に記入して出力",d:"設定「水道事業者」に自治体の公式様式(PDF・画像)をアップロードし、記入位置を設定すると、水道届の「申込内容シート」から様式に氏名・住所・日付などを書き込んでPDF・画像で出力できます。"},
  {v:"2026-10-22",t:"書類ボックスとバックアップ(Web版)",d:"FAX取込で読み取った書類のPDF・画像をサーバーに自動で保管し、「書類ボックス」からいつでも開けます。全データのバックアップは1日1回自動で保存され、設定の「バックアップ」から手動保存・ダウンロード・復元もできます。"},
  {v:"2026-10-22",t:"担当ごとにログイン(Web版)",d:"設定の「担当・作業員」で担当ごとにパスワードを発行すると、担当名とパスワードでログインできます。担当でログインすると、自分の担当分(担当未設定も含む)だけを初期表示し、「自分の担当のみ」で切り替えられます。管理者は従来のパスワードで担当名を空欄にしてログインします。"},
  {v:"2026-10-22",t:"FAX書類の種類を自由に追加",d:"設定「FAX書類の種類」で書類名・見分け方・読み取る項目を登録すると、FAX取込で読み取って保存できます。書類のサンプル(PDF・画像)を読み込むと、見分け方と項目を自動で入力します。登録前の編集や、書類の種類の選び直しもできます。"},
@@ -2708,7 +2707,7 @@ S.wform=S.wform||[];
 function wtfInit(){
   if(!db){var v=lsGet("wform");S.wform=Array.isArray(v)?v:[];return}
   db.collection("wform").onSnapshot(function(snap){S.wform=snap.docs.map(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}d.id=x.id;return d});
-    if(S.tab==="set"&&S.setTab==="wform"&&!WTE.f)render()},function(){});
+    if(S.tab==="set"&&S.setTab==="orgs"&&!WTE.f)render()},function(){});
 }
 function wtfSave(o){var a=S.wform,i=a.findIndex(function(x){return x.id===o.id});if(i<0)a.push(o);else a[i]=o;
   if(db)db.doc("wform/"+o.id).set(o).catch(function(){toast("保存に失敗しました(画像が大きすぎる可能性があります)")});else lsSet("wform",a)}
