@@ -382,7 +382,7 @@ var ICONS={
  menu:'<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
  tool:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'};
 function ic(n,sz){sz=sz||20;return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[n]+"</svg>"}
-var NAV=[{tab:"home",label:"ホーム",ic:"home"},
+var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"info",label:"お知らせ",ic:"bell"},
  {g:"原状回復工事"},{tab:"jobs",label:"案件一覧",ic:"list",d:"genkyo"},{tab:"sched",label:"施工予定",ic:"calendar",d:"genkyo"},{tab:"report",label:"完了報告",ic:"check",d:"genkyo"},{tab:"bill",label:"請求・入金",ic:"yen",d:"genkyo"},{tab:"water",label:"水道開始・中止届",ic:"drop",d:"genkyo"},
  {g:"緊急対応"},{tab:"elog",label:"出動一覧",ic:"alert",d:"emerg"},{tab:"eguide",label:"対応区分ガイド",ic:"book",d:"emerg"},{tab:"esum",label:"月次集計",ic:"chart",d:"emerg"},
  {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mscope",label:"業務内容",ic:"book",d:"maint"},
@@ -403,7 +403,7 @@ function todos(){
 }
 function renderTabs(){
   var c=counts(),eAct=S.emerg.filter(function(x){return x.status<2}).length,mSei=S.maint.filter(function(x){return x.status===1}).length;
-  var B={jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
+  var B={info:infoNew(),jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
   var sd=$("#side"),sTop=sd.scrollTop;
   sd.innerHTML='<div class="brand"><i>'+ic("tool",20)+'</i><span>大東受注ナビ</span></div>'+NAV.map(function(n){
     if(n.g!==undefined)return n.g.trim()?'<div class="nv-g">'+n.g+"</div>":'<div class="nv-g" style="padding:6px"></div>';
@@ -413,7 +413,7 @@ function renderTabs(){
   var cur=sd.querySelector('[aria-current="page"]');
   if(cur&&sd.scrollHeight>sd.clientHeight){var cr=cur.getBoundingClientRect(),sr=sd.getBoundingClientRect();if(cr.bottom>sr.bottom-8)sd.scrollTop+=cr.bottom-sr.bottom+16;else if(cr.top<sr.top+8)sd.scrollTop-=sr.top-cr.top+16}
   $("#menu").innerHTML=ic("menu");
-  var tn=todos().length;$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");
+  var tn=todos().length+infoNew();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");
 }
 function pageHead(){
   var n=NAV.find(function(x){return x.tab===S.tab})||NAV[0],act="";
@@ -459,7 +459,7 @@ function render0(){
   var m=$("#main"),h="";
   if(!S.persist)h+='<div class="banner">共有保存が使えない表示です。入力内容はこのブラウザにだけ保存されます。</div>';
   h+=pageHead();
-  h+=({home:vHome,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,water:vWater}[S.tab]||vJobs)();
+  h+=({home:vHome,info:vInfo,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,water:vWater}[S.tab]||vJobs)();
   m.innerHTML=h;
   decorate();
   if(fk){var fe=$(fk,m);if(fe){fe.focus();try{if(ss&&ss[0]!=null)fe.setSelectionRange(ss[0],ss[1])}catch(e){}}}
@@ -2382,7 +2382,7 @@ async function ntLoad(){
     out.sort(function(a,b){return String(b.date).localeCompare(String(a.date))});
     NT.list=out;NT.state="ok";NT.at=Date.now();
   }catch(e){NT.state="err";NT.msg=(e&&e.code==="server_not_connected"||e&&e.code==="needs_reauth")?"Gmailが未接続です":"お知らせを取得できませんでした";NT.connect=(e&&e.connectUrl)||""}
-  if(S.tab==="home")render();
+  if(S.tab==="home"||S.tab==="info")render();
 }
 function ntHtml(){
   if(NT.state==="off"||NT.state==="idle")return "";
@@ -2468,6 +2468,26 @@ function psBar(){
 }
 function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件";PS.arm=false;var d=$("#ps-del");if(d)d.textContent="選択を削除"}
 
+/* ---------- お知らせ(通知・更新履歴) ---------- */
+var CHANGELOG=[
+ {v:"2026-10-21",t:"お知らせ画面を追加",d:"通知(対応が必要な項目)・大東建託からのメール・アプリの更新履歴を1か所で見られます。ベルからも開けます。"},
+ {v:"2026-10-20",t:"設定の一括編集・CSV・選択削除",d:"設定の各一覧で、表形式の一括編集、CSV出力/取込、複数選択しての削除・一括変更ができます。"},
+ {v:"2026-10-19",t:"大東建託からのメールをホームに表示",d:"Gmailのラベル「100_業者別/大東建託パートナーズ」の直近14日のメールをお知らせとして表示します。"},
+ {v:"2026-10-18",t:"FAX取込(eFax)",d:"上部の「📠 FAX取込」からeFaxラベルのFAXを読み取り、案件登録などに使えます。大東建託関連の書類のみ表示します。"},
+ {v:"2026-10-17",t:"Web版(Vercel)を公開",d:"パスワードログイン付きでブラウザから利用できます。データはクラウドに保存されます。"}
+];
+function infoSeen(){var v=lsGet("infoSeen");return typeof v==="string"?v:""}
+function infoNew(){var s=infoSeen();return CHANGELOG.filter(function(c){return c.v>s}).length}
+function vInfo(){
+  ntKick();
+  var seen=infoSeen(),T=todos(),today=TODAY();
+  var groups={};T.forEach(function(t){(groups[t.tag]=groups[t.tag]||[]).push(t)});
+  var rows=T.length?Object.keys(groups).map(function(g){
+    return '<div class="sub" style="margin:8px 0 2px"><b>'+g+" "+groups[g].length+"件</b></div>"+groups[g].slice(0,10).map(function(t){var d=daysTo(t.date),lab=d>0?"あと"+d+"日":d===0?"今日":(-d)+"日超過";
+      return '<button class="todo" data-todo="'+t.kind+":"+esc(t.id)+'"><span class="dt'+(d<0?" late":"")+'">'+t.date.replace(/-/g,"/")+"<br>"+lab+'</span><span class="tt">'+esc(t.title)+"<small>"+esc(t.note)+'</small></span><span class="go sub">開く ›</span></button>'}).join("")+(groups[g].length>10?'<div class="sub">ほか '+(groups[g].length-10)+" 件</div>":"")}).join(""):'<div class="empty">いま対応が必要な項目はありません。</div>';
+  var log=CHANGELOG.map(function(c){return '<div class="up" style="align-items:flex-start"><span class="d">'+c.v.slice(5).replace("-","/")+'</span><span style="flex:1;min-width:0"><b>'+esc(c.t)+(c.v>seen?' <span class="tag" style="background:#c0392b;color:#fff">NEW</span>':"")+'</b><div class="sub">'+esc(c.d)+"</div></span></div>"}).join("");
+  return '<div class="home"><div class="col">'+ntHtml()+'<div class="card2"><h3>対応が必要な通知'+(T.length?' <span class="sub">'+T.length+"件</span>":"")+"</h3>"+rows+'</div></div><div class="col"><div class="card2"><h3>アプリの更新履歴'+(infoNew()?' <button type="button" class="btn sm" id="info-read" style="float:right">既読にする</button>':"")+"</h3>"+log+"</div></div></div>";
+}
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
@@ -2475,8 +2495,9 @@ function modClick(e,t,d){
   if(d.tab){S.tab=d.tab;resetFilters();saveUi();document.body.classList.remove("nav-open");render();window.scrollTo(0,0);return true}
   if(t.id==="menu"){document.body.classList.toggle("nav-open");return true}
   if(t.id==="fold"){document.body.classList.toggle("folded");render();return true}
-  if(t.id==="bell"){S.tab="home";saveUi();render();return true}
+  if(t.id==="bell"){S.tab="info";resetFilters();saveUi();render();return true}
   if(d.stab){S.setTab=d.stab;render();return true}
+  if(t.id==="info-read"){lsSet("infoSeen",CHANGELOG[0].v);render();return true}
   if(t.id==="nt-reload"){NT.state="idle";ntLoad();render();return true}
   if(t.id==="nt-all"){var dn=ntDone();NT.list.forEach(function(x){if(dn.indexOf(x.id)<0)dn.push(x.id)});if(dn.length>300)dn.splice(0,dn.length-300);saveSettings(true);render();return true}
   if(t.dataset&&t.dataset.nt){var dn2=ntDone();if(dn2.indexOf(t.dataset.nt)<0)dn2.push(t.dataset.nt);if(dn2.length>300)dn2.splice(0,dn2.length-300);saveSettings(true);render();return true}
