@@ -1170,6 +1170,7 @@ var SETGROUPS=[
  ["全体共通",[
   ["basic","基本設定","消費税率・支払日・期限が近いと扱う日数です。",[P("bill","請求・入金"),P("elog","出動一覧"),P("mmonth","作業一覧"),P("home","ホーム")]],
   ["staff","担当・作業員","担当に割り当てるチーム・作業員の名前です。",[P("jobs","案件一覧"),P("sched","施工予定"),P("elog","出動一覧")]],
+  ["fxtype","FAX書類の種類","FAX取込で読み取る書類の種類を追加します。読み取った内容の保存先も、ここで確認できます。",[P("home","ホーム")]],
   ["company","自社情報","水道の届出などで、届出者として使う会社の情報です。",[P("water","水道開始・中止届")]]]]];
 var SETTABS=[];SETGROUPS.forEach(function(g){g[1].forEach(function(t){SETTABS.push(t)})});
 var SET_ONE=["prices","layout","chk","emfee","emcat","mitems","staff","company","mtopts"];
@@ -1179,7 +1180,7 @@ function vSet(){
   var body={prices:b.prices,staff:b.staff,layout:vLayoutTab(),basic:vBasicTab(),
    genopts:vListsTab(["kind","area"]),emopts:vListsTab(["emFrom","emRes"]),mtopts:vListsTab(["mtKind"]),wtopts:vListsTab(["wtMethod","wtOffice"]),
    genstat:vStatTab(["job"]),emstat:vStatTab(["em"]),mtstat:vStatTab(["mt"]),wtstat:vStatTab(["wt"]),
-   chk:vChkTab(),emcat:vEmcatTab(),orgs:vOrgTab(),
+   chk:vChkTab(),fxtype:vFxType(),emcat:vEmcatTab(),orgs:vOrgTab(),
    mitems:'<div class="panel"><h3>維持管理の作業項目</h3>'+mi.map(function(m,i){return '<div class="set-row"><input type="text" data-mi="'+i+'" value="'+esc(m)+'" aria-label="作業項目"><button class="btn sm danger" data-midel="'+i+'">削除</button></div>'}).join("")+'<div class="set-row"><button class="btn sm" id="miadd">＋ 項目を追加</button><button class="btn sm" data-sb="mitems">一括編集</button><button class="btn sm" id="mi-sync"'+(mItemsMissing().length?"":" disabled")+'>委託業務一覧表の項目を追加('+mItemsMissing().length+'件)</button></div><div class="sub" style="padding:0 14px 10px">「07 排水管清掃費」のようにコード(2桁)から始まる名前は、建物維持管理の「業務内容」ページの項目コードと対応します。注文書の読み取りでも、このコードで項目を当てはめます。</div></div>',
    company:'<div class="panel"><h3>自社情報(水道の届出などの届出者)</h3><div class="fields" style="padding:12px">'+[["name","会社名(使用者氏名)"],["kana","フリガナ"],["tel","連絡先電話番号"],["addr","住所(転居先・連絡先の住所)"],["pay","支払い方法(例:納付書、口座振替)"]].map(function(r){return '<label class="'+(r[0]==="addr"?"wide":"")+'">'+r[1]+'<input type="text" data-co="'+r[0]+'" value="'+esc((S.settings.company||{})[r[0]]||"")+'"></label>'}).join("")+'</div><div class="sub" style="padding:0 12px 12px">水道の届出シートの初期値として使います。</div></div>',
    emfee:'<div class="panel"><h3>緊急出動費(税別)</h3><div class="set-row"><span style="flex:1">基本料金 日中(7:00〜19:00)</span><input type="number" data-ef="day" value="'+f.day+'"></div><div class="set-row"><span style="flex:1">基本料金 夜間(19:00〜7:00)</span><input type="number" data-ef="night" value="'+f.night+'"></div><div class="set-row"><span style="flex:1">2時間超の加算</span><input type="number" data-ef="over" value="'+f.over+'"></div></div>'}[t];
@@ -2278,7 +2279,7 @@ function fxRowHtml(r,i){
   if(st==="wait")body='<span class="sub">待機中…</span>';
   else if(st==="run")body='<span class="sub">取得・判別中…</span>';
   else if(st==="err")body='<span class="sub" style="color:var(--bad,#e66)">'+esc(r.err||"失敗")+"</span>";
-  else body='<select data-fxt="'+i+'" aria-label="書類の種類(違っていれば変更できます)" style="margin:0 6px 0 0">'+Object.keys(FX_TYPES).filter(function(k){return k!=="other"}).map(function(k){return '<option value="'+k+'"'+(r.type===k?" selected":"")+">"+FX_TYPES[k]+"</option>"}).join("")+"</select><b>"+esc(r.summary||"")+'</b><div class="sub">'+esc(r.sender||"")+"</div>";
+  else body='<select data-fxt="'+i+'" aria-label="書類の種類(違っていれば変更できます)" style="margin:0 6px 0 0">'+Object.keys(fxAll()).filter(function(k){return k!=="other"}).map(function(k){return '<option value="'+k+'"'+(r.type===k?" selected":"")+">"+fxAll()[k]+"</option>"}).join("")+"</select><b>"+esc(r.summary||"")+'</b><div class="sub">'+esc(r.sender||"")+"</div>";
   var btn="";
   if(st==="ok"){
     if(r.type!=="other"&&r.type!=="daito")btn+='<button type="button" class="btn pri sm" data-fx="go:'+i+'">読み取って登録</button> ';
@@ -2343,8 +2344,8 @@ async function fxRun(){
           var blob0=null;
           await eachPage(file,async function(b){if(!blob0)blob0=b},1,1400);
           if(blob0)row.thumb=URL.createObjectURL(blob0);
-          var a=await sample.json(FX_PROMPT+"\n(参考: メール件名「"+x.subject.trim().slice(0,80)+"」 差出人 "+x.sender+")",{images:[blob0],signal:FX.ctl.signal,modelTier:"quick"});
-          row.type=FX_TYPES[a&&a.docType]?a.docType:"other";row.summary=String((a&&a.summary)||"").slice(0,60);row.sender=String((a&&a.sender)||"").slice(0,60);row.status="ok";
+          var a=await sample.json(fxPrompt()+"\n(参考: メール件名「"+x.subject.trim().slice(0,80)+"」 差出人 "+x.sender+")",{images:[blob0],signal:FX.ctl.signal,modelTier:"quick"});
+          row.type=fxAll()[a&&a.docType]?a.docType:"other";row.summary=String((a&&a.summary)||"").slice(0,60);row.sender=String((a&&a.sender)||"").slice(0,60);row.status="ok";
           if(row.type==="other"){row.hidden=true;FX.skipped=(FX.skipped||0)+1;fxMark(x.id);var el0=$("#fx-r"+i);if(el0)el0.remove();continue}
         }catch(e){
           if(e&&(e.code==="cancelled"||e.name==="AbortError")){row.status="wait";fxDraw(i);break}
@@ -2366,6 +2367,73 @@ function fxGo(i){
   else if(t==="request"||t==="notice"){openEmImport();emoRun(f)}
   else if(t==="order"){openMtImport();mtiRun([f])}
   else if(t==="annual"){openMpImport();mpiRun([f])}
+  else if(/^c_/.test(t)){openFxc(f,t)}
+}
+
+/* ---------- FAX書類の種類(自分で追加) ---------- */
+function fxCustom(){var s=S.settings;if(!Array.isArray(s.fxTypes))s.fxTypes=[];return s.fxTypes}
+function fxDocs(){var s=S.settings;if(!Array.isArray(s.fxDocs))s.fxDocs=[];return s.fxDocs}
+function fxAll(){var o={};Object.keys(FX_TYPES).forEach(function(k){if(k!=="other"&&k!=="daito")o[k]=FX_TYPES[k]});fxCustom().forEach(function(c){if(c.name)o[c.id]=c.name});o.daito=FX_TYPES.daito;o.other=FX_TYPES.other;return o}
+function fxPrompt(){var L=fxCustom().filter(function(c){return c.name}).map(function(c){return "- "+c.id+" = "+c.name+(c.hint?"("+c.hint+")":"")+"\n"}).join("");return L?FX_PROMPT.replace("- daito = ",function(){return L+"- daito = "}):FX_PROMPT}
+function fxcType(id){return fxCustom().find(function(c){return c.id===id})}
+function vFxType(){
+  var T=fxCustom(),D=fxDocs();
+  var h='<div class="panel"><h3>追加した書類の種類</h3><div class="sub" style="padding:0 12px 8px">標準の5種類(工事予定書・出動要請書・金額確定通知書・注文書/作業依頼書・年間発注予定一覧表)のほかに、読み取りたい書類を追加できます。「見分け方」を書くと判別しやすくなります。「読み取る項目」は1行に1つ書きます(空欄なら書類の主な項目を自動で拾います)。</div>';
+  h+=T.map(function(c,i){return '<div class="set-row" style="flex-wrap:wrap;align-items:flex-start;gap:6px;border-top:1px solid var(--line);padding-top:8px"><input type="text" data-fct="n:'+i+'" value="'+esc(c.name)+'" placeholder="書類の名前(例: 見積依頼書)" aria-label="書類の名前" style="flex:1;min-width:160px"><input type="text" data-fct="h:'+i+'" value="'+esc(c.hint||"")+'" placeholder="見分け方(例: 表題に「見積依頼」とある)" aria-label="見分け方" style="flex:2;min-width:200px"><button type="button" class="btn sm danger" data-fctdel="'+i+'">削除</button><textarea data-fct="f:'+i+'" rows="3" placeholder="読み取る項目(1行に1つ。例: 物件名 / 金額 / 納期)" aria-label="読み取る項目" style="flex:1 1 100%">'+esc((c.fields||[]).join("\n"))+"</textarea></div>"}).join("")||'<div class="empty">まだ追加していません。</div>';
+  h+='<div class="set-row"><button type="button" class="btn sm" id="fct-add">＋ 書類の種類を追加</button></div></div>';
+  h+='<div class="panel scroll"><h3>保存した書類 <span class="sub">'+D.length+'件</span></h3>'+(D.length?'<table><thead><tr><th>日付</th><th>種類</th><th>題名</th><th>主な内容</th><th></th></tr></thead><tbody>'+D.map(function(r){
+    return "<tr><td>"+esc(r.date||r.at||"")+"</td><td>"+esc(r.typeName)+"</td><td>"+esc(r.title||"")+"</td><td class=\"sub\">"+esc((r.fields||[]).filter(function(f){return f.v}).slice(0,3).map(function(f){return f.k+":"+f.v}).join(" / "))+'</td><td style="white-space:nowrap"><button type="button" class="btn sm" data-fced="'+r.id+'">編集</button> <button type="button" class="btn sm danger" data-fcdelrec="'+r.id+'">削除</button></td></tr>'}).join("")+"</tbody></table>":'<div class="empty">FAX取込で「読み取って登録」した追加種類の書類が、ここに保存されます。</div>')+"</div>";
+  return h;
+}
+var FXC={rec:null,isNew:false,busy:false,ctl:null};
+function fxcHtml(){
+  var r=FXC.rec,c=fxcType(r.typeId);
+  var h='<div class="mask" id="mask"><div class="dlg lg"><h2>'+esc(r.typeName)+(FXC.isNew?"の読み取り":"の編集")+'</h2><div id="fxc-prog" class="sub">'+(FXC.busy?'読み取り中…(数十秒かかります) <button type="button" class="btn sm" id="fxc-stop">中止</button>':"内容を確認して、必要なら直してから保存してください。")+"</div>";
+  h+='<div class="fields"><label>題名<input type="text" data-fc="title" value="'+esc(r.title)+'"></label><label>書類の日付<input type="date" data-fc="date" value="'+esc(r.date)+'"></label></div>';
+  h+='<div class="panel" style="padding:8px 12px">'+r.fields.map(function(f,i){return '<div class="set-row"><input type="text" data-fc="k:'+i+'" value="'+esc(f.k)+'" aria-label="項目名" style="width:34%"><input type="text" data-fc="v:'+i+'" value="'+esc(f.v)+'" aria-label="内容" style="flex:1"><button type="button" class="btn sm danger" data-fcrm="'+i+'">×</button></div>'}).join("")+'<div class="set-row"><button type="button" class="btn sm" id="fxc-addf">＋ 項目を追加</button></div></div>';
+  h+='<label class="wide" style="display:block;margin-top:8px">メモ<textarea data-fc="memo" rows="3" style="width:100%">'+esc(r.memo)+"</textarea></label>";
+  return h+'<div class="acts"><span></span><span><button type="button" class="btn" id="fxc-close">閉じる</button> <button type="button" class="btn pri" id="fxc-save">保存</button></span></div></div></div>';
+}
+function fxcDraw(){var m=$("#modal");if(m)m.innerHTML=fxcHtml()}
+function openFxc(file,tid,editId){
+  var ty=fxcType(tid),rec=null;
+  if(editId){rec=fxDocs().find(function(x){return x.id===editId});if(rec){rec=JSON.parse(JSON.stringify(rec));ty=ty||{id:rec.typeId,name:rec.typeName,fields:[]}}}
+  else if(ty)rec={id:"fd"+Date.now().toString(36),typeId:tid,typeName:ty.name,title:"",date:"",fields:(ty.fields||[]).map(function(n){return {k:n,v:""}}),memo:"",at:TODAY()};
+  if(!rec)return;
+  FXC.rec=rec;FXC.isNew=!editId;FXC.busy=false;FXC.ctl=null;fxcDraw();
+  if(file)fxcRun(file,ty);
+}
+async function fxcRun(file,ty){
+  var sample=await claude_use("sample"),lim=null;
+  if(sample){try{lim=await sample.limits()}catch(e){}}
+  var pg=$("#fxc-prog");
+  if(!sample||!lim||!lim.images){if(pg)pg.textContent="この表示では自動読み取りを使えません。手入力で保存してください。";return}
+  FXC.busy=true;FXC.ctl=new AbortController();IM.ctl=FXC.ctl;fxcDraw();
+  var names=(ty.fields||[]).filter(Boolean);
+  var prompt="添付の画像は、受信したFAXの書類(種類: "+ty.name+(ty.hint?"。"+ty.hint:"")+")です。次のJSONだけを出力してください。説明文やコードフェンスは付けないでください。\n"+
+   '{"title":"書類の題名(30字以内)","date":"書類の日付 YYYY-MM-DD(読めなければ空文字)","fields":{'+(names.length?names.map(function(n){return JSON.stringify(n)+':""'}).join(","):'"項目名":"内容"')+'},"memo":"上記以外で重要な内容を100字以内で(なければ空文字)"}\n'+
+   (names.length?"fields のキーは上記の項目名のまま使い、読めない項目は空文字にする。":"fields には書類の主な項目を最大8個、項目名と内容で入れる。")+" 見えない文字を推測で埋めない。";
+  try{
+    await eachPage(file,async function(blob){
+      var a=await sample.json(prompt,{images:[blob],signal:FXC.ctl.signal,modelTier:"default"});
+      if(!a||typeof a!=="object")return;
+      var r=FXC.rec,T=function(v){return String(v==null?"":v).trim()};
+      if(!r.title&&T(a.title))r.title=T(a.title).slice(0,60);
+      if(!r.date&&/^\d{4}-\d{2}-\d{2}$/.test(T(a.date)))r.date=T(a.date);
+      var F=a.fields&&typeof a.fields==="object"?a.fields:{};
+      Object.keys(F).forEach(function(k){var v=T(F[k]);if(!v)return;var f=r.fields.find(function(x){return x.k===k});if(f){if(!f.v)f.v=v}else if(!names.length&&r.fields.length<12)r.fields.push({k:k,v:v})});
+      if(T(a.memo)&&!r.memo)r.memo=T(a.memo).slice(0,300);
+    },3);
+  }catch(e){var pg2=$("#fxc-prog");FXC.busy=false;FXC.ctl=null;fxcDraw();pg2=$("#fxc-prog");if(pg2)pg2.textContent=imErr(e)||((e&&e.message)||"読み取れませんでした")+"。手入力で保存できます。";return}
+  FXC.busy=false;FXC.ctl=null;fxcDraw();
+}
+function fxcSave(){
+  var r=FXC.rec,L=fxDocs();
+  var i=L.findIndex(function(x){return x.id===r.id});
+  r.fields=r.fields.filter(function(f){return f.k||f.v});
+  if(i>=0)L[i]=r;else L.unshift(r);
+  if(L.length>300)L.length=300;
+  saveSettings(true);FXC.rec=null;$("#modal").innerHTML="";toast("保存しました(設定「FAX書類の種類」で確認できます)");if(S.tab==="set")render();
 }
 
 /* ---------- 大東建託からのお知らせ(ホーム) ---------- */
@@ -2477,6 +2545,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"FAX書類の種類を自由に追加",d:"設定「FAX書類の種類」で書類名・見分け方・読み取る項目を登録すると、FAX取込で読み取って保存できます。登録前の編集や、書類の種類の選び直しもできます。"},
  {v:"2026-10-21",t:"お知らせ画面を追加",d:"通知(対応が必要な項目)・大東建託からのメール・アプリの更新履歴を1か所で見られます。ベルからも開けます。"},
  {v:"2026-10-20",t:"設定の一括編集・CSV・選択削除",d:"設定の各一覧で、表形式の一括編集、CSV出力/取込、複数選択しての削除・一括変更ができます。"},
  {v:"2026-10-19",t:"大東建託からのメールをホームに表示",d:"Gmailのラベル「100_業者別/大東建託パートナーズ」の直近14日のメールをお知らせとして表示します。"},
@@ -2579,6 +2648,15 @@ function modClick(e,t,d){
     render();toast("例データを削除しました");return true}
   if(t.id==="mi-sync"){var n0=mItemsSync();saveSettings();toast(n0+"件の項目を追加しました");return true}
   if(t.id==="miadd"){S.settings.mItems.push("新しい項目");saveSettings();return true}
+  if(t.id==="fct-add"){fxCustom().push({id:"c_"+Date.now().toString(36),name:"",hint:"",fields:[]});saveSettings();return true}
+  if(d.fctdel!==undefined){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に削除";return true}fxCustom().splice(+d.fctdel,1);saveSettings();return true}
+  if(d.fced){openFxc(null,"",d.fced);return true}
+  if(d.fcdelrec){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に削除";return true}var Ld=fxDocs(),ix=Ld.findIndex(function(x){return x.id===d.fcdelrec});if(ix>=0)Ld.splice(ix,1);saveSettings();return true}
+  if(t.id==="fxc-close"){if(FXC.ctl)try{FXC.ctl.abort()}catch(x){}FXC.rec=null;$("#modal").innerHTML="";return true}
+  if(t.id==="fxc-stop"){if(FXC.ctl)try{FXC.ctl.abort()}catch(x){}return true}
+  if(t.id==="fxc-save"){fxcSave();return true}
+  if(t.id==="fxc-addf"){FXC.rec.fields.push({k:"",v:""});fxcDraw();return true}
+  if(d.fcrm!==undefined){FXC.rec.fields.splice(+d.fcrm,1);fxcDraw();return true}
   if(d.midel!==undefined){S.settings.mItems.splice(+d.midel,1);saveSettings();return true}
   if(d.eopen&&!e.target.closest("button")){openEmerg(d.eopen);return true}
   if(d.mopen&&!e.target.closest("button")){openMaint(d.mopen);return true}
@@ -2586,6 +2664,8 @@ function modClick(e,t,d){
   return false;
 }
 function modChange(t){
+  if(t.dataset.fct!==undefined){var a=t.dataset.fct.split(":"),c=fxCustom()[+a[1]];if(c){if(a[0]==="n")c.name=t.value.trim();else if(a[0]==="h")c.hint=t.value.trim();else c.fields=t.value.split(/\n/).map(function(x){return x.trim()}).filter(Boolean)}saveSettings(true);return true}
+  if(t.dataset.fc!==undefined&&FXC.rec){var b=t.dataset.fc.split(":"),r=FXC.rec;if(b[0]==="k")r.fields[+b[1]].k=t.value.trim();else if(b[0]==="v")r.fields[+b[1]].v=t.value;else r[b[0]]=t.value;return true}
   if(t.dataset.mi!==undefined){S.settings.mItems[+t.dataset.mi]=t.value||"項目";saveSettings(true);return true}
   if(t.dataset.ef){S.settings.emFee[t.dataset.ef]=+t.value||0;saveSettings(true);return true}
   if(t.id==="mitem"){S.mItem=t.value;render();return true}
