@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><script src="/shim.js"></script></head><body>
 <title>大東受注ナビ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
@@ -2256,7 +2256,8 @@ function fxFiles(rawB64u,label){
   return fs;
 }
 function fxErrMsg(e){
-  var c=e&&e.code;
+  var c=e&&e.code;FX.connect=(e&&e.connectUrl)||FX.connect||"";
+  if(e&&e.connectUrl&&(c==="server_not_connected"||c==="needs_reauth"))return "Gmailが未接続です。下のリンクからGoogleで許可してください。";
   if(c==="needs_reauth")return "Gmailの接続が切れています。claude.aiの設定→コネクタでGmailを再接続してください。";
   if(c==="server_not_connected"||c==="server_not_found")return "Gmailが接続されていません。claude.aiの設定→コネクタでGmailを追加してください。";
   if(c==="not_in_manifest"||c==="approval_required"||c==="consent_required")return "Gmailへのアクセスが許可されていません。許可して再度お試しください。";
@@ -2279,9 +2280,9 @@ function fxRowHtml(r,i){
    '<div style="flex:1;min-width:0"><div class="sub">'+esc(r.date||"")+" "+esc(r.caller||"")+"</div>"+body+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+btn+"</div></div>";
 }
 function fxDraw(i){var el=$("#fx-r"+i);if(el)el.outerHTML=fxRowHtml(FX.rows[i],i)}
-function fxProg(m,busy){var p=$("#fx-prog");if(p)p.innerHTML=esc(m||"")+(busy?' <button type="button" class="btn sm" id="fx-stop">中止</button>':"")}
+function fxProg(m,busy){var p=$("#fx-prog");if(p)p.innerHTML=esc(m||"")+(FX.connect?' <a href="'+esc(FX.connect)+'" target="_blank" rel="noopener">Gmailを接続する</a>':"")+(busy?' <button type="button" class="btn sm" id="fx-stop">中止</button>':"")}
 function openFax(){
-  FX.rows=[];FX.busy=false;
+  FX.rows=[];FX.busy=false;FX.connect="";
   $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg lg"><h2>📠 FAX取込</h2><div class="sub">Gmailの「大東建託パートナーズ」ラベルとeFaxラベルの添付PDF・画像を読み込み、書類の種類を自動で判別します。「読み取って登録」を押すと、内容を確認してから登録できます(勝手には登録しません)。</div>'+
    '<div id="fx-prog" class="sub"></div><div id="fx-list"></div>'+
    '<div class="acts"><span></span><span><button type="button" class="btn" id="fx-reload">再読み込み</button> <button type="button" class="btn" id="fx-close">閉じる</button></span></div></div></div>';

@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/ai.js": { "maxDuration": 60 },
+    "api/google.js": { "maxDuration": 60 },
+    "api/db.js": { "maxDuration": 30 }
+  }
+}

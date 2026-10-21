@@ -1,6 +1,24 @@
 # 大東受注ナビ
-株式会社三桜 — 大東建託パートナーズ案件(原状回復工事・緊急対応・建物維持管理)の管理アプリ。単一の `index.html`。
 
-Claude アーティファクト版(https://claude.ai/artifact/L5vmR3ypPJEKY1wKnWv5J6)から書き出したものです。
-Vercel 等で単体公開した場合、Claude 実行環境が無いため次の機能は使えません(データはブラウザの localStorage に保存):
-- 書類の自動読み取り(Claude)、Gmail からの FAX 取込、共有データベース
+株式会社三桜 — 大東建託パートナーズ案件(原状回復工事・緊急対応・建物維持管理)の管理アプリ。
+
+- `index.html` … アプリ本体(単一ファイル)
+- `shim.js` … Claude アーティファクト実行環境の代わりに `/api` を使う互換層(ログイン画面を含む)
+- `api/` … Vercel サーバー関数(`auth` ログイン / `db` データ保存 / `ai` 書類読み取り / `google` Gmail 連携)
+- `import.html` … アーティファクト版からのデータ移行用
+
+## Vercel の設定(環境変数)
+
+| 名前 | 内容 |
+|---|---|
+| `APP_PASSWORD` | アプリを開くときの共通パスワード(必須) |
+| `SESSION_SECRET` | ランダムな長い文字列(任意・推奨) |
+| `ANTHROPIC_API_KEY` | 書類の自動読み取り用(Anthropic Console で発行) |
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | データ保存。Vercel の Storage → Upstash Redis を追加すると自動で入る |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | FAX取込(Gmail)用。Google Cloud の OAuth クライアント |
+
+Google Cloud 側: Gmail API を有効化 → OAuth クライアント(ウェブアプリ)を作成 →
+承認済みリダイレクト URI に `https://<公開URL>/api/google?op=callback` を登録。
+初回だけアプリの「FAX取込」から「Gmailを接続する」を押して許可します(読み取り専用)。
+
+環境変数を追加・変更したら再デプロイしてください。
