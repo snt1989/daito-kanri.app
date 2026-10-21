@@ -1,6 +1,6 @@
 // バックアップ: 全コレクションを JSON にして Redis に世代保存(直近 KEEP 世代)
 const { pipeline, redis } = require("./_lib");
-const COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings"];
+const COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform"];
 const KEEP = 14, CHUNK = 400000;
 const META = "daito:bkmeta", LAST = "daito:bklast";
 const ck = (id, n) => "daito:bk:" + id + ":" + n;
@@ -48,6 +48,7 @@ async function restore(id) {
   if (!s) throw new Error("バックアップが見つかりません");
   await snapshot("復元前の自動保存");
   for (const c of COLS) {
+    if (!(c in s.data)) continue;
     const items = s.data[c] || [];
     await pipeline([["DEL", "daito:" + c]]);
     for (let i = 0; i < items.length; i += 100) {

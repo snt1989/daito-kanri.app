@@ -1168,6 +1168,7 @@ var SETGROUPS=[
  ["水道開始・中止届",[
   ["orgs","水道事業者","届出シートに出す窓口の情報です。自治体を追加できます。",[P("water","水道開始・中止届")]],
   ["wtopts","届出の選択肢","「申請方法」と、候補に足す水道事業者のプルダウンです。",[P("water","水道開始・中止届")]],
+  ["wform","届出の様式","自治体の公式様式(PDF・画像)を登録し、記入位置を設定すると、届出の内容を様式に書き込んで出力できます。",[P("water","水道開始・中止届")]],
   ["wtstat","届出の状況名","届出の進捗の段階の名前と、次へ進めるボタンの文言です。",[P("water","水道開始・中止届")]]]],
  ["全体共通",[
   ["basic","基本設定","消費税率・支払日・期限が近いと扱う日数です。",[P("bill","請求・入金"),P("elog","出動一覧"),P("mmonth","作業一覧"),P("home","ホーム")]],
@@ -1183,7 +1184,7 @@ function vSet(){
   var body={prices:b.prices,staff:b.staff,layout:vLayoutTab(),basic:vBasicTab(),
    genopts:vListsTab(["kind","area"]),emopts:vListsTab(["emFrom","emRes"]),mtopts:vListsTab(["mtKind"]),wtopts:vListsTab(["wtMethod","wtOffice"]),
    genstat:vStatTab(["job"]),emstat:vStatTab(["em"]),mtstat:vStatTab(["mt"]),wtstat:vStatTab(["wt"]),
-   chk:vChkTab(),fxtype:vFxType(),backup:vBackup(),emcat:vEmcatTab(),orgs:vOrgTab(),
+   chk:vChkTab(),fxtype:vFxType(),wform:vWform(),backup:vBackup(),emcat:vEmcatTab(),orgs:vOrgTab(),
    mitems:'<div class="panel"><h3>維持管理の作業項目</h3>'+mi.map(function(m,i){return '<div class="set-row"><input type="text" data-mi="'+i+'" value="'+esc(m)+'" aria-label="作業項目"><button class="btn sm danger" data-midel="'+i+'">削除</button></div>'}).join("")+'<div class="set-row"><button class="btn sm" id="miadd">＋ 項目を追加</button><button class="btn sm" data-sb="mitems">一括編集</button><button class="btn sm" id="mi-sync"'+(mItemsMissing().length?"":" disabled")+'>委託業務一覧表の項目を追加('+mItemsMissing().length+'件)</button></div><div class="sub" style="padding:0 14px 10px">「07 排水管清掃費」のようにコード(2桁)から始まる名前は、建物維持管理の「業務内容」ページの項目コードと対応します。注文書の読み取りでも、このコードで項目を当てはめます。</div></div>',
    company:'<div class="panel"><h3>自社情報(水道の届出などの届出者)</h3><div class="fields" style="padding:12px">'+[["name","会社名(使用者氏名)"],["kana","フリガナ"],["tel","連絡先電話番号"],["addr","住所(転居先・連絡先の住所)"],["pay","支払い方法(例:納付書、口座振替)"]].map(function(r){return '<label class="'+(r[0]==="addr"?"wide":"")+'">'+r[1]+'<input type="text" data-co="'+r[0]+'" value="'+esc((S.settings.company||{})[r[0]]||"")+'"></label>'}).join("")+'</div><div class="sub" style="padding:0 12px 12px">水道の届出シートの初期値として使います。</div></div>',
    emfee:'<div class="panel"><h3>緊急出動費(税別)</h3><div class="set-row"><span style="flex:1">基本料金 日中(7:00〜19:00)</span><input type="number" data-ef="day" value="'+f.day+'"></div><div class="set-row"><span style="flex:1">基本料金 夜間(19:00〜7:00)</span><input type="number" data-ef="night" value="'+f.night+'"></div><div class="set-row"><span style="flex:1">2時間超の加算</span><input type="number" data-ef="over" value="'+f.over+'"></div></div>'}[t];
@@ -1527,10 +1528,13 @@ function openWtpl(id){
         return '<label class="'+(it[2]?"wide":"")+'">'+label+'<input type="'+(k==="date"?"date":"text")+'" data-tp="'+key+'" value="'+esc(v)+'"></label>'}).join("")+"</div>";
       h+='<label class="lab sub" style="display:flex;flex-direction:column;gap:3px">コピー用の文面(電話・WEB・FAXで伝える内容)<textarea id="tp-text" rows="9" readonly style="font-size:13px">'+esc(wtText(w,org,tpVals()))+"</textarea></label>";
     }
+    var fl=wtfFormsFor(w);
+    h+=fl.length?'<div class="panel" style="padding:8px 12px"><b>公式様式に記入</b> <select id="tp-form">'+fl.map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.name)+(x.org?"("+esc(x.org)+")":"")+"</option>"}).join("")+'</select> <button type="button" class="btn sm pri" id="tp-fill">様式に記入して確認</button><div id="tp-prev"></div></div>':'<div class="sub">設定の「届出の様式」に公式様式をアップロードすると、この内容を様式に書き込んで出力できます。</div>';
     h+='<div class="sub">項目と窓口の情報は各自治体の公式ページ(2026年10月に確認)に基づきます。窓口・様式は変更されることがあるため、提出前に公式の案内で確認してください。</div>'+
      '<div class="acts"><span>'+(o?'<button type="button" class="btn sm" id="tp-copy">文面をコピー</button> <button type="button" class="btn sm" id="tp-save">テキストで保存</button>':"")+'</span><span><button type="button" class="btn" id="tp-x">閉じる</button> <button type="button" class="btn pri" id="tp-ok">入力内容を保存</button></span></div></div></div>';
     el.innerHTML=h;
   }
+  var last=null;
   function tpVals(){var v={};Object.keys(WT_ITEM).forEach(function(k){var key=WT_ITEM[k][1];v[k]=wtVal(w,key)});v.date=w.date;return v}
   function readInputs(){[].slice.call(el.querySelectorAll("[data-tp]")).forEach(function(i){w[i.dataset.tp]=i.value})}
   draw();
@@ -1542,6 +1546,11 @@ function openWtpl(id){
     var t=e.target;
     if(t.id==="tp-x"||t.id==="mask"){el.innerHTML="";el.onclick=el.oninput=el.onchange=null;return}
     if(t.id==="tp-ok"){readInputs();if(org)w.office=org;w.status=+w.status;saveDoc("water",normDoc("water",w.id,w),true);el.innerHTML="";el.onclick=el.oninput=el.onchange=null;render();toast("保存しました");return}
+    if(t.id==="tp-fill"){readInputs();var fm=S.wform.find(function(x){return x.id===$("#tp-form",el).value});if(!fm)return;t.textContent="作成中…";
+      wtfRender(fm,w).then(function(b){last={blob:b,form:fm};var u=URL.createObjectURL(b);t.textContent="様式に記入して確認";
+        $("#tp-prev",el).innerHTML='<img src="'+u+'" alt="記入した様式" style="width:100%;border:1px solid var(--line);margin-top:6px"><div class="acts"><span class="sub">位置がずれていたら、設定の「届出の様式」→「記入位置を設定」で直せます。</span><span><button type="button" class="btn sm" id="tp-img">画像で保存</button> <button type="button" class="btn sm pri" id="tp-pdf">PDFで保存</button></span></div>'},function(){t.textContent="様式に記入して確認";toast("作成できませんでした")});return}
+    if((t.id==="tp-pdf"||t.id==="tp-img")&&last){var isP=t.id==="tp-pdf",nm="水道"+(w.kind==="使用中止"?"中止":"開始")+"届_"+(w.site||"")+(w.room||"");
+      (isP?wtfPdf(last.blob,last.form.w,last.form.h):Promise.resolve(last.blob)).then(function(bl){return claude_use("downloads").then(function(d){if(!d){toast("この表示では保存できません");return}return d.save({filename:nm+(isP?".pdf":".jpg"),data:bl}).then(function(){toast("保存しました")},function(e2){if(e2&&e2.code!=="declined")toast("保存できませんでした")})})});return}
     if(t.id==="tp-copy"){var ta=$("#tp-text",el);ta.select();var ok=false;try{ok=document.execCommand("copy")}catch(x){}
       if(ok)toast("コピーしました");else if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(ta.value).then(function(){toast("コピーしました")},function(){toast("選択した状態です。Ctrl+C でコピーしてください")});else toast("選択した状態です。Ctrl+C でコピーしてください");return}
     if(t.id==="tp-save"){var txt=$("#tp-text",el).value;claude_use("downloads").then(function(d){if(!d){toast("この表示では保存できません");return}
@@ -2571,6 +2580,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"水道届の様式に記入して出力",d:"設定「届出の様式」に自治体の公式様式(PDF・画像)をアップロードし、記入位置を設定すると、水道届の「申込内容シート」から様式に氏名・住所・日付などを書き込んでPDF・画像で出力できます。"},
  {v:"2026-10-22",t:"書類ボックスとバックアップ(Web版)",d:"FAX取込で読み取った書類のPDF・画像をサーバーに自動で保管し、「書類ボックス」からいつでも開けます。全データのバックアップは1日1回自動で保存され、設定の「バックアップ」から手動保存・ダウンロード・復元もできます。"},
  {v:"2026-10-22",t:"担当ごとにログイン(Web版)",d:"設定の「担当・作業員」で担当ごとにパスワードを発行すると、担当名とパスワードでログインできます。担当でログインすると、自分の担当分(担当未設定も含む)だけを初期表示し、「自分の担当のみ」で切り替えられます。管理者は従来のパスワードで担当名を空欄にしてログインします。"},
  {v:"2026-10-22",t:"FAX書類の種類を自由に追加",d:"設定「FAX書類の種類」で書類名・見分け方・読み取る項目を登録すると、FAX取込で読み取って保存できます。書類のサンプル(PDF・画像)を読み込むと、見分け方と項目を自動で入力します。登録前の編集や、書類の種類の選び直しもできます。"},
@@ -2688,6 +2698,134 @@ function vBackup(){
     return "<tr><td>"+esc(isNaN(d)?m.at:d.toLocaleString("ja-JP",{year:"numeric",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}))+'</td><td><span class="tag">'+esc(m.by||"")+'</span></td><td class="sub">案件 '+(c.jobs||0)+" / 出動 "+(c.emerg||0)+" / 維持管理 "+(c.maint||0)+" / 水道 "+(c.water||0)+'</td><td class="num">'+dfSize(m.size)+'</td><td style="white-space:nowrap"><button type="button" class="btn sm" data-bkdl="'+esc(m.id)+'">ダウンロード</button> <button type="button" class="btn sm" data-bkrs="'+esc(m.id)+'">この時点に戻す</button> <button type="button" class="btn sm danger" data-bkdel="'+esc(m.id)+'">削除</button></td></tr>'}).join(""):'<tr><td colspan="5" class="empty">'+(BKP.state==="load"?"読み込み中…":"まだバックアップがありません。")+"</td></tr>")+"</tbody></table></div>";
   return h;
 }
+/* ====================== 水道届の様式(アップロード)に記入して出力 ====================== */
+var WTF_KEYS=[["name","使用者氏名"],["kana","フリガナ"],["addr","使用場所の住所"],["tel","連絡先電話番号"],["custNo","お客様番号"],["pay","支払い方法"],["payer","支払者氏名"],["newAddr","転居先の住所"],["workplace","勤務先"],["occupants","世帯人数"],["sendTo","送付先"],
+ ["site","物件名"],["room","号室"],["office","窓口名"],["memo","備考"],
+ ["date","使用開始/中止日(令和○年○月○日)"],["date_y","使用開始/中止日:年(数字)"],["date_m","使用開始/中止日:月"],["date_d","使用開始/中止日:日"],
+ ["today","申請日(令和○年○月○日)"],["today_y","申請日:年(数字)"],["today_m","申請日:月"],["today_d","申請日:日"],["mark","○印(位置に○を描く)"]];
+var WTF_FMT=[["wareki","令和○年○月○日"],["seireki","2026年10月22日"],["slash","2026/10/22"],["md","○月○日"]];
+S.wform=S.wform||[];
+function wtfInit(){
+  if(!db){var v=lsGet("wform");S.wform=Array.isArray(v)?v:[];return}
+  db.collection("wform").onSnapshot(function(snap){S.wform=snap.docs.map(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}d.id=x.id;return d});
+    if(S.tab==="set"&&S.setTab==="wform"&&!WTE.f)render()},function(){});
+}
+function wtfSave(o){var a=S.wform,i=a.findIndex(function(x){return x.id===o.id});if(i<0)a.push(o);else a[i]=o;
+  if(db)db.doc("wform/"+o.id).set(o).catch(function(){toast("保存に失敗しました(画像が大きすぎる可能性があります)")});else lsSet("wform",a)}
+function wtfDel(id){S.wform=S.wform.filter(function(x){return x.id!==id});if(db)db.doc("wform/"+id).delete().catch(function(){});else lsSet("wform",S.wform)}
+function wtfWareki(s){var m=String(s||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return null;var y=+m[1],mo=+m[2],d=+m[3];
+  var era=y>=2019?"令和":y>=1989?"平成":"昭和",n=y>=2019?y-2018:y>=1989?y-1988:y-1925;return {era:era,y:n===1?"元":String(n),m:String(mo),d:String(d),seireki:y}}
+function wtfDateText(s,fmt){var w=wtfWareki(s);if(!w)return s||"";
+  if(fmt==="seireki")return w.seireki+"年"+w.m+"月"+w.d+"日";if(fmt==="slash")return w.seireki+"/"+w.m+"/"+w.d;if(fmt==="md")return w.m+"月"+w.d+"日";
+  return w.era+w.y+"年"+w.m+"月"+w.d+"日"}
+function wtfValue(w,f){
+  var k=f.k;
+  if(k==="mark")return "";
+  if(k==="site")return w.site||"";if(k==="room")return w.room||"";if(k==="office")return wtOrgOf(w)||w.office||"";if(k==="memo")return w.memo||"";
+  var dk=k.indexOf("date")===0?w.date:k.indexOf("today")===0?(w.applyDate||TODAY()):null;
+  if(dk!==null){var parts=k.split("_");if(parts.length===1)return wtfDateText(dk,f.fmt||"wareki");var x=wtfWareki(dk);if(!x)return "";return parts[1]==="y"?(f.fmt==="seireki"?String(x.seireki):x.y):parts[1]==="m"?x.m:x.d}
+  var it=WT_ITEM[k];return it?wtVal(w,it[1]):"";
+}
+function wtfLoadImg(src){return new Promise(function(res,rej){var im=new Image();im.onload=function(){res(im)};im.onerror=function(){rej(new Error("img"))};im.src=src})}
+async function wtfRender(form,w){
+  var im=await wtfLoadImg(form.img),W=im.naturalWidth,H=im.naturalHeight,cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  var cx=cv.getContext("2d");cx.drawImage(im,0,0,W,H);cx.fillStyle="#000";cx.strokeStyle="#000";cx.textBaseline="top";
+  (form.fields||[]).forEach(function(f){
+    var fs=(+f.s||0.018)*W;
+    if(f.k==="mark"){cx.lineWidth=Math.max(2,fs*0.12);cx.beginPath();cx.arc(f.x*W,f.y*H,fs*0.9,0,Math.PI*2);cx.stroke();return}
+    var t=wtfValue(w,f);if(!t)return;
+    cx.font=fs+'px "Noto Sans JP","Hiragino Sans","Yu Gothic","Meiryo",sans-serif';
+    var avail=Math.max(40,W*(1-f.x)-W*0.02),tw=cx.measureText(t).width,sz=fs;
+    if(tw>avail){sz=fs*avail/tw;cx.font=sz+'px "Noto Sans JP","Hiragino Sans","Yu Gothic","Meiryo",sans-serif'}
+    cx.fillText(t,f.x*W,f.y*H+(fs-sz)/2)});
+  return new Promise(function(r){cv.toBlob(r,"image/jpeg",0.92)});
+}
+async function wtfPdf(jpg,w,h){
+  var ab=new Uint8Array(await jpg.arrayBuffer()),pw=595,ph=Math.round(595*h/w),enc=new TextEncoder(),parts=[],len=0,offs=[];
+  function add(x){var u=typeof x==="string"?enc.encode(x):x;parts.push(u);len+=u.length}
+  add("%PDF-1.4\n");
+  function obj(n,body){offs[n]=len;add(n+" 0 obj\n"+body+"\nendobj\n")}
+  obj(1,"<</Type/Catalog/Pages 2 0 R>>");obj(2,"<</Type/Pages/Kids[3 0 R]/Count 1>>");
+  obj(3,"<</Type/Page/Parent 2 0 R/MediaBox[0 0 "+pw+" "+ph+"]/Resources<</XObject<</Im0 4 0 R>>>>/Contents 5 0 R>>");
+  offs[4]=len;add("4 0 obj\n<</Type/XObject/Subtype/Image/Width "+w+"/Height "+h+"/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length "+ab.length+">>\nstream\n");add(ab);add("\nendstream\nendobj\n");
+  var cs="q "+pw+" 0 0 "+ph+" 0 0 cm /Im0 Do Q";obj(5,"<</Length "+cs.length+">>\nstream\n"+cs+"\nendstream");
+  var xr=len;add("xref\n0 6\n0000000000 65535 f \n");for(var i=1;i<=5;i++)add(String(offs[i]).padStart(10,"0")+" 00000 n \n");
+  add("trailer\n<</Size 6/Root 1 0 R>>\nstartxref\n"+xr+"\n%%EOF");
+  return new Blob(parts,{type:"application/pdf"});
+}
+function wtfDummy(kind){return {kind:kind||"使用開始",site:"サンプル荘",room:"101",address:"青森県八戸市○○1-2-3",date:TODAY(),applyDate:TODAY(),custNo:"123456",memo:"",office:""}}
+function wtfFormsFor(w){var org=wtOrgOf(w)||w.office||"";return S.wform.filter(function(f){return f.kind===w.kind}).sort(function(a,b){return (b.org===org?1:0)-(a.org===org?1:0)})}
+/* ---- 設定タブ ---- */
+function vWform(){
+  var h='<div class="panel"><h3>届出の様式(アップロード)</h3><div class="sub" style="padding:0 12px 8px">自治体の公式様式(PDF・画像)を登録し、「記入位置を設定」で氏名・住所・日付などを書き込む場所を決めておくと、水道の届出から様式に記入した状態で出力できます。PDFは1ページ目を使います。</div>'+
+   S.wform.map(function(f){return '<div class="set-row" style="flex-wrap:wrap;gap:6px;border-top:1px solid var(--line);padding-top:8px"><img src="'+f.img+'" alt="" style="width:46px;height:62px;object-fit:cover;border-radius:3px;border:1px solid var(--line)">'+
+    '<input type="text" data-wtf="n:'+f.id+'" value="'+esc(f.name)+'" aria-label="様式の名前" style="flex:1;min-width:150px"><select data-wtf="o:'+f.id+'" aria-label="自治体"><option value="">全自治体</option>'+Object.keys(WT_ORG).map(function(k){return "<option"+(f.org===k?" selected":"")+">"+k+"</option>"}).join("")+'</select>'+
+    '<select data-wtf="k:'+f.id+'" aria-label="種別">'+["使用開始","使用中止"].map(function(k){return "<option"+(f.kind===k?" selected":"")+">"+k+"</option>"}).join("")+'</select>'+
+    '<span class="sub">'+((f.fields||[]).length)+'か所</span><button type="button" class="btn sm pri" data-wtfed="'+f.id+'">記入位置を設定</button><button type="button" class="btn sm danger" data-wtfdel="'+f.id+'">削除</button></div>'}).join("")||'<div class="empty">まだ登録していません。</div>';
+  h+='<div class="set-row"><label class="btn pri" style="cursor:pointer">＋ 様式をアップロード<input type="file" id="wtf-file" accept="application/pdf,image/*" style="display:none"></label>'+(WTE.msg?'<span class="sub">'+esc(WTE.msg)+"</span>":"")+"</div></div>";
+  return h;
+}
+var WTE={f:null,msg:"",sel:""};
+async function wtfUpload(file){
+  WTE.msg="読み込み中…";render();
+  try{
+    var ctl=new AbortController();IM.ctl=ctl;var b0=null;
+    await eachPage(file,async function(b){if(!b0)b0=b},1,1800);
+    var b=b0?await fitBlob(b0,420*1024):null;if(!b)throw new Error("画像が大きすぎます");
+    var url=await new Promise(function(r){var fr=new FileReader();fr.onload=function(){r(fr.result)};fr.readAsDataURL(b)});
+    var im=await wtfLoadImg(url);
+    var f={id:nid("wf"),name:file.name.replace(/\.[^.]+$/,"").slice(0,40),org:"",kind:"使用開始",img:url,w:im.naturalWidth,h:im.naturalHeight,fields:[],at:TODAY()};
+    wtfSave(f);WTE.msg="";render();openWtfEd(f.id);
+  }catch(e){WTE.msg="読み込めませんでした: "+((e&&e.message)||"");render()}
+}
+document.addEventListener("change",function(e){var t=e.target;if(t&&t.id==="wtf-file"&&t.files&&t.files[0]){var f=t.files[0];t.value="";wtfUpload(f)}});
+/* ---- 記入位置の編集 ---- */
+function openWtfEd(id){
+  var f0=S.wform.find(function(x){return x.id===id});if(!f0)return;
+  WTE.f=JSON.parse(JSON.stringify(f0));wtfEdDraw();
+}
+function wtfEdSample(){var f=WTE.f;return S.water.find(function(w){return w.kind===f.kind})||wtfDummy(f.kind)}
+function wtfEdDraw(){
+  var f=WTE.f,w=wtfEdSample(),el=$("#modal");
+  var h='<div class="mask" id="mask"><div class="dlg" style="width:min(1180px,100%);max-height:94vh;overflow:auto"><h2>記入位置の設定: '+esc(f.name)+'</h2><div class="sub">右の一覧から項目を追加し、左の様式の上で<b>ドラッグして位置</b>を合わせます。文字はサンプルの内容で表示しています(実際は届出の内容が入ります)。</div>'+
+   '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px"><div style="flex:1 1 560px;min-width:0"><div id="wtf-stage" style="position:relative;line-height:0;border:1px solid var(--line);background:#fff;touch-action:none"><img src="'+f.img+'" alt="様式" style="width:100%;display:block;user-select:none;-webkit-user-drag:none" draggable="false">'+
+   f.fields.map(function(x){var t=x.k==="mark"?"○":(wtfValue(w,x)||"("+((WTF_KEYS.find(function(k){return k[0]===x.k})||[0,x.k])[1])+")");
+     return '<div data-wtfm="'+x.id+'" style="position:absolute;left:'+(x.x*100)+'%;top:'+(x.y*100)+'%;'+(x.k==="mark"?"transform:translate(-50%,-50%);":"")+'font-size:calc(var(--sw,800px)*'+(x.s||0.018)+');line-height:1;white-space:nowrap;cursor:move;color:#000;background:rgba(255,214,0,.35);outline:1px dashed #c0392b;font-family:\'Noto Sans JP\',sans-serif">'+esc(t)+"</div>"}).join("")+"</div></div>"+
+   '<div style="flex:0 0 330px;max-width:100%"><div class="set-row"><select id="wtfe-add" style="flex:1">'+WTF_KEYS.map(function(k){return '<option value="'+k[0]+'">'+k[1]+"</option>"}).join("")+'</select><button type="button" class="btn sm" id="wtfe-addbtn">＋追加</button></div>'+
+   '<div class="set-row"><button type="button" class="btn sm" id="wtfe-ai" title="様式の画像から、AIが記入欄の位置を推定します">🪄 AIで自動配置</button><span class="sub" id="wtfe-msg"></span></div>'+
+   '<div class="panel" style="padding:6px 8px;max-height:46vh;overflow:auto">'+(f.fields.length?f.fields.map(function(x){var lab=(WTF_KEYS.find(function(k){return k[0]===x.k})||[0,x.k])[1];
+     return '<div class="set-row" style="gap:4px"><span style="flex:1;font-size:12px">'+esc(lab)+'</span>'+(x.k.indexOf("date")===0&&x.k.indexOf("_")<0||x.k.indexOf("today")===0&&x.k.indexOf("_")<0?'<select data-wtfe="f:'+x.id+'" aria-label="日付の形式">'+WTF_FMT.map(function(m){return '<option value="'+m[0]+'"'+((x.fmt||"wareki")===m[0]?" selected":"")+">"+m[1]+"</option>"}).join("")+"</select>":"")+
+      '<input type="number" min="8" max="60" step="1" data-wtfe="s:'+x.id+'" value="'+Math.round((x.s||0.018)*1000)+'" style="width:56px" aria-label="文字の大きさ"><button type="button" class="btn sm danger" data-wtfe="x:'+x.id+'">×</button></div>'}).join(""):'<div class="empty">項目を追加してください。</div>')+"</div>"+
+   '<div class="sub">文字の大きさは数字が大きいほど大きくなります(標準18)。「○印」は開始/中止などの該当欄を囲うときに使います。</div></div></div>'+
+   '<div class="acts"><span></span><span><button type="button" class="btn" id="wtfe-close">閉じる</button> <button type="button" class="btn pri" id="wtfe-save">保存</button></span></div></div></div>';
+  el.innerHTML=h;wtfEdSize();
+}
+function wtfEdSize(){var st=$("#wtf-stage");if(st)st.style.setProperty("--sw",st.clientWidth+"px")}
+window.addEventListener("resize",wtfEdSize);
+var WTD=null;
+document.addEventListener("pointerdown",function(e){var m=e.target.closest&&e.target.closest("[data-wtfm]");if(!m||!WTE.f)return;e.preventDefault();var st=$("#wtf-stage"),r=st.getBoundingClientRect(),f=WTE.f.fields.find(function(x){return x.id===m.dataset.wtfm});if(!f)return;
+  WTD={m:m,f:f,r:r,dx:(e.clientX-r.left)/r.width-f.x,dy:(e.clientY-r.top)/r.height-f.y};try{m.setPointerCapture(e.pointerId)}catch(x){}});
+document.addEventListener("pointermove",function(e){if(!WTD)return;var r=WTD.r,x=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width-WTD.dx)),y=Math.min(1,Math.max(0,(e.clientY-r.top)/r.height-WTD.dy));WTD.f.x=+x.toFixed(4);WTD.f.y=+y.toFixed(4);WTD.m.style.left=(x*100)+"%";WTD.m.style.top=(y*100)+"%"});
+document.addEventListener("pointerup",function(){WTD=null});
+async function wtfAi(){
+  var f=WTE.f,msg=$("#wtfe-msg"),sample=await claude_use("sample"),lim=null;
+  if(sample){try{lim=await sample.limits()}catch(e){}}
+  if(!sample||!lim||!lim.images){if(msg)msg.textContent="この表示では自動読み取りを使えません";return}
+  if(msg)msg.textContent="位置を推定中…(数十秒)";
+  var blob=await (await fetch(f.img)).blob();
+  var kindLabel=f.kind==="使用中止"?"使用中止(休止・廃止)":"使用開始";
+  var prompt="添付の画像は、水道の"+kindLabel+"届の様式です。申込者が文字を書き込む記入欄ごとに、書き込む文字の左上の位置を、画像全体を横1・縦1とした0〜1の小数で答えてください。次のJSONだけを出力してください。説明文やコードフェンスは付けないでください。\n"+
+   '{"fields":[{"k":"項目キー","x":0.0,"y":0.0,"s":0.018}]}\n s は文字の大きさ(画像の横幅に対する比。記入欄の高さに合わせて0.012〜0.03)。\n項目キー:\n- name 使用者(申込者)氏名\n- kana フリガナ\n- addr 使用場所の住所\n- tel 電話番号\n- custNo お客様番号・水栓番号\n- pay 支払い方法\n- payer 支払者氏名\n- newAddr 転居先・連絡先の住所\n- workplace 勤務先\n- occupants 世帯人数\n- sendTo 送付先\n- site 物件名\n- room 号室\n- date 使用開始(中止)日を1つの欄に書く場合\n- date_y / date_m / date_d 年・月・日が別々の欄の場合(年は「令和」の後ろの数字の欄)\n- today / today_y / today_m / today_d 届出日・申請日の欄(上記dateと同様)\n様式にない項目は含めない。位置は、欄の枠の内側の左上を指す。';
+  try{
+    var ctl=new AbortController();var a=await sample.json(prompt,{images:[blob],signal:ctl.signal,modelTier:"default"});
+    var n=0;((a&&a.fields)||[]).forEach(function(x){
+      if(!x||!WTF_KEYS.some(function(k){return k[0]===x.k})||x.k==="mark")return;
+      var px=+x.x,py=+x.y;if(!(px>=0&&px<=1&&py>=0&&py<=1))return;
+      var ex=f.fields.find(function(z){return z.k===x.k});
+      if(ex){ex.x=px;ex.y=py;if(+x.s>0.008&&+x.s<0.06)ex.s=+x.s}else f.fields.push({id:"f"+Math.random().toString(36).slice(2,7),k:x.k,x:px,y:py,s:(+x.s>0.008&&+x.s<0.06)?+x.s:0.018,fmt:"wareki"});n++});
+    wtfEdDraw();var m2=$("#wtfe-msg");if(m2)m2.textContent=n?"位置を入れました。ずれている所はドラッグで直してください。":"位置を読み取れませんでした。手動で追加してください。";
+  }catch(e){var m3=$("#wtfe-msg");if(m3)m3.textContent=imErr(e)||"推定できませんでした"}
+}
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
@@ -2786,6 +2924,13 @@ function modClick(e,t,d){
     await dl.save({data:new Blob([JSON.stringify(out)],{type:"application/json"}),filename:"daito-backup-"+stamp+".json"});toast("ダウンロードしました")});return true}
   if(d.bkrs){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に戻す";return true}BKP.msg="戻しています…";render();window.dsApi("/api/backup",{op:"restore",id:d.bkrs}).then(function(j){if(j&&j.ok){toast("戻しました。再読み込みします");setTimeout(function(){location.reload()},900)}else{BKP.msg=(j&&j.error)||"戻せませんでした";render()}});return true}
   if(d.bkdel){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に削除";return true}window.dsApi("/api/backup",{op:"delete",id:d.bkdel}).then(function(){bkpKick(true);render()});return true}
+  if(d.wtfed){openWtfEd(d.wtfed);return true}
+  if(d.wtfdel){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に削除";return true}wtfDel(d.wtfdel);render();return true}
+  if(t.id==="wtfe-close"){WTE.f=null;$("#modal").innerHTML="";render();return true}
+  if(t.id==="wtfe-save"){wtfSave(WTE.f);WTE.f=null;$("#modal").innerHTML="";render();toast("保存しました");return true}
+  if(t.id==="wtfe-addbtn"&&WTE.f){var kk=$("#wtfe-add").value,n0=WTE.f.fields.length;WTE.f.fields.push({id:"f"+Math.random().toString(36).slice(2,7),k:kk,x:0.3,y:Math.min(0.9,0.2+n0*0.03),s:0.018,fmt:"wareki"});wtfEdDraw();return true}
+  if(t.id==="wtfe-ai"){wtfAi();return true}
+  if(d.wtfe&&d.wtfe.indexOf("x:")===0&&WTE.f){var xid=d.wtfe.slice(2);WTE.f.fields=WTE.f.fields.filter(function(x){return x.id!==xid});wtfEdDraw();return true}
   if(t.id==="me-menu"){openMe();return true}
   if(t.id==="me-close"||t.id==="pw-close"){$("#modal").innerHTML="";return true}
   if(t.id==="me-out"){window.dsAuth.logout();return true}
@@ -2809,6 +2954,8 @@ function modClick(e,t,d){
   return false;
 }
 function modChange(t){
+  if(t.dataset.wtf!==undefined){var a=t.dataset.wtf.split(":"),fm=S.wform.find(function(x){return x.id===a[1]});if(fm){if(a[0]==="n")fm.name=t.value.trim()||fm.name;else if(a[0]==="o")fm.org=t.value;else fm.kind=t.value;wtfSave(fm)}return true}
+  if(t.dataset.wtfe!==undefined&&WTE.f){var b=t.dataset.wtfe.split(":"),fx=WTE.f.fields.find(function(x){return x.id===b[1]});if(fx){if(b[0]==="s"){fx.s=Math.min(60,Math.max(8,+t.value||18))/1000}else if(b[0]==="f")fx.fmt=t.value;wtfEdDraw()}return true}
   if(t.id==="df-q"){DF.q=t.value;render();return true}
   if(t.id==="mine-t"){S.mine=t.checked;render();return true}
   if(t.dataset.fct!==undefined){var a=t.dataset.fct.split(":"),c=fxCustom()[+a[1]];if(c){if(a[0]==="n")c.name=t.value.trim();else if(a[0]==="h")c.hint=t.value.trim();else c.fields=t.value.split(/\n/).map(function(x){return x.trim()}).filter(Boolean)}saveSettings(true);return true}
@@ -2853,11 +3000,11 @@ function boot(){
   render();
   claude_use("db").then(function(d){
     if(!d){
-      S.persist=false;
+      S.persist=false;wtfInit();
       COLN.forEach(function(c){var v=lsGet(c);S[c]=(Array.isArray(v)?v:(c==="jobs"?sampleJobs():[])).map(function(o){return normDoc(c,String((o&&o.id)||nid("x")),o)});loaded[c]=true});
       var st=lsGet("settings");if(st&&st.prices)S.settings=st;normSettings();loaded.settings=true;ready();return;
     }
-    db=d;
+    db=d;wtfInit();
     COLN.forEach(function(c){
       db.collection(c).onSnapshot(function(snap){PEND[c]=snap;if(!PTM[c])PTM[c]=setTimeout(function(){PTM[c]=0;var sn=PEND[c];PEND[c]=null;if(!sn)return;S[c]=sn.docs.map(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}return normDoc(c,x.id,d)});S.persist=true;loaded[c]=true;ready()},80)},function(){S.persist=false;loaded[c]=true;ready()});
     });
