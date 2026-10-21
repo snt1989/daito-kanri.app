@@ -20,6 +20,9 @@
 
   /* ---- ログイン ---- */
   var authP = null;
+  var dsAuth = window.dsAuth = { me: null, call: function (data) { return post("/api/auth", data).then(function (r) { return r.json().then(function (j) { j.status = r.status; return j; }); }); },
+    logout: function () { return post("/api/auth", { op: "logout" }).then(function () { location.reload(); }); } };
+  function setMe(j) { dsAuth.me = { role: j.role === "staff" ? "staff" : "admin", name: j.name || "" }; }
   function ensureAuth() {
     if (authP) return authP;
     authP = (async function () {
@@ -27,7 +30,7 @@
         var r = await post("/api/auth", { op: "check" });
         if (!r.ok) return false;
         var j = await r.json();
-        if (j.ok) return true;
+        if (j.ok) { setMe(j); return true; }
         if (j.nopw) { banner("サーバーに APP_PASSWORD が設定されていません。Vercel の環境変数を確認してください。"); return false; }
         return await loginUi();
       } catch (e) { return false; }
@@ -45,18 +48,20 @@
       w.style.cssText = "position:fixed;inset:0;z-index:99998;background:#14201b;display:flex;align-items:center;justify-content:center;font-family:'Noto Sans JP',sans-serif";
       w.innerHTML = '<form style="background:#fff;border-radius:12px;padding:28px 26px;width:min(340px,92vw);box-shadow:0 8px 30px #0006">' +
         '<div style="font-weight:700;font-size:18px;color:#1b6847;margin-bottom:4px">大東受注ナビ</div>' +
-        '<div style="font-size:13px;color:#62736b;margin-bottom:14px">パスワードを入力してください</div>' +
-        '<input type="password" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #c9d3ce;border-radius:8px;font-size:16px" autofocus>' +
+        '<div style="font-size:13px;color:#62736b;margin-bottom:14px">担当名とパスワードを入力してください<br>(管理者は担当名を空欄のまま)</div>' +
+        '<input class="nm" type="text" placeholder="担当名(管理者は空欄)" autocomplete="username" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #c9d3ce;border-radius:8px;font-size:16px;margin-bottom:8px">' +
+        '<input class="pw" type="password" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #c9d3ce;border-radius:8px;font-size:16px" autofocus>' +
         '<div class="e" style="color:#b33;font-size:13px;min-height:18px;margin:6px 0"></div>' +
         '<button style="width:100%;padding:10px;border:0;border-radius:8px;background:#1b6847;color:#fff;font-size:15px;cursor:pointer">ログイン</button></form>';
       document.body.appendChild(w);
-      var f = w.querySelector("form"), inp = w.querySelector("input"), er = w.querySelector(".e");
-      setTimeout(function () { inp.focus(); }, 50);
+      var f = w.querySelector("form"), inp = w.querySelector(".pw"), nmI = w.querySelector(".nm"), er = w.querySelector(".e");
+      try { nmI.value = localStorage.getItem("dsLoginName") || ""; } catch (e) {}
+      setTimeout(function () { (nmI.value ? inp : nmI).focus(); }, 50);
       f.onsubmit = async function (ev) {
         ev.preventDefault(); er.textContent = "";
         try {
-          var r = await post("/api/auth", { op: "login", password: inp.value });
-          if (r.ok) { w.remove(); resolve(true); } else { er.textContent = "パスワードが違います"; inp.select(); }
+          var r = await post("/api/auth", { op: "login", name: nmI.value, password: inp.value });
+          if (r.ok) { var jj = await r.json(); setMe(jj); try { localStorage.setItem("dsLoginName", nmI.value.trim()); } catch (e) {} w.remove(); resolve(true); } else { er.textContent = "担当名またはパスワードが違います"; inp.select(); }
         } catch (e) { er.textContent = "通信に失敗しました"; }
       };
     });

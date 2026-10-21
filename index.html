@@ -390,12 +390,12 @@ var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"info",label:"お知ら�
 function daysTo(dstr){var a=new Date(TODAY()+"T00:00:00"),b=new Date(dstr+"T00:00:00");return Math.round((b-a)/86400000)}
 function todos(){
   var T=[],today=TODAY(),cur=ym(new Date()),soon=ymd(new Date(Date.now()+ALERTDAYS*86400000));
-  S.jobs.forEach(function(j){if(j.status>=4)return;
+  S.jobs.forEach(function(j){if(j.status>=4||!mineOk(j))return;
     var urgent=overdue(j)||(j.dueDate&&j.dueDate<=soon)||(j.status===3&&j.workDate&&j.workDate<=today);
     if(urgent)T.push({date:j.dueDate||j.workDate||today,kind:"j",id:j.id,tag:"原状回復",title:j.site+" "+j.room,note:STAT[j.status].next?"次の対応:"+STAT[j.status].next:""})});
-  S.emerg.forEach(function(e){if(e.status>=3)return;
+  S.emerg.forEach(function(e){if(e.status>=3||!mineOk(e))return;
     T.push({date:(e.recvAt||today).slice(0,10),kind:"e",id:e.id,tag:"緊急",title:e.site+" "+(e.room||""),note:e.status<2?"対応中":"出動報告の提出待ち"})});
-  S.maint.forEach(function(m){var note="";
+  S.maint.forEach(function(m){if(!mineOk(m))return;var note="";
     if(m.status===1)note="請書の提出";else if(m.status<3&&m.month<cur)note="作業が遅れています";else if(m.status===3)note="完了報告(写真付き)の提出";
     if(note)T.push({date:m.month+"-"+(m.doneDate?m.doneDate.slice(8):"01"),kind:"m",id:m.id,tag:"維持管理",title:m.bldgName+" "+m.item,note:note})});
   S.water.forEach(function(w){if(w.status===0&&w.date&&w.date<=soon)T.push({date:w.date,kind:"w",id:w.id,tag:"水道届",title:w.kind+"届 "+wtLabel(w),note:"予定日 "+md(w.date)+" までに申請"})});
@@ -413,6 +413,7 @@ function renderTabs(){
   var cur=sd.querySelector('[aria-current="page"]');
   if(cur&&sd.scrollHeight>sd.clientHeight){var cr=cur.getBoundingClientRect(),sr=sd.getBoundingClientRect();if(cr.bottom>sr.bottom-8)sd.scrollTop+=cr.bottom-sr.bottom+16;else if(cr.top<sr.top+8)sd.scrollTop-=sr.top-cr.top+16}
   $("#menu").innerHTML=ic("menu");
+  var uc=userChipHtml();if(uc!==null){var ue=document.querySelector(".user");if(ue&&ue.dataset.c!==uc){ue.innerHTML=uc;ue.dataset.c=uc}}
   var tn=todos().length+infoNew();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");
 }
 function pageHead(){
@@ -480,6 +481,7 @@ function vJobs(){
   var c=counts(),cnt=STAT.map(function(_,i){return S.jobs.filter(function(j){return j.status===i}).length});
   var A=[["over","期限超過",c.over,"hot"],["nodate","施工日 未定",c.nodate,c.nodate?"warm":""],["seishou","請書 未提出",c.seishou,c.seishou?"warm":""],["wait","完了報告待ち",c.wait,c.wait?"warm":""],["bill","未請求",c.bill,""]];
   var list=S.jobs.filter(function(j){
+    if(!mineOk(j))return false;
     if(S.filter!=="all"&&j.status!==+S.filter)return false;
     if(S.kind&&j.kind!==S.kind)return false;
     if(S.alert==="over"&&!overdue(j))return false;
@@ -504,7 +506,7 @@ function vJobs(){
 /* ----- schedule ----- */
 function vSched(){
   var p=S.calMonth.split("-"),y=+p[0],mo=+p[1]-1,first=new Date(y,mo,1),start=new Date(y,mo,1-first.getDay());
-  var by={};S.jobs.forEach(function(j){if(j.workDate)(by[j.workDate]=by[j.workDate]||[]).push(j)});
+  var by={};S.jobs.forEach(function(j){if(j.workDate&&mineOk(j))(by[j.workDate]=by[j.workDate]||[]).push(j)});
   var cells=["日","月","火","水","木","金","土"].map(function(d){return '<div class="dow">'+d+"</div>"}).join("");
   for(var i=0;i<42;i++){
     var d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),k=ymd(d),L=by[k]||[];
@@ -567,7 +569,7 @@ function vSetBase(){
   return {prices:'<div class="panel"><h3>単価表(税別)</h3><div class="set-row psearch"><input type="search" id="pq" placeholder="項目名で絞り込み" aria-label="項目名で絞り込み"><span class="sub">'+S.settings.prices.length+'項目</span><button type="button" class="btn sm" data-sb="prices">一括編集</button><button type="button" class="btn sm" id="ps-toggle">'+(PS.on?"選択を終了":"選択して削除・一括変更")+'</button></div>'+psBar()+'<div class="set-row pr sh"><span>項目名</span><span>単価(税別)</span><span>税込(参考)</span><span>単位</span><span></span></div>'+
    S.settings.prices.map(function(p,i){return '<div class="set-row pr'+(p.base?" base":"")+'" data-pn="'+esc(p.name)+'"><input type="text" data-pf="name:'+i+'" value="'+esc(p.name)+'" aria-label="項目名"><input type="number" data-pf="price:'+i+'" value="'+p.price+'" aria-label="単価"><span class="inc">'+yen(taxOf(+p.price||0))+'</span><input type="text" data-pf="unit:'+i+'" value="'+esc(p.unit)+'" style="width:56px" aria-label="単位">'+(PS.on?'<label class="sub" style="white-space:nowrap"><input type="checkbox" data-psel="'+i+'"'+(PS.sel[i]?" checked":"")+(p.base?" disabled":"")+'> 選択</label>':'<button class="btn sm danger" data-pdel="'+i+'">削除</button>')+'</div>'}).join("")+
    '<div class="set-row"><button class="btn sm" id="padd">＋ 項目を追加</button><span class="sub">クリーニングの間取り別基本料金は、案件の「間取り」と連動します。</span></div></div>',
-   staff:'<div class="panel"><h3>担当チーム・作業員</h3>'+S.settings.staff.map(function(s,i){return '<div class="set-row"><input type="text" data-sf="'+i+'" value="'+esc(s)+'" aria-label="担当名"><button class="btn sm danger" data-sdel="'+i+'">削除</button></div>'}).join("")+
+   staff:'<div class="panel"><h3>担当チーム・作業員</h3>'+S.settings.staff.map(function(s,i){return '<div class="set-row"><input type="text" data-sf="'+i+'" value="'+esc(s)+'" aria-label="担当名">'+pwHtml(s,i)+'<button class="btn sm danger" data-sdel="'+i+'">削除</button></div>'}).join("")+
    '<div class="set-row"><button class="btn sm" id="sadd">＋ 追加</button><button class="btn sm" data-sb="staff">一括編集</button></div></div>',
    note:'<div class="sub">単価は大東建託の単価表(クリーニング・内装工事)を初期値にしています。既存の案件の金額は登録時の単価で保持されます。</div>'};
 }
@@ -921,7 +923,7 @@ function emRow(e){
   return '<tr class="row" data-eopen="'+e.id+'"><td>'+fmtDT(e.recvAt)+(f.night?'<span class="tag">夜間</span>':"")+'</td><td><div class="site">'+esc(e.site)+" "+esc(e.room||"")+(e.sample?'<span class="tag ex">例</span>':"")+'</div><div class="sub">'+esc(e.from||"")+"</div></td><td>"+(c?c[0]+" "+esc(c[2]):"—")+"</td><td>"+esc((e.staff||[]).join("・")||"—")+'</td><td class="num">'+(f.mins==null?"—":Math.floor(f.mins/60)+"時間"+(f.mins%60)+"分")+'</td><td class="num">'+(+e.fixAmt>0?yen(+e.fixAmt)+'<div class="sub">確定</div>':yen(f.total))+'</td><td><span class="pill s'+EM_PILL[e.status]+'">'+st.n+"</span>"+(e.result==="要再訪"||e.result==="本工事へ引き継ぎ"?'<div class="sub">'+esc(e.result)+"</div>":"")+"</td><td>"+(st.next?'<button class="btn sm" data-enext="'+e.id+'">'+st.next+"</button> ":"")+(+e.fixAmt>0?"":'<button class="btn sm out" data-emfix="'+e.id+'" title="金額確定通知書を読み取って、この出動に反映">確定通知</button>')+"</td></tr>";
 }
 function vElog(){
-  var L=S.emerg,mo=ym(new Date()),mj=L.filter(function(e){return emMonth(e)===mo}),sub=0,tot=0,night=0;
+  var L=S.emerg.filter(mineOk),mo=ym(new Date()),mj=L.filter(function(e){return emMonth(e)===mo}),sub=0,tot=0,night=0;
   mj.forEach(function(e){var f=emFee(e);sub+=f.sub;tot+=f.total;if(f.night)night++});
   var n=function(fn){return L.filter(fn).length};
   var A=[["active","対応中",n(function(e){return e.status<2}),"hot"],["rep","報告待ち",n(function(e){return e.status===2}),"warm"],["bill","未請求",n(function(e){return e.status===3}),""],["rev","再訪・本工事の引継ぎ",n(function(e){return e.status<5&&(e.result==="要再訪"||e.result==="本工事へ引き継ぎ")}),"warm"]];
@@ -2567,6 +2569,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"担当ごとにログイン(Web版)",d:"設定の「担当・作業員」で担当ごとにパスワードを発行すると、担当名とパスワードでログインできます。担当でログインすると、自分の担当分(担当未設定も含む)だけを初期表示し、「自分の担当のみ」で切り替えられます。管理者は従来のパスワードで担当名を空欄にしてログインします。"},
  {v:"2026-10-22",t:"FAX書類の種類を自由に追加",d:"設定「FAX書類の種類」で書類名・見分け方・読み取る項目を登録すると、FAX取込で読み取って保存できます。書類のサンプル(PDF・画像)を読み込むと、見分け方と項目を自動で入力します。登録前の編集や、書類の種類の選び直しもできます。"},
  {v:"2026-10-21",t:"お知らせ画面を追加",d:"大東建託からのメールとアプリの更新履歴を1か所で見られます。ホームには新着があるときだけ案内を出します。ベルからも開けます。"},
  {v:"2026-10-20",t:"設定の一括編集・CSV・選択削除",d:"設定の各一覧で、表形式の一括編集、CSV出力/取込、複数選択しての削除・一括変更ができます。"},
@@ -2587,6 +2590,36 @@ function vInfo(){
   var todo='<button class="todo" data-tab="home"><span class="dt">TODO</span><span class="tt">'+(T.length?"対応が必要な案件が "+T.length+" 件あります":"いま対応が必要な項目はありません")+'<small>ホームの一覧で確認・対応できます</small></span><span class="go sub">ホームへ ›</span></button>';
   return '<div class="home"><div class="col">'+todo+ntHtml()+'</div><div class="col"><div class="card2"><h3>アプリの更新履歴'+(infoNew()?' <button type="button" class="btn sm" id="info-read" style="float:right">既読にする</button>':"")+"</h3>"+log+"</div></div></div>";
 }
+/* ---------- 担当ログイン(Web版のみ) ---------- */
+function ME(){return window.dsAuth&&window.dsAuth.me||null}
+function isStaff(){var m=ME();return !!(m&&m.role==="staff"&&m.name)}
+function isAdmin(){var m=ME();return !!(m&&m.role==="admin")}
+function mineOn(){return isStaff()&&S.mine!==false}
+function mineOk(x){if(!mineOn())return true;var st=x&&x.staff;return !Array.isArray(st)||!st.length||st.indexOf(ME().name)>=0}
+var PWU={names:[],state:"idle"};
+function pwKick(){if(!window.dsAuth||!isAdmin()||PWU.state!=="idle")return;PWU.state="load";window.dsAuth.call({op:"users"}).then(function(j){PWU.names=(j&&j.names)||[];PWU.state="ok";if(S.tab==="set")render()}).catch(function(){PWU.state="err"})}
+function pwHtml(s,i){if(!window.dsAuth||!isAdmin())return "";pwKick();var on=PWU.names.indexOf(String(s).normalize("NFKC").trim())>=0;
+  return '<span class="sub" style="white-space:nowrap">'+(on?"🔑 ログイン可":"ログイン未設定")+'</span><button type="button" class="btn sm" data-pwset="'+i+'">パスワード</button>'}
+function userChipHtml(){
+  var m=ME();if(!m)return null;
+  var nm=m.role==="staff"?m.name:"管理者";
+  return (m.role==="staff"?'<label class="sub" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="mine-t"'+(S.mine!==false?" checked":"")+'> <span>自分の担当のみ</span></label>':"")+
+   '<span class="av">'+esc(nm.slice(0,1))+'</span><span class="un">'+esc(nm)+(m.role==="staff"?" さん":"")+'</span><button type="button" class="btn sm" id="me-menu">アカウント</button>'
+}
+function openMe(){
+  var m=ME();if(!m)return;
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(420px,100%)"><h2>アカウント</h2><div class="sub">ログイン中: <b>'+esc(m.role==="staff"?m.name+" さん(担当)":"管理者")+'</b></div>'+
+   (m.role==="staff"?'<div class="fields" style="margin-top:10px"><label class="wide">現在のパスワード<input type="password" id="me-old" autocomplete="current-password"></label><label class="wide">新しいパスワード(6文字以上)<input type="password" id="me-new" autocomplete="new-password"></label></div><div class="sub" id="me-msg" style="min-height:18px"></div><div><button type="button" class="btn" id="me-pw">パスワードを変更</button></div>':"")+
+   '<div class="acts"><button type="button" class="btn danger" id="me-out">ログアウト</button><button type="button" class="btn" id="me-close">閉じる</button></div></div></div>'}
+function openPw(i){
+  var nm=S.settings.staff[+i];if(nm==null)return;nm=String(nm).normalize("NFKC").trim();var on=PWU.names.indexOf(nm)>=0;
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(420px,100%)"><h2>'+esc(nm)+' のログイン</h2><div class="sub">この担当名とパスワードでログインできるようになります(現在: '+(on?"ログイン可":"未設定")+')。パスワードは6文字以上。担当名を変更したときは設定し直してください。</div>'+
+   '<div class="fields" style="margin-top:10px"><label class="wide">新しいパスワード<input type="text" id="pw-new" autocomplete="off" data-name="'+esc(nm)+'"></label></div><div class="sub" id="pw-msg" style="min-height:18px"></div>'+
+   '<div class="acts"><span>'+(on?'<button type="button" class="btn danger" id="pw-del">ログインを停止</button>':"")+'</span><span><button type="button" class="btn" id="pw-close">閉じる</button> <button type="button" class="btn pri" id="pw-ok">設定する</button></span></div></div></div>'}
+async function pwCall(data,msgId,okMsg){
+  var el=$("#"+msgId);if(el)el.textContent="処理中…";
+  try{var j=await window.dsAuth.call(data);if(j&&j.ok){if(el)el.textContent=okMsg;return true}if(el)el.textContent=(j&&j.error)||"失敗しました"}catch(e){if(el)el.textContent="通信に失敗しました"}
+  return false}
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
@@ -2672,6 +2705,13 @@ function modClick(e,t,d){
   if(t.id==="mi-sync"){var n0=mItemsSync();saveSettings();toast(n0+"件の項目を追加しました");return true}
   if(t.id==="miadd"){S.settings.mItems.push("新しい項目");saveSettings();return true}
   if(d.fcsmp!==undefined){if(FCS.busy)return true;FCS.idx=+d.fcsmp;FCS.msg="";var fi=$("#fct-file");if(fi)fi.click();return true}
+  if(t.id==="me-menu"){openMe();return true}
+  if(t.id==="me-close"||t.id==="pw-close"){$("#modal").innerHTML="";return true}
+  if(t.id==="me-out"){window.dsAuth.logout();return true}
+  if(t.id==="me-pw"){pwCall({op:"chpw",old:$("#me-old").value,password:$("#me-new").value},"me-msg","パスワードを変更しました");return true}
+  if(d.pwset!==undefined){openPw(d.pwset);return true}
+  if(t.id==="pw-ok"){var pe=$("#pw-new");pwCall({op:"setpw",name:pe.dataset.name,password:pe.value},"pw-msg","設定しました。この担当名でログインできます").then(function(ok){if(ok){var n0=pe.dataset.name.normalize("NFKC").trim();if(PWU.names.indexOf(n0)<0)PWU.names.push(n0);setTimeout(function(){$("#modal").innerHTML="";render()},700)}});return true}
+  if(t.id==="pw-del"){var pn=$("#pw-new").dataset.name;pwCall({op:"delpw",name:pn},"pw-msg","ログインを停止しました").then(function(ok){if(ok){PWU.names=PWU.names.filter(function(x){return x!==pn.normalize("NFKC").trim()});setTimeout(function(){$("#modal").innerHTML="";render()},700)}});return true}
   if(t.id==="fct-add"){fxCustom().push({id:"c_"+Date.now().toString(36),name:"",hint:"",fields:[]});saveSettings();return true}
   if(d.fctdel!==undefined){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に削除";return true}fxCustom().splice(+d.fctdel,1);saveSettings();return true}
   if(d.fced){openFxc(null,"",d.fced);return true}
@@ -2688,6 +2728,7 @@ function modClick(e,t,d){
   return false;
 }
 function modChange(t){
+  if(t.id==="mine-t"){S.mine=t.checked;render();return true}
   if(t.dataset.fct!==undefined){var a=t.dataset.fct.split(":"),c=fxCustom()[+a[1]];if(c){if(a[0]==="n")c.name=t.value.trim();else if(a[0]==="h")c.hint=t.value.trim();else c.fields=t.value.split(/\n/).map(function(x){return x.trim()}).filter(Boolean)}saveSettings(true);return true}
   if(t.dataset.fc!==undefined&&FXC.rec){var b=t.dataset.fc.split(":"),r=FXC.rec;if(b[0]==="k")r.fields[+b[1]].k=t.value.trim();else if(b[0]==="v")r.fields[+b[1]].v=t.value;else r[b[0]]=t.value;return true}
   if(t.dataset.mi!==undefined){S.settings.mItems[+t.dataset.mi]=t.value||"項目";saveSettings(true);return true}

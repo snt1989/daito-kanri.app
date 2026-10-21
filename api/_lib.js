@@ -7,20 +7,41 @@ function secret() {
 function sign(v) {
   return crypto.createHmac("sha256", secret()).update(String(v)).digest("hex");
 }
-function makeToken() {
+// トークン: exp.role.name(base64url).署名   (旧形式 exp.署名 は管理者として扱う)
+function makeToken(role, name) {
   const exp = Date.now() + 30 * 24 * 3600 * 1000;
-  return exp + "." + sign(exp);
+  role = role === "staff" ? "staff" : "admin";
+  const nm = Buffer.from(String(name || ""), "utf8").toString("base64url");
+  const p = exp + "." + role + "." + nm;
+  return p + "." + sign(p);
 }
+// 戻り値: false または { role, name }
 function authed(req) {
   if (!process.env.APP_PASSWORD) return false;
   const c = (req.headers.cookie || "").split(/;\s*/).find((x) => x.startsWith("dsess="));
   if (!c) return false;
   const t = decodeURIComponent(c.slice(6));
-  const i = t.indexOf(".");
-  if (i < 0) return false;
-  const e = t.slice(0, i), h = t.slice(i + 1);
-  if (!(Number(e) > Date.now())) return false;
-  const a = Buffer.from(h), b = Buffer.from(sign(e));
+  const parts = t.split(".");
+  let payload, h, role = "admin", name = "";
+  if (parts.length === 2) { payload = parts[0]; h = parts[1]; }
+  else if (parts.length === 4) {
+    payload = parts.slice(0, 3).join("."); h = parts[3];
+    role = parts[1] === "staff" ? "staff" : "admin";
+    try { name = Buffer.from(parts[2], "base64url").toString("utf8"); } catch (e) { return false; }
+  } else return false;
+  if (!(Number(parts[0]) > Date.now())) return false;
+  const a = Buffer.from(h), b = Buffer.from(sign(payload));
+  if (!(a.length === b.length && crypto.timingSafeEqual(a, b))) return false;
+  return { role, name };
+}
+// 担当ごとのパスワード(scrypt)
+function hashPw(pw, salt) {
+  salt = salt || crypto.randomBytes(16).toString("hex");
+  return { salt, hash: crypto.scryptSync(String(pw), salt, 32).toString("hex") };
+}
+function checkPw(pw, rec) {
+  if (!rec || !rec.salt || !rec.hash) return false;
+  const a = Buffer.from(crypto.scryptSync(String(pw), rec.salt, 32).toString("hex")), b = Buffer.from(rec.hash);
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 function setCookie(res, token, maxAge) {
@@ -60,4 +81,4 @@ function body(req) {
   if (typeof b === "string") { try { b = JSON.parse(b); } catch (e) { b = {}; } }
   return b || {};
 }
-module.exports = { authed, makeToken, setCookie, origin, pipeline, redis, body, sign };
+module.exports = { hashPw, checkPw, authed, makeToken, setCookie, origin, pipeline, redis, body, sign };
