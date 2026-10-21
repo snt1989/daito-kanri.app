@@ -1,7 +1,7 @@
 // データ保存: コレクションごとに Redis の Hash(daito:<col>)。更新のたびに版番号(daito:ver:<col>)を増やす
 const { authed, pipeline, body } = require("./_lib");
 const { maybeDaily } = require("./_backup");
-const COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform"];
+const COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform", "ac"];
 const key = (c) => "daito:" + c;
 const vkey = (c) => "daito:ver:" + c;
 

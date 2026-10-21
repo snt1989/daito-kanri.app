@@ -2,7 +2,7 @@
    アーティファクトの中で動いているとき(window.claude が既にある)は何もしない。 */
 (function () {
   if (window.claude || location.protocol === "file:") return;
-  var COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform"];
+  var COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform", "ac"];
 
   function post(path, data, signal) {
     return fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", body: JSON.stringify(data || {}), signal: signal });

@@ -386,6 +386,7 @@ var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"info",label:"お知ら�
  {g:"原状回復工事"},{tab:"jobs",label:"案件一覧",ic:"list",d:"genkyo"},{tab:"sched",label:"施工予定",ic:"calendar",d:"genkyo"},{tab:"report",label:"完了報告",ic:"check",d:"genkyo"},{tab:"bill",label:"請求・入金",ic:"yen",d:"genkyo"},{tab:"water",label:"水道開始・中止届",ic:"drop",d:"genkyo"},
  {g:"緊急対応"},{tab:"elog",label:"出動一覧",ic:"alert",d:"emerg"},{tab:"eguide",label:"対応区分ガイド",ic:"book",d:"emerg"},{tab:"esum",label:"月次集計",ic:"chart",d:"emerg"},
  {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mscope",label:"業務内容",ic:"book",d:"maint"},
+ {g:"エアコン設置"},{tab:"aclist",label:"エアコン案件",ic:"tool",d:"ac"},
  {g:" "},{tab:"set",label:"設定",ic:"sliders"}];
 function daysTo(dstr){var a=new Date(TODAY()+"T00:00:00"),b=new Date(dstr+"T00:00:00");return Math.round((b-a)/86400000)}
 function todos(){
@@ -398,12 +399,13 @@ function todos(){
   S.maint.forEach(function(m){if(!mineOk(m))return;var note="";
     if(m.status===1)note="請書の提出";else if(m.status<3&&m.month<cur)note="作業が遅れています";else if(m.status===3)note="完了報告(写真付き)の提出";
     if(note)T.push({date:m.month+"-"+(m.doneDate?m.doneDate.slice(8):"01"),kind:"m",id:m.id,tag:"維持管理",title:m.bldgName+" "+m.item,note:note})});
+  S.ac.forEach(function(r){if(!mineOk(r)||r.status>1)return;T.push({date:r.reqDate||today,kind:"a",id:r.id,tag:"エアコン",title:r.site+" "+r.room,note:r.status===0?"見積の提出":"発注の連絡待ち"})});
   S.water.forEach(function(w){if(w.status===0&&w.date&&w.date<=soon)T.push({date:w.date,kind:"w",id:w.id,tag:"水道届",title:w.kind+"届 "+wtLabel(w),note:"予定日 "+md(w.date)+" までに申請"})});
   return T.sort(function(a,b){return a.date.localeCompare(b.date)});
 }
 function renderTabs(){
   var c=counts(),eAct=S.emerg.filter(function(x){return x.status<2}).length,mSei=S.maint.filter(function(x){return x.status===1}).length;
-  var B={info:infoNew(),jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
+  var B={aclist:S.ac.filter(function(r){return r.status===0&&mineOk(r)}).length,info:infoNew(),jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
   var sd=$("#side"),sTop=sd.scrollTop;
   sd.innerHTML='<div class="brand"><i>'+ic("tool",20)+'</i><span>大東受注ナビ</span></div>'+NAV.filter(function(n){return n.tab!=="docs"||window.dsFiles}).map(function(n){
     if(n.g!==undefined)return n.g.trim()?'<div class="nv-g">'+n.g+"</div>":'<div class="nv-g" style="padding:6px"></div>';
@@ -420,6 +422,7 @@ function pageHead(){
   var n=NAV.find(function(x){return x.tab===S.tab})||NAV[0],act="";
   if(n.d)S.div=n.d;
   if(S.tab==="home")act='<button class="btn out" id="qa-j">＋ 案件を登録</button><button class="btn out" id="qa-e">＋ 緊急出動</button><button class="btn out" id="qa-m">＋ 維持管理</button>';
+  else if(S.tab==="aclist")act='<button class="btn out" id="ac-imp">📄 書類から取り込む</button><input type="file" id="ac-file" accept="application/pdf,image/*" style="display:none"><button class="btn pri" id="add">＋ エアコン案件を追加</button>';
   else if(S.tab==="water")act='<button class="btn out" id="w-job">案件から作成</button><button class="btn pri" id="add">＋ 届出を追加</button>';
   else if(S.tab!=="set"&&S.tab!=="mscope")act='<button class="btn pri" id="add">'+({genkyo:"＋ 案件を登録",emerg:"＋ 緊急出動を記録",maint:S.tab==="mplan"?"＋ 年間計画を追加":"＋ 維持管理を追加"}[S.div]||"＋ 追加")+"</button>";
   return '<div class="pghead"><h2 class="pt">'+n.label+'</h2><div class="pgact">'+act+"</div></div>";
@@ -460,7 +463,7 @@ function render0(){
   var m=$("#main"),h="";
   if(!S.persist)h+='<div class="banner">共有保存が使えない表示です。入力内容はこのブラウザにだけ保存されます。</div>';
   h+=pageHead();
-  h+=({home:vHome,info:vInfo,docs:vDocs,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,water:vWater}[S.tab]||vJobs)();
+  h+=({home:vHome,info:vInfo,docs:vDocs,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,water:vWater}[S.tab]||vJobs)();
   m.innerHTML=h;
   decorate();
   if(fk){var fe=$(fk,m);if(fe){fe.focus();try{if(ss&&ss[0]!=null)fe.setSelectionRange(ss[0],ss[1])}catch(e){}}}
@@ -1169,6 +1172,8 @@ var SETGROUPS=[
   ["orgs","水道事業者","届出シートに出す窓口の情報と、自治体の公式様式(PDF・画像)の登録です。自治体を追加できます。",[P("water","水道開始・中止届")]],
   ["wtopts","届出の選択肢","「申請方法」と、候補に足す水道事業者のプルダウンです。",[P("water","水道開始・中止届")]],
   ["wtstat","届出の状況名","届出の進捗の段階の名前と、次へ進めるボタンの文言です。",[P("water","水道開始・中止届")]]]],
+ ["エアコン設置",[
+  ["acprices","エアコン工事の単価","エアコン設置の見積り依頼書にある工事項目と単価(税別)です。見積金額の計算に使われます。",[P("aclist","エアコン案件")]]]],
  ["全体共通",[
   ["basic","基本設定","消費税率・支払日・期限が近いと扱う日数です。",[P("bill","請求・入金"),P("elog","出動一覧"),P("mmonth","作業一覧"),P("home","ホーム")]],
   ["staff","担当・作業員","担当に割り当てるチーム・作業員の名前です。",[P("jobs","案件一覧"),P("sched","施工予定"),P("elog","出動一覧")]],
@@ -1183,7 +1188,7 @@ function vSet(){
   var body={prices:b.prices,staff:b.staff,layout:vLayoutTab(),basic:vBasicTab(),
    genopts:vListsTab(["kind","area"]),emopts:vListsTab(["emFrom","emRes"]),mtopts:vListsTab(["mtKind"]),wtopts:vListsTab(["wtMethod","wtOffice"]),
    genstat:vStatTab(["job"]),emstat:vStatTab(["em"]),mtstat:vStatTab(["mt"]),wtstat:vStatTab(["wt"]),
-   chk:vChkTab(),fxtype:vFxType(),backup:vBackup(),emcat:vEmcatTab(),orgs:vOrgTab()+vWform(),
+   chk:vChkTab(),fxtype:vFxType(),acprices:vAcPrices(),backup:vBackup(),emcat:vEmcatTab(),orgs:vOrgTab()+vWform(),
    mitems:'<div class="panel"><h3>維持管理の作業項目</h3>'+mi.map(function(m,i){return '<div class="set-row"><input type="text" data-mi="'+i+'" value="'+esc(m)+'" aria-label="作業項目"><button class="btn sm danger" data-midel="'+i+'">削除</button></div>'}).join("")+'<div class="set-row"><button class="btn sm" id="miadd">＋ 項目を追加</button><button class="btn sm" data-sb="mitems">一括編集</button><button class="btn sm" id="mi-sync"'+(mItemsMissing().length?"":" disabled")+'>委託業務一覧表の項目を追加('+mItemsMissing().length+'件)</button></div><div class="sub" style="padding:0 14px 10px">「07 排水管清掃費」のようにコード(2桁)から始まる名前は、建物維持管理の「業務内容」ページの項目コードと対応します。注文書の読み取りでも、このコードで項目を当てはめます。</div></div>',
    company:'<div class="panel"><h3>自社情報(水道の届出などの届出者)</h3><div class="fields" style="padding:12px">'+[["name","会社名(使用者氏名)"],["kana","フリガナ"],["tel","連絡先電話番号"],["addr","住所(転居先・連絡先の住所)"],["pay","支払い方法(例:納付書、口座振替)"]].map(function(r){return '<label class="'+(r[0]==="addr"?"wide":"")+'">'+r[1]+'<input type="text" data-co="'+r[0]+'" value="'+esc((S.settings.company||{})[r[0]]||"")+'"></label>'}).join("")+'</div><div class="sub" style="padding:0 12px 12px">水道の届出シートの初期値として使います。</div></div>',
    emfee:'<div class="panel"><h3>緊急出動費(税別)</h3><div class="set-row"><span style="flex:1">基本料金 日中(7:00〜19:00)</span><input type="number" data-ef="day" value="'+f.day+'"></div><div class="set-row"><span style="flex:1">基本料金 夜間(19:00〜7:00)</span><input type="number" data-ef="night" value="'+f.night+'"></div><div class="set-row"><span style="flex:1">2時間超の加算</span><input type="number" data-ef="over" value="'+f.over+'"></div></div>'}[t];
@@ -2244,9 +2249,9 @@ var bkDelTm=0;
 
 /* ---------- eFax取込 ---------- */
 var FX={rows:[],busy:false,ctl:null,err:""};
-var FX_TYPES={koji:"工事予定書",request:"出動要請書",notice:"金額確定通知書",order:"注文書・作業依頼書",annual:"年間発注予定一覧表",daito:"大東建託(その他の書類)",other:"対象外"};
+var FX_TYPES={koji:"工事予定書",request:"出動要請書",notice:"金額確定通知書",order:"注文書・作業依頼書",annual:"年間発注予定一覧表",ac:"エアコン設置の見積り依頼書",daito:"大東建託(その他の書類)",other:"対象外"};
 var FX_PROMPT='添付の画像は、受信したFAXの1ページ目です。大東建託パートナーズ関連の書類かどうかを判別し、次のJSONだけを出力してください。\n'+
- 'docType は次のいずれか1つ:\n- koji = 原状回復工事 工事予定書\n- request = 緊急対応の出動要請書\n- notice = 金額確定通知書\n- order = 維持管理作業注文書 または 作業依頼書\n- annual = 年間発注予定一覧表\n- daito = 上記以外の、大東建託・大東建託パートナーズ(営業所・各部署)が発信元または宛先に関わる書類(お知らせ、見積依頼、請書、会議案内など)\n- other = 大東建託と関係のない書類(他社・官公庁の入札や見積依頼、営業・広告・請求など)\n'+
+ 'docType は次のいずれか1つ:\n- koji = 原状回復工事 工事予定書\n- request = 緊急対応の出動要請書\n- notice = 金額確定通知書\n- order = 維持管理作業注文書 または 作業依頼書\n- annual = 年間発注予定一覧表\n- ac = 営業エアコン設置のみ 見積り依頼書(協力業者様専用。エアコン設置の見積もり依頼)\n- daito = 上記以外の、大東建託・大東建託パートナーズ(営業所・各部署)が発信元または宛先に関わる書類(お知らせ、見積依頼、請書、会議案内など)\n- other = 大東建託と関係のない書類(他社・官公庁の入札や見積依頼、営業・広告・請求など)\n'+
  '大東建託に関わるかどうかを必ず判断する。少しでも大東建託に関係しそうなら daito にし、明らかに無関係な場合だけ other にする。\n{"docType":"other","sender":"発信元の会社名・部署(読めなければ空文字)","summary":"書類の内容を30字以内で"}';
 function fxSet(){var s=S.settings;if(!Array.isArray(s.fxDone))s.fxDone=[];return s.fxDone}
 function fxMark(id){var a=fxSet();if(a.indexOf(id)<0){a.push(id);if(a.length>400)a.splice(0,a.length-400);saveSettings(true)}}
@@ -2379,6 +2384,7 @@ function fxGo(i){
   else if(t==="request"||t==="notice"){openEmImport();emoRun(f)}
   else if(t==="order"){openMtImport();mtiRun([f])}
   else if(t==="annual"){openMpImport();mpiRun([f])}
+  else if(t==="ac"){acImport(f)}
   else if(/^c_/.test(t)){openFxc(f,t,undefined,r.fid)}
 }
 
@@ -2579,6 +2585,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"エアコン設置のページを追加",d:"大東建託パートナーズの「営業エアコン設置のみ 見積り依頼書」に沿った案件管理です。書類(PDF・FAX画像)から読み取って登録でき、工事項目と単価は設定の「エアコン工事の単価」で変更できます。FAX取込でもこの書類を判別します。"},
  {v:"2026-10-22",t:"水道届の様式に記入して出力",d:"設定「水道事業者」に自治体の公式様式(PDF・画像)をアップロードし、記入位置を設定すると、水道届の「申込内容シート」から様式に氏名・住所・日付などを書き込んでPDF・画像で出力できます。"},
  {v:"2026-10-22",t:"書類ボックスとバックアップ(Web版)",d:"FAX取込で読み取った書類のPDF・画像をサーバーに自動で保管し、「書類ボックス」からいつでも開けます。全データのバックアップは1日1回自動で保存され、設定の「バックアップ」から手動保存・ダウンロード・復元もできます。"},
  {v:"2026-10-22",t:"担当ごとにログイン(Web版)",d:"設定の「担当・作業員」で担当ごとにパスワードを発行すると、担当名とパスワードでログインできます。担当でログインすると、自分の担当分(担当未設定も含む)だけを初期表示し、「自分の担当のみ」で切り替えられます。管理者は従来のパスワードで担当名を空欄にしてログインします。"},
@@ -2786,7 +2793,7 @@ function openWtfEd(id){
 function wtfEdSample(){var f=WTE.f;return S.water.find(function(w){return w.kind===f.kind})||wtfDummy(f.kind)}
 function wtfEdDraw(){
   var f=WTE.f,w=wtfEdSample(),el=$("#modal");
-  var h='<div class="mask" id="mask"><div class="dlg" style="width:min(1180px,100%);max-height:94vh;overflow:auto"><h2>記入位置の設定: '+esc(f.name)+'</h2><div class="sub">右の一覧から項目を追加し、左の様式の上で<b>ドラッグして位置</b>を合わせます。文字はサンプルの内容で表示しています(実際は届出の内容が入ります)。</div>'+
+  var h='<div class="mask" id="mask"><div class="dlg" style="width:min(1180px,100%)"><h2>記入位置の設定: '+esc(f.name)+'</h2><div class="sub">右の一覧から項目を追加し、左の様式の上で<b>ドラッグして位置</b>を合わせます。文字はサンプルの内容で表示しています(実際は届出の内容が入ります)。</div>'+
    '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px"><div style="flex:1 1 560px;min-width:0"><div id="wtf-stage" style="position:relative;line-height:0;border:1px solid var(--line);background:#fff;touch-action:none"><img src="'+f.img+'" alt="様式" style="width:100%;display:block;user-select:none;-webkit-user-drag:none" draggable="false">'+
    f.fields.map(function(x){var t=x.k==="mark"?"○":(wtfValue(w,x)||"("+((WTF_KEYS.find(function(k){return k[0]===x.k})||[0,x.k])[1])+")");
      return '<div data-wtfm="'+x.id+'" style="position:absolute;left:'+(x.x*100)+'%;top:'+(x.y*100)+'%;'+(x.k==="mark"?"transform:translate(-50%,-50%);":"")+'font-size:calc(var(--sw,800px)*'+(x.s||0.018)+');line-height:1;white-space:nowrap;cursor:move;color:#000;background:rgba(255,214,0,.35);outline:1px dashed #c0392b;font-family:\'Noto Sans JP\',sans-serif">'+esc(t)+"</div>"}).join("")+"</div></div>"+
@@ -2825,6 +2832,144 @@ async function wtfAi(){
     wtfEdDraw();var m2=$("#wtfe-msg");if(m2)m2.textContent=n?"位置を入れました。ずれている所はドラッグで直してください。":"位置を読み取れませんでした。手動で追加してください。";
   }catch(e){var m3=$("#wtfe-msg");if(m3)m3.textContent=imErr(e)||"推定できませんでした"}
 }
+/* ====================== エアコン設置 ====================== */
+var AC_STAT=[{n:"見積依頼",next:"見積を提出済みにする"},{n:"見積提出",next:"発注を受けた(施工待ち)"},{n:"施工待ち",next:"施工完了にする"},{n:"施工完了",next:"請求済みにする"},{n:"請求済",next:"入金済みにする"},{n:"入金済",next:""}];
+var AC_PILL=[0,1,3,4,5,6];
+var DEF_ACPRICES=[
+ {id:"a1",maj:"658",min:"1654",name:"標準取付け工事",note:"必須(配管4m、カバー・ドレン2m込)",price:23500,unit:"ヶ所"},
+ {id:"a2",maj:"658",min:"1655",name:"既存エアコン取り外し・処分",note:"交換の場合必須(取り外し工事・収集運搬費用・リサイクル費用の3つで658-1655)",price:8500,unit:"台"},
+ {id:"a3",maj:"658",min:"1655",name:"室外機取り外し",note:"壁掛・天吊・屋根置の何れかの場合",price:2000,unit:"ヶ所"},
+ {id:"a4",maj:"658",min:"1657",name:"室外機設置(既存金具)",note:"交換で壁掛・天吊・屋根置の場合(既存金具)",price:5000,unit:"ヶ所"},
+ {id:"a5",maj:"658",min:"1654",name:"室外機設置(壁 新規)",note:"新規で壁掛の場合(新規金具設置)",price:8600,unit:"ヶ所"},
+ {id:"a6",maj:"658",min:"1654",name:"室外機設置(天・屋新規)",note:"新規で天吊・屋根置の場合(新規金具設置)",price:8500,unit:"ヶ所"},
+ {id:"a7",maj:"658",min:"1653",name:"配管延長 1m",note:"標準工事4mを超える場合",price:1500,unit:"ヶ所"},
+ {id:"a8",maj:"658",min:"1653",name:"配管カバー延長 1m",note:"標準工事2mを超える場合",price:1500,unit:"ヶ所"},
+ {id:"a9",maj:"658",min:"1653",name:"ドレンホース延長 4m",note:"標準工事2mを超える場合 ベランダ排水無",price:2000,unit:"ヶ所"},
+ {id:"a10",maj:"658",min:"1654",name:"スリーブ新設工事",note:"エアコンスリーブが無い場合",price:1000,unit:"ヶ所"},
+ {id:"a11",maj:"658",min:"1653",name:"室内配管カバー",note:"1mまで、3曲まで",price:1500,unit:"台"},
+ {id:"a12",maj:"658",min:"1653",name:"高所作業費",note:"2F壁面設置。足場無しの場合。",price:2000,unit:"台"},
+ {id:"a13",maj:"658",min:"1654",name:"エアコン用電源工事",note:"エアコン用コンセントが無い場合 要見積もり",price:0,unit:"台",quote:true},
+ {id:"a14",maj:"658",min:"1654",name:"エアコン追加工事",note:"上記以外の工事は別途お見積り",price:0,unit:"式",quote:true}];
+S.ac=S.ac||[];
+function acPrices(){var s=S.settings;if(!Array.isArray(s.acPrices)||!s.acPrices.length)s.acPrices=JSON.parse(JSON.stringify(DEF_ACPRICES));return s.acPrices}
+function acInit(){
+  if(!db){var v=lsGet("ac");S.ac=Array.isArray(v)?v:[];return}
+  db.collection("ac").onSnapshot(function(snap){S.ac=snap.docs.map(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}d.id=x.id;return acNorm(d)});if(S.ready)render()},function(){});
+}
+function acNorm(r){
+  r.status=Math.min(5,Math.max(0,Math.floor(+r.status||0)));
+  ["reqDate","reqNo","site","room","bldgCd","address","office","officeTel","officeFax","contact","power","sleeve","existing","outdoorNeed","occ","occName","hopeDate","hopeTime","keyNo","lockLimit","note","workDate","memo"].forEach(function(k){r[k]=r[k]==null?"":String(r[k])});
+  ["pipeExt","coverExt","drainExt","docTotal"].forEach(function(k){r[k]=+r[k]||0});
+  r.items=Array.isArray(r.items)?r.items.filter(function(i){return i&&i.id}).map(function(i){return {id:String(i.id),qty:+i.qty||0,price:i.price===""||i.price==null?null:(+i.price||0)}}):[];
+  r.staff=Array.isArray(r.staff)?r.staff.map(String):[];return r}
+function saveAc(o){var a=S.ac,i=a.findIndex(function(x){return x.id===o.id});if(i<0)a.push(o);else a[i]=o;if(db)db.doc("ac/"+o.id).set(o).catch(function(){toast("保存に失敗しました。もう一度お試しください")});else lsSet("ac",a)}
+function delAc(id){S.ac=S.ac.filter(function(x){return x.id!==id});if(db)db.doc("ac/"+id).delete().catch(function(){});else lsSet("ac",S.ac)}
+function acPrice(it){var m=acPrices().find(function(p){return p.id===it.id});return it.price!=null?it.price:(m?m.price:0)}
+function acCalc(r){var sub=0;r.items.forEach(function(it){sub+=(+it.qty||0)*acPrice(it)});return {sub:sub,total:taxOf(sub)}}
+function acItemsText(r){return r.items.filter(function(i){return +i.qty>0}).map(function(i){var m=acPrices().find(function(p){return p.id===i.id});return (m?m.name:i.id)+(i.qty>1?"×"+i.qty:"")}).join("、")}
+function acMatch(r){
+  if(!mineOk(r))return false;
+  if(S.acf!==undefined&&S.acf!=="all"&&r.status!==+S.acf)return false;
+  var q=(S.acq||"").trim();if(q&&(r.site+r.room+r.office+r.reqNo+r.bldgCd+r.address+r.memo).indexOf(q)<0)return false;
+  return true}
+function vAc(){
+  var L=S.ac.filter(mineOk),cnt=AC_STAT.map(function(_,i){return L.filter(function(r){return r.status===i}).length});
+  var list=S.ac.filter(acMatch).sort(function(a,b){return (b.reqDate||"").localeCompare(a.reqDate||"")});
+  var f=S.acf===undefined?"all":S.acf;
+  var h='<div class="pipe"><button data-acf="all" aria-pressed="'+(f==="all")+'"><b>'+L.length+"</b><span>すべて</span></button>"+AC_STAT.map(function(s,i){return '<button data-acf="'+i+'" aria-pressed="'+(f===""+i)+'"><b>'+cnt[i]+"</b><span>"+s.n+"</span></button>"}).join("")+"</div>";
+  h+='<div class="tools"><input type="search" id="acq" placeholder="物件名・号室・営業所・依頼Noで検索" value="'+esc(S.acq||"")+'"></div>';
+  h+='<div class="panel scroll">'+(list.length?"<table><thead><tr><th>依頼日</th><th>物件・号室</th><th>営業所</th><th>工事内容</th><th class=num>見積(税別)</th><th>施工日</th><th>状況</th><th></th></tr></thead><tbody>"+list.map(function(r){
+    var c=acCalc(r),st=AC_STAT[r.status];
+    return '<tr class="row" data-acopen="'+r.id+'"><td>'+md(r.reqDate)+'</td><td><div class="site">'+esc(r.site)+" "+esc(r.room)+'</div><div class="sub">'+esc(r.bldgCd)+" "+esc(r.address)+'</div></td><td>'+esc(r.office)+'</td><td class="sub">'+esc(acItemsText(r))+'</td><td class="num">'+yen(c.sub)+'</td><td>'+md(r.workDate)+'</td><td><span class="pill s'+AC_PILL[r.status]+'">'+st.n+'</span></td><td>'+(st.next?'<button type="button" class="btn sm" data-acnext="'+r.id+'">'+esc(st.next)+"</button>":"")+"</td></tr>"}).join("")+"</tbody></table>":'<div class="empty">エアコン設置の案件はまだありません。「書類から取り込む」で見積り依頼書(PDF・FAX画像)を読み込むか、「＋ エアコン案件を追加」から登録してください。</div>')+"</div>";
+  h+='<div class="sub">大東建託パートナーズ「営業エアコン設置のみ 見積り依頼書(協力業者様専用)」に沿った管理です。工事項目と単価は、設定の「エアコン工事の単価」で変更できます。</div>';
+  return h;
+}
+function vAcPrices(){
+  var P=acPrices();
+  return '<div class="panel scroll"><h3>エアコン工事の項目と単価(税別)</h3><table><thead><tr><th>大工事</th><th>小工事</th><th>工事項目</th><th>備考</th><th class=num>単価</th><th>単位</th><th></th></tr></thead><tbody>'+P.map(function(p,i){
+    return '<tr><td><input type="text" data-acp="maj:'+i+'" value="'+esc(p.maj)+'" style="width:56px"></td><td><input type="text" data-acp="min:'+i+'" value="'+esc(p.min)+'" style="width:56px"></td><td><input type="text" data-acp="name:'+i+'" value="'+esc(p.name)+'" style="min-width:150px"></td><td><input type="text" data-acp="note:'+i+'" value="'+esc(p.note)+'" style="min-width:200px"></td><td class="num"><input type="number" min="0" data-acp="price:'+i+'" value="'+(p.quote&&!p.price?"":p.price)+'" placeholder="見積" style="width:90px"></td><td><input type="text" data-acp="unit:'+i+'" value="'+esc(p.unit)+'" style="width:48px"></td><td><button type="button" class="btn sm danger" data-acpdel="'+i+'">削除</button></td></tr>'}).join("")+
+   '</tbody></table><div class="set-row"><button type="button" class="btn sm" id="acp-add">＋ 項目を追加</button></div><div class="sub" style="padding:0 12px 10px">単価を空欄にした項目は「要見積り」として、案件ごとに金額を入力します。</div></div>';
+}
+var AC_PROMPT='添付の画像は、大東建託パートナーズの「営業エアコン設置のみ 見積り依頼書(協力業者様専用)」です。記載内容を読み取り、次のJSONだけを出力してください。説明文やコードフェンスは付けないでください。\n'+
+ '- 読み取れない項目は空文字("")、数値は数値にする。見えない文字を推測で埋めず、自信がない項目名を confidence に入れる。日付は西暦のYYYY-MM-DD。\n'+
+ '- power/sleeve/existing は「エアコン用電源(100V)の有無」「エアコン用スリーブ」「既存のエアコン」のレ印が付いた方("有"か"無")。outdoorNeed は室外機置場の「要」か「否」。pipeExt/coverExt/drainExt は配管延長・配管カバー延長・ドレンホース延長のm数。\n'+
+ '- occ は「①入居済」「②空室」のどちらの欄に記入があるか("入居済"か"空室")。入居者様名・設置希望日・時間・電子キー番号・ロッキー期限は書かれていれば読む。\n'+
+ '- note は「その他、注意事項」欄の文章全体。\n'+
+ '- items は工事項目の表(番号1〜14)のうち、数量欄に数字が書かれている行だけを {"no":番号,"qty":数量} で。単価が「見積」の行は price に金額が手書きされていれば入れる。total は「見積金額(税抜)」の合計。\n'+
+ '{"reqNo":"","reqDate":"","officeName":"","officeTel":"","officeFax":"","contact":"","site":"","room":"","bldgCd":"","address":"","power":"","sleeve":"","existing":"","outdoorNeed":"","pipeExt":0,"coverExt":0,"drainExt":0,"occ":"","occName":"","hopeDate":"","hopeTime":"","keyNo":"","lockLimit":"","note":"","items":[{"no":1,"qty":1}],"total":0,"confidence":[]}';
+var ACI={busy:false};
+async function acImport(file){
+  if(ACI.busy)return;
+  var sample=await claude_use("sample"),lim=null;
+  if(sample){try{lim=await sample.limits()}catch(e){}}
+  if(!sample||!lim||!lim.images){toast("この表示では自動読み取りを使えません。手入力で登録してください");return}
+  ACI.busy=true;toast("読み取り中…(数十秒かかります)");IM.ctl=new AbortController();
+  try{
+    var blob=null;await eachPage(file,async function(b){if(!blob)blob=b},1,2200);
+    var a=await sample.json(AC_PROMPT,{images:[blob],signal:IM.ctl.signal,modelTier:"default"});
+    if(!a||typeof a!=="object")throw {code:"bad_answer"};
+    var T=function(v){return String(v==null?"":v).trim()},N=function(v){return Math.round(+String(v==null?"":v).replace(/[^\d.]/g,""))||0},P=acPrices();
+    var YN=function(v,x,y){v=T(v);return v===x||v===y?v:""};
+    var items=[];(Array.isArray(a.items)?a.items:[]).forEach(function(x){var m=P[(+x.no||0)-1];if(!m||!(+x.qty>0))return;items.push({id:m.id,qty:+x.qty,price:(m.quote&&N(x.price)>0)?N(x.price):null})});
+    var pre={reqNo:T(a.reqNo),reqDate:okDate(a.reqDate)||"",office:T(a.officeName),officeTel:T(a.officeTel),officeFax:T(a.officeFax),contact:T(a.contact),site:T(a.site),room:T(a.room).replace(/号室?$/,""),bldgCd:T(a.bldgCd),address:T(a.address),
+      power:YN(a.power,"有","無"),sleeve:YN(a.sleeve,"有","無"),existing:YN(a.existing,"有","無"),outdoorNeed:YN(a.outdoorNeed,"要","否"),pipeExt:N(a.pipeExt),coverExt:N(a.coverExt),drainExt:N(a.drainExt),
+      occ:YN(a.occ,"入居済","空室"),occName:T(a.occName),hopeDate:okDate(a.hopeDate)||"",hopeTime:T(a.hopeTime),keyNo:T(a.keyNo),lockLimit:okDate(a.lockLimit)||"",note:T(a.note),items:items,docTotal:N(a.total)};
+    var cf=Array.isArray(a.confidence)?a.confidence.filter(Boolean).map(String).join("、"):"";
+    ACI.busy=false;$("#modal").innerHTML="";openAc(null,pre,cf);
+  }catch(e){ACI.busy=false;toast(imErr(e)||((e&&e.message)||"読み取れませんでした"))}
+}
+document.addEventListener("change",function(e){var t=e.target;if(t&&t.id==="ac-file"&&t.files&&t.files[0]){var f=t.files[0];t.value="";acImport(f)}});
+function openAc(id,pre,conf){
+  var isNew=!id,d=isNew?acNorm(Object.assign({id:nid("ac"),reqDate:TODAY(),status:0,items:[{id:"a1",qty:1,price:null}]},pre||{})):JSON.parse(JSON.stringify(S.ac.find(function(x){return x.id===id})||{}));
+  if(!d.id)return;
+  var el=$("#modal");
+  function inp(k,l,type,wide,ph){return '<label class="'+(wide?"wide":"")+'">'+l+'<input type="'+(type||"text")+'" data-ac="'+k+'" value="'+esc(d[k]==null?"":d[k])+'"'+(ph?' placeholder="'+esc(ph)+'"':"")+(type==="number"?' min="0" step="any"':"")+"></label>"}
+  function sel(k,l,opts){return '<label>'+l+'<select data-ac="'+k+'"><option value="">未確認</option>'+opts.map(function(o){return "<option"+(d[k]===o?" selected":"")+">"+o+"</option>"}).join("")+"</select></label>"}
+  function totalHtml(){var c=acCalc(d);return '見積金額 税別 <b>'+yen(c.sub)+'</b>　税込 <b>'+yen(c.total)+"</b>"+(d.docTotal?(d.docTotal===c.sub?' <span style="color:var(--ok);font-weight:700">✓ 書面の見積金額 '+yen(d.docTotal)+' と一致</span>':' <span class="late">書面の見積金額 '+yen(d.docTotal)+" と合いません。工事項目を書面と見比べてください</span>"):"")}
+  function draw(){
+    var P=acPrices(),qtyOf=function(pid){var it=d.items.find(function(x){return x.id===pid});return it?it.qty:""};
+    var h='<div class="mask" id="mask"><div class="dlg lg"><h2>'+(isNew?"エアコン案件を登録":"エアコン案件の編集")+'</h2>'+
+     (conf?'<div class="sub" style="color:var(--warn)">読み取りに自信のない項目: '+esc(conf)+'。書面と見比べて確認してください。</div>':"")+
+     '<div class="fields">'+inp("reqDate","ご依頼日","date")+inp("reqNo","ご依頼No")+inp("office","営業所")+inp("contact","営業所の担当(携帯)")+inp("officeTel","営業所 TEL")+inp("officeFax","営業所 FAX")+
+     inp("site","アパート名",0,1)+inp("room","部屋番号")+inp("bldgCd","建物CD")+inp("address","建物住所",0,1)+"</div>"+
+     '<h3 style="margin:12px 0 4px;font-size:14px">エアコン設置場所の状況</h3><div class="fields">'+sel("power","エアコン用電源(100V)",["有","無"])+sel("sleeve","エアコン用スリーブ",["有","無"])+sel("existing","既存のエアコン",["有","無"])+sel("outdoorNeed","室外機置場",["要","否"])+
+     inp("pipeExt","配管延長(m)","number")+inp("coverExt","配管カバー延長(m)","number")+inp("drainExt","ドレンホース延長(m)","number")+sel("occ","入居状況",["入居済","空室"])+
+     inp("occName","入居者様名")+inp("hopeDate","設置希望日","date")+inp("hopeTime","希望時間")+inp("keyNo","電子キー番号")+inp("lockLimit","ロッキー期限","date")+
+     '<label class="wide">その他・注意事項<textarea rows="3" data-ac="note">'+esc(d.note)+"</textarea></label></div>"+
+     '<h3 style="margin:12px 0 4px;font-size:14px">工事項目(数量を入力)</h3><div class="scroll"><table class="items" style="min-width:640px"><thead><tr><th>No</th><th>工事項目</th><th>備考</th><th class=num>単価(税別)</th><th class=num>数量</th><th>単位</th><th class=num>金額</th></tr></thead><tbody>'+
+     P.map(function(p,i){var q=qtyOf(p.id),it=d.items.find(function(x){return x.id===p.id}),pr=it&&it.price!=null?it.price:p.price;
+       return '<tr><td>'+(i+1)+'</td><td>'+esc(p.name)+'<div class="sub">'+esc(p.maj)+"-"+esc(p.min)+'</div></td><td class="sub">'+esc(p.note)+'</td><td class="num">'+(p.quote?'<input type="number" min="0" data-acpr="'+p.id+'" value="'+(it&&it.price!=null?it.price:"")+'" placeholder="見積" style="width:84px">':yen(p.price))+'</td><td class="num"><input type="number" min="0" step="any" data-acq="'+p.id+'" value="'+esc(q)+'" style="width:60px"></td><td>'+esc(p.unit)+'</td><td class="num" id="acl-'+p.id+'">'+(q?yen((+q||0)*pr):"")+"</td></tr>"}).join("")+"</tbody></table></div>"+
+     '<div class="sum" id="ac-total" style="margin:6px 0">'+totalHtml()+"</div>"+
+     '<h3 style="margin:12px 0 4px;font-size:14px">進行</h3><div class="fields"><label>状況<select data-ac="status">'+AC_STAT.map(function(s,i){return '<option value="'+i+'"'+(d.status===i?" selected":"")+">"+s.n+"</option>"}).join("")+"</select></label>"+inp("workDate","施工日","date")+
+     '<div class="lab wide"><span>担当</span><div class="staffs">'+S.settings.staff.map(function(s){return '<label><input type="checkbox" data-acst="'+esc(s)+'"'+(d.staff.indexOf(s)>=0?" checked":"")+"> "+esc(s)+"</label>"}).join("")+'</div></div><label class="wide">メモ<textarea rows="2" data-ac="memo">'+esc(d.memo)+"</textarea></label></div>"+
+     '<div class="acts"><span>'+(isNew?"":'<button type="button" class="btn danger" id="ac-del">削除</button>')+'</span><span><button type="button" class="btn" id="ac-x">キャンセル</button> <button type="button" class="btn pri" id="ac-ok">保存</button></span></div></div></div>';
+    el.innerHTML=h;
+  }
+  function item(pid){var it=d.items.find(function(x){return x.id===pid});if(!it){it={id:pid,qty:0,price:null};d.items.push(it)}return it}
+  function upd(pid){var it=d.items.find(function(x){return x.id===pid}),c=$("#acl-"+pid,el);if(c)c.textContent=it&&it.qty?yen((+it.qty||0)*acPrice(it)):"";var t=$("#ac-total",el);if(t)t.innerHTML=totalHtml()}
+  draw();
+  el.oninput=el.onchange=function(e){
+    var t=e.target;if(!t||!t.dataset)return;
+    if(t.dataset.ac){var k=t.dataset.ac,v=t.value;d[k]=["pipeExt","coverExt","drainExt"].indexOf(k)>=0?(+v||0):k==="status"?+v:v;return}
+    if(t.dataset.acq){var it=item(t.dataset.acq);it.qty=Math.max(0,+t.value||0);upd(t.dataset.acq);return}
+    if(t.dataset.acpr){var it2=item(t.dataset.acpr);it2.price=t.value===""?null:Math.max(0,+t.value||0);upd(t.dataset.acpr);return}
+    if(t.dataset.acst){var s=t.dataset.acst,ix=d.staff.indexOf(s);if(t.checked&&ix<0)d.staff.push(s);if(!t.checked&&ix>=0)d.staff.splice(ix,1)}};
+  el.onclick=function(e){
+    var t=e.target.closest("button");if(e.target.id==="mask"){el.innerHTML="";el.onclick=el.oninput=el.onchange=null;return}if(!t)return;
+    if(t.id==="ac-x"){el.innerHTML="";el.onclick=el.oninput=el.onchange=null;return}
+    if(t.id==="ac-ok"){if(!d.site.trim()){toast("アパート名を入力してください");return}d.items=d.items.filter(function(i){return +i.qty>0});d.sample=false;saveAc(acNorm(d));el.innerHTML="";el.onclick=el.oninput=el.onchange=null;render();toast("保存しました");return}
+    if(t.id==="ac-del"){t.outerHTML='<span class="late">本当に削除しますか？ <button type="button" class="btn sm danger" id="ac-del2">削除する</button></span>';return}
+    if(t.id==="ac-del2"){delAc(d.id);el.innerHTML="";el.onclick=el.oninput=el.onchange=null;render();toast("削除しました");return}
+  };
+}
+document.addEventListener("click",function(e){
+  if(S.tab!=="aclist")return;var t=e.target.closest("button,tr[data-acopen]");if(!t)return;var d=t.dataset||{};
+  if(d.acnext){var r=S.ac.find(function(x){return x.id===d.acnext});if(r&&r.status<5){r.status++;if(r.status===3&&!r.workDate)r.workDate=TODAY();saveAc(r);render()}e.stopPropagation();return}
+  if(d.acf!==undefined){S.acf=d.acf;render();return}
+  if(t.id==="ac-imp"){var fi=$("#ac-file");if(fi)fi.click();return}
+  if(d.acopen&&!e.target.closest("button"))openAc(d.acopen)
+});
+document.addEventListener("input",function(e){if(e.target.id==="acq"){S.acq=e.target.value;var p=e.target.selectionStart;render();var n=$("#acq");if(n){n.focus();try{n.setSelectionRange(p,p)}catch(x){}}}});
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
@@ -2868,8 +3013,8 @@ function modClick(e,t,d){
   if(t.id==="qa-m"){S.div="maint";openMtChoice();return true}
   if(t.id==="ch-mocr"){openMtImport();return true}
   if(t.id==="ch-mman"){$("#modal").innerHTML="";openMaint();return true}
-  if(d.todo){var q=d.todo.split(":");({j:openJob,e:openEmerg,m:openMaint,d:openDef,w:openWater}[q[0]])(q.slice(1).join(":"));return true}
-  if(t.id==="add"){S.tab==="water"?openWater():S.div==="emerg"?openEmChoice():S.div==="maint"?(S.tab==="mplan"?openMpChoice():openMtChoice()):openJobChoice();return true}
+  if(d.todo){var q=d.todo.split(":");({j:openJob,e:openEmerg,m:openMaint,d:openDef,w:openWater,a:openAc}[q[0]])(q.slice(1).join(":"));return true}
+  if(t.id==="add"){S.tab==="aclist"?openAc():S.tab==="water"?openWater():S.div==="emerg"?openEmChoice():S.div==="maint"?(S.tab==="mplan"?openMpChoice():openMtChoice()):openJobChoice();return true}
   if(d.emfix){$("#modal").innerHTML="";openEmImport(d.emfix);return true}
   if(d.enext){advanceEm(d.enext);return true}
   if(d.mnext){advanceMt(d.mnext);return true}
@@ -2930,6 +3075,8 @@ function modClick(e,t,d){
   if(t.id==="wtfe-addbtn"&&WTE.f){var kk=$("#wtfe-add").value,n0=WTE.f.fields.length;WTE.f.fields.push({id:"f"+Math.random().toString(36).slice(2,7),k:kk,x:0.3,y:Math.min(0.9,0.2+n0*0.03),s:0.018,fmt:"wareki"});wtfEdDraw();return true}
   if(t.id==="wtfe-ai"){wtfAi();return true}
   if(d.wtfe&&d.wtfe.indexOf("x:")===0&&WTE.f){var xid=d.wtfe.slice(2);WTE.f.fields=WTE.f.fields.filter(function(x){return x.id!==xid});wtfEdDraw();return true}
+  if(t.id==="acp-add"){acPrices().push({id:"a"+Date.now().toString(36),maj:"658",min:"1654",name:"新しい工事項目",note:"",price:0,unit:"ヶ所",quote:true});saveSettings();return true}
+  if(d.acpdel!==undefined){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に削除";return true}acPrices().splice(+d.acpdel,1);saveSettings();return true}
   if(t.id==="me-menu"){openMe();return true}
   if(t.id==="me-close"||t.id==="pw-close"){$("#modal").innerHTML="";return true}
   if(t.id==="me-out"){window.dsAuth.logout();return true}
@@ -2953,6 +3100,7 @@ function modClick(e,t,d){
   return false;
 }
 function modChange(t){
+  if(t.dataset.acp!==undefined){var a=t.dataset.acp.split(":"),p=acPrices()[+a[1]];if(p){if(a[0]==="price"){p.price=t.value===""?0:Math.max(0,+t.value||0);p.quote=t.value===""}else p[a[0]]=t.value.trim();saveSettings(true)}return true}
   if(t.dataset.wtf!==undefined){var a=t.dataset.wtf.split(":"),fm=S.wform.find(function(x){return x.id===a[1]});if(fm){if(a[0]==="n")fm.name=t.value.trim()||fm.name;else if(a[0]==="o")fm.org=t.value;else fm.kind=t.value;wtfSave(fm)}return true}
   if(t.dataset.wtfe!==undefined&&WTE.f){var b=t.dataset.wtfe.split(":"),fx=WTE.f.fields.find(function(x){return x.id===b[1]});if(fx){if(b[0]==="s"){fx.s=Math.min(60,Math.max(8,+t.value||18))/1000}else if(b[0]==="f")fx.fmt=t.value;wtfEdDraw()}return true}
   if(t.id==="df-q"){DF.q=t.value;render();return true}
@@ -2999,11 +3147,11 @@ function boot(){
   render();
   claude_use("db").then(function(d){
     if(!d){
-      S.persist=false;wtfInit();
+      S.persist=false;wtfInit();acInit();
       COLN.forEach(function(c){var v=lsGet(c);S[c]=(Array.isArray(v)?v:(c==="jobs"?sampleJobs():[])).map(function(o){return normDoc(c,String((o&&o.id)||nid("x")),o)});loaded[c]=true});
       var st=lsGet("settings");if(st&&st.prices)S.settings=st;normSettings();loaded.settings=true;ready();return;
     }
-    db=d;wtfInit();
+    db=d;wtfInit();acInit();
     COLN.forEach(function(c){
       db.collection(c).onSnapshot(function(snap){PEND[c]=snap;if(!PTM[c])PTM[c]=setTimeout(function(){PTM[c]=0;var sn=PEND[c];PEND[c]=null;if(!sn)return;S[c]=sn.docs.map(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}return normDoc(c,x.id,d)});S.persist=true;loaded[c]=true;ready()},80)},function(){S.persist=false;loaded[c]=true;ready()});
     });
