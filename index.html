@@ -1538,7 +1538,7 @@ function openWtpl(id){
       h+='<label class="lab sub" style="display:flex;flex-direction:column;gap:3px">コピー用の文面(電話・WEB・FAXで伝える内容)<textarea id="tp-text" rows="9" readonly style="font-size:13px">'+esc(wtText(w,org,tpVals()))+"</textarea></label>";
     }
     var fl=wtfFormsFor(w);
-    h+=fl.length?'<div class="panel" style="padding:8px 12px"><b>公式様式に記入</b> <select id="tp-form">'+fl.map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.name)+(x.org?"("+esc(x.org)+")":"")+"</option>"}).join("")+'</select> <button type="button" class="btn sm pri" id="tp-fill">様式に記入して確認</button><div id="tp-prev"></div></div>':'<div class="sub">設定の「水道事業者」に公式様式をアップロードすると、この内容を様式に書き込んで出力できます。</div>';
+    h+=fl.length?'<div class="panel" style="padding:8px 12px"><b>公式様式に記入</b> <select id="tp-form">'+fl.map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.name)+(x.type==="docx"?" [Word]":"")+(x.org?"("+esc(x.org)+")":"")+"</option>"}).join("")+'</select> <button type="button" class="btn sm pri" id="tp-fill">様式に記入して確認</button><div id="tp-prev"></div></div>':'<div class="sub">設定の「水道事業者」に公式様式をアップロードすると、この内容を様式に書き込んで出力できます。</div>';
     h+='<div class="sub">項目と窓口の情報は各自治体の公式ページ(2026年10月に確認)に基づきます。窓口・様式は変更されることがあるため、提出前に公式の案内で確認してください。</div>'+
      '<div class="acts"><span>'+(o?'<button type="button" class="btn sm" id="tp-copy">文面をコピー</button> <button type="button" class="btn sm" id="tp-save">テキストで保存</button>':"")+'</span><span><button type="button" class="btn" id="tp-x">閉じる</button> <button type="button" class="btn pri" id="tp-ok">入力内容を保存</button></span></div></div></div>';
     el.innerHTML=h;
@@ -1555,10 +1555,11 @@ function openWtpl(id){
     var t=e.target;
     if(t.id==="tp-x"||t.id==="mask"){el.innerHTML="";el.onclick=el.oninput=el.onchange=null;return}
     if(t.id==="tp-ok"){readInputs();if(org)w.office=org;w.status=+w.status;saveDoc("water",normDoc("water",w.id,w),true);el.innerHTML="";el.onclick=el.oninput=el.onchange=null;render();toast("保存しました");return}
-    if(t.id==="tp-fill"){readInputs();var fm=S.wform.find(function(x){return x.id===$("#tp-form",el).value});if(!fm)return;t.textContent="作成中…";
+    if(t.id==="tp-fill"){readInputs();var fm=S.wform.find(function(x){return x.id===$("#tp-form",el).value});if(!fm)return;if(fm.type==="docx"){dxRun(fm,w,t,el,function(l){last=l});return}t.textContent="作成中…";
       wtfRender(fm,w).then(function(b){last={blob:b,form:fm};var u=URL.createObjectURL(b);t.textContent="様式に記入して確認";
         $("#tp-prev",el).innerHTML='<img src="'+u+'" alt="記入した様式" style="width:100%;border:1px solid var(--line);margin-top:6px"><div class="acts"><span class="sub">位置がずれていたら、設定の「水道事業者」→「記入位置を設定」で直せます。</span><span><button type="button" class="btn sm" id="tp-img">画像で保存</button> <button type="button" class="btn sm pri" id="tp-pdf">PDFで保存</button></span></div>'},function(){t.textContent="様式に記入して確認";toast("作成できませんでした")});return}
-    if((t.id==="tp-pdf"||t.id==="tp-img")&&last){var isP=t.id==="tp-pdf",nm="水道"+(w.kind==="使用中止"?"中止":"開始")+"届_"+(w.site||"")+(w.room||"");
+    if(t.id==="tp-docx"&&last&&last.docx){dxSave(last.docx,"水道"+(w.kind==="使用中止"?"中止":"開始")+"届_"+(w.site||"")+(w.room||""));return}
+    if((t.id==="tp-pdf"||t.id==="tp-img")&&last&&!last.docx){var isP=t.id==="tp-pdf",nm="水道"+(w.kind==="使用中止"?"中止":"開始")+"届_"+(w.site||"")+(w.room||"");
       (isP?wtfPdf(last.blob,last.form.w,last.form.h):Promise.resolve(last.blob)).then(function(bl){return claude_use("downloads").then(function(d){if(!d){toast("この表示では保存できません");return}return d.save({filename:nm+(isP?".pdf":".jpg"),data:bl}).then(function(){toast("保存しました")},function(e2){if(e2&&e2.code!=="declined")toast("保存できませんでした")})})});return}
     if(t.id==="tp-copy"){var ta=$("#tp-text",el);ta.select();var ok=false;try{ok=document.execCommand("copy")}catch(x){}
       if(ok)toast("コピーしました");else if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(ta.value).then(function(){toast("コピーしました")},function(){toast("選択した状態です。Ctrl+C でコピーしてください")});else toast("選択した状態です。Ctrl+C でコピーしてください");return}
@@ -2592,6 +2593,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"水道届の様式にWord(.docx)も使える",d:"設定「水道事業者」の様式アップロードで、PDF・画像に加えてWord(.docx)も登録できます。文書の各行に氏名・住所・日付などの項目を割り当て(AIの自動割り当てもあります)、水道届から記入済みのWordファイルとして保存できます。"},
  {v:"2026-10-22",t:"品質会議のメールをホームの予定に",d:"Gmailに届いた「災害防止協議会・品質会議」のメールから開催日時を読み取り、ホームの「会議・予定」に表示します(Teams参加リンク付き)。ホームを開いたときに自動で確認し、「📧 メールを確認」からも更新できます。"},
  {v:"2026-10-22",t:"読み込んだ書類を案件に紐づけて保存・プレビュー(Web版)",d:"工事予定書・出動要請書・金額確定通知書・維持管理の注文書・年間発注予定一覧表・エアコンの見積り依頼書を読み取って登録すると、元の書類(PDF・画像)がサーバーに保管され、その案件に紐づきます。案件の画面の「📎 元の書類」から、👁でその場でプレビューできます。書類を後から添付することもできます。"},
  {v:"2026-10-22",t:"エアコン設置のページを追加",d:"大東建託パートナーズの「営業エアコン設置のみ 見積り依頼書」に沿った案件管理です。書類(PDF・FAX画像)から読み取って登録でき、工事項目と単価は設定の「エアコン工事の単価」で変更できます。FAX取込でもこの書類を判別します。"},
@@ -2768,16 +2770,18 @@ function wtfDummy(kind){return {kind:kind||"使用開始",site:"サンプル荘"
 function wtfFormsFor(w){var org=wtOrgOf(w)||w.office||"";return S.wform.filter(function(f){return f.kind===w.kind}).sort(function(a,b){return (b.org===org?1:0)-(a.org===org?1:0)})}
 /* ---- 設定タブ ---- */
 function vWform(){
-  var h='<div class="panel"><h3>届出の様式(アップロード)</h3><div class="sub" style="padding:0 12px 8px">自治体の公式様式(PDF・画像)を登録し、「記入位置を設定」で氏名・住所・日付などを書き込む場所を決めておくと、水道の届出から様式に記入した状態で出力できます。PDFは1ページ目を使います。</div>'+
+  var h='<div class="panel"><h3>届出の様式(アップロード)</h3><div class="sub" style="padding:0 12px 8px">自治体の公式様式(PDF・画像・Word)を登録し、「記入位置を設定」で氏名・住所・日付などを書き込む場所を決めておくと、水道の届出から様式に記入した状態で出力できます。PDFは1ページ目を使います。Word(.docx)の様式は、文書の各行に記入する項目を割り当てると、記入済みのWordファイルとして出力できます。</div>'+
    S.wform.map(function(f){return '<div class="set-row" style="flex-wrap:wrap;gap:6px;border-top:1px solid var(--line);padding-top:8px"><img src="'+f.img+'" alt="" style="width:46px;height:62px;object-fit:cover;border-radius:3px;border:1px solid var(--line)">'+
     '<input type="text" data-wtf="n:'+f.id+'" value="'+esc(f.name)+'" aria-label="様式の名前" style="flex:1;min-width:150px"><select data-wtf="o:'+f.id+'" aria-label="自治体"><option value="">全自治体</option>'+Object.keys(WT_ORG).map(function(k){return "<option"+(f.org===k?" selected":"")+">"+k+"</option>"}).join("")+'</select>'+
     '<select data-wtf="k:'+f.id+'" aria-label="種別">'+["使用開始","使用中止"].map(function(k){return "<option"+(f.kind===k?" selected":"")+">"+k+"</option>"}).join("")+'</select>'+
     '<span class="sub">'+((f.fields||[]).length)+'か所</span><button type="button" class="btn sm pri" data-wtfed="'+f.id+'">記入位置を設定</button><button type="button" class="btn sm danger" data-wtfdel="'+f.id+'">削除</button></div>'}).join("")||'<div class="empty">まだ登録していません。</div>';
-  h+='<div class="set-row"><label class="btn pri" style="cursor:pointer">＋ 様式をアップロード<input type="file" id="wtf-file" accept="application/pdf,image/*" style="display:none"></label>'+(WTE.msg?'<span class="sub">'+esc(WTE.msg)+"</span>":"")+"</div></div>";
+  h+='<div class="set-row"><label class="btn pri" style="cursor:pointer">＋ 様式をアップロード<input type="file" id="wtf-file" accept="application/pdf,image/*,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none"></label>'+(WTE.msg?'<span class="sub">'+esc(WTE.msg)+"</span>":"")+"</div></div>";
   return h;
 }
 var WTE={f:null,msg:"",sel:""};
 async function wtfUpload(file){
+  if(/\.docx$/i.test(file.name)||file.type===DX_MIME)return dxUpload(file);
+  if(/\.doc$/i.test(file.name)){WTE.msg="古い形式(.doc)は使えません。Wordで「.docx」として保存し直してください";render();return}
   WTE.msg="読み込み中…";render();
   try{
     var ctl=new AbortController();IM.ctl=ctl;var b0=null;
@@ -2793,6 +2797,7 @@ document.addEventListener("change",function(e){var t=e.target;if(t&&t.id==="wtf-
 /* ---- 記入位置の編集 ---- */
 function openWtfEd(id){
   var f0=S.wform.find(function(x){return x.id===id});if(!f0)return;
+  if(f0.type==="docx"){openDxEd(id);return}
   WTE.f=JSON.parse(JSON.stringify(f0));wtfEdDraw();
 }
 function wtfEdSample(){var f=WTE.f;return S.water.find(function(w){return w.kind===f.kind})||wtfDummy(f.kind)}
@@ -3112,6 +3117,177 @@ function mtgCard(){
    (MTG.msg?'<div class="sub" style="padding:4px 0">'+esc(MTG.msg)+"</div>":"")+"</div>";
 }
 document.addEventListener("click",function(e){var t=e.target.closest&&e.target.closest("#mtg-sync");if(t){e.preventDefault();mtgSync(true)}});
+
+
+/* ---------- Word(.docx)様式 ---------- */
+var DXW="http://schemas.openxmlformats.org/wordprocessingml/2006/main",DX_MIME="application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+var DX_ICON="data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="46" height="62"><rect width="46" height="62" rx="4" fill="#2b579a"/><text x="23" y="40" font-size="26" font-weight="700" text-anchor="middle" fill="#fff" font-family="sans-serif">W</text></svg>');
+var DX_MODES=[["fill","空欄に入れる"],["append","末尾に追加"],["set","全体を置き換え"],["mark","○を付ける"]];
+function loadJszip(){if(typeof JSZip!=="undefined")return Promise.resolve();if(!window.__jz)window.__jz=loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js").catch(function(){window.__jz=null});return window.__jz}
+function dxB64ToBytes(b){var s=atob(b),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
+function dxBytesToB64(u){var s="",k=0x8000;for(var i=0;i<u.length;i+=k)s+=String.fromCharCode.apply(null,u.subarray(i,i+k));return btoa(s)}
+async function dxOpen(src){
+  await loadJszip();if(typeof JSZip==="undefined")throw new Error("Word用のライブラリを読み込めませんでした");
+  var zip=await JSZip.loadAsync(typeof src==="string"?dxB64ToBytes(src):src),f=zip.file("word/document.xml");
+  if(!f)throw new Error("Word文書(.docx)として読めません");
+  var doc=new DOMParser().parseFromString(await f.async("string"),"application/xml");
+  if(doc.getElementsByTagName("parsererror").length)throw new Error("文書の中身を読めません");
+  return {zip:zip,doc:doc};
+}
+function dxRuns(p){
+  var out=[];(function walk(n){for(var c=n.firstChild;c;c=c.nextSibling){if(c.namespaceURI!==DXW)continue;var l=c.localName;
+    if(l==="r")out.push(c);else if(l==="hyperlink"||l==="ins"||l==="smartTag"||l==="sdt"||l==="sdtContent"||l==="fldSimple")walk(c)}})(p);
+  return out;
+}
+function dxText(p){return dxRuns(p).map(function(r){var s="";for(var c=r.firstChild;c;c=c.nextSibling){if(c.namespaceURI!==DXW)continue;if(c.localName==="t")s+=c.textContent;else if(c.localName==="tab")s+="\t"}return s}).join("")}
+function dxMk(doc,name){return doc.createElementNS(DXW,"w:"+name)}
+function dxSet(doc,p,txt){
+  var runs=dxRuns(p),first=runs[0];
+  if(!first){
+    first=dxMk(doc,"r");var ppr=null;for(var c=p.firstChild;c;c=c.nextSibling)if(c.namespaceURI===DXW&&c.localName==="pPr")ppr=c;
+    if(ppr){for(var d=ppr.firstChild;d;d=d.nextSibling)if(d.namespaceURI===DXW&&d.localName==="rPr"){first.appendChild(d.cloneNode(true));break}}
+    p.appendChild(first);runs=[first];
+  }
+  runs.forEach(function(r){[].slice.call(r.childNodes).forEach(function(c){if(c.namespaceURI===DXW&&(c.localName==="t"||c.localName==="tab"))r.removeChild(c)})});
+  var t=dxMk(doc,"t");t.setAttributeNS("http://www.w3.org/XML/1998/namespace","xml:space","preserve");t.textContent=txt;first.appendChild(t);
+}
+function dxBlanks(T){var out=[],re=/[　 _＿]+/g,m;while((m=re.exec(T))){if(m.index===0)continue;out.push({s:m.index,e:m.index+m[0].length})}return out}
+function dxInfo(doc){
+  var body=doc.getElementsByTagNameNS(DXW,"body")[0];if(!body)return [];
+  var tbls=[].slice.call(doc.getElementsByTagNameNS(DXW,"tbl")),out=[];
+  [].slice.call(body.getElementsByTagNameNS(DXW,"p")).forEach(function(p,i){
+    var T=dxText(p),ctx="",cell=false;
+    for(var a=p.parentNode;a&&a!==body;a=a.parentNode){
+      if(a.namespaceURI===DXW&&a.localName==="tc"){cell=true;var tr=a.parentNode,ci=[].slice.call(tr.childNodes).filter(function(x){return x.localName==="tc"}).indexOf(a),ri=[].slice.call(tr.parentNode.childNodes).filter(function(x){return x.localName==="tr"}).indexOf(tr),ti=tbls.indexOf(tr.parentNode);ctx="表"+(ti+1)+" "+(ri+1)+"行"+(ci+1)+"列";break}}
+    out.push({i:i,el:p,text:T,blanks:dxBlanks(T),cell:cell,ctx:ctx});
+  });
+  return out;
+}
+function dxApply(info,fields,w){
+  var by={},lines=[];
+  (fields||[]).forEach(function(f){(by[f.p]=by[f.p]||[]).push(f)});
+  Object.keys(by).forEach(function(k){
+    var pi=info[+k];if(!pi)return;var T=pi.text,ed=[];
+    by[k].forEach(function(f){
+      if(f.mode==="mark"){var ix=f.ph?T.indexOf(f.ph):-1;ed.push({s:ix>=0?ix:0,e:ix>=0?ix:0,t:"○"});return}
+      var val=wtfValue(w,f);if(!val)return;
+      if(f.mode==="set")ed.push({s:0,e:T.length,t:val});
+      else if(f.mode==="fill"&&pi.blanks[f.n|0])ed.push({s:pi.blanks[f.n|0].s,e:pi.blanks[f.n|0].e,t:val});
+      else ed.push({s:T.length,e:T.length,t:val});
+    });
+    if(!ed.length)return;
+    ed.map(function(x,i){x.o=i;return x}).sort(function(a,b){return b.s-a.s||b.o-a.o}).forEach(function(x){T=T.slice(0,x.s)+x.t+T.slice(x.e)});
+    pi.newText=T;lines.push((pi.ctx?pi.ctx+": ":"")+T);
+  });
+  return lines;
+}
+async function dxFill(form,w){
+  var o=await dxOpen(form.docx),info=dxInfo(o.doc),lines=dxApply(info,form.fields,w);
+  info.forEach(function(pi){if(pi.newText!=null)dxSet(o.doc,pi.el,pi.newText)});
+  var xml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+new XMLSerializer().serializeToString(o.doc).replace(/^<\?xml[^>]*\?>\s*/,"");
+  o.zip.file("word/document.xml",xml);
+  return {blob:await o.zip.generateAsync({type:"blob",mimeType:DX_MIME}),lines:lines};
+}
+function dxSave(blob,name){
+  claude_use("downloads").then(function(d){if(!d){toast("この表示では保存できません");return}
+    return d.save({filename:name+".docx",data:blob}).then(function(){toast("保存しました")},function(e2){if(e2&&e2.code!=="declined")toast("保存できませんでした")})});
+}
+function dxPrevHtml(lines){
+  return '<div class="panel" style="padding:8px 12px;margin-top:6px"><div class="sub">記入した箇所('+lines.length+'か所)。Wordで開いて確認・調整してください。</div>'+
+   (lines.length?lines.map(function(l){return '<div style="font-size:13px;border-top:1px solid var(--line);padding:3px 0;word-break:break-all">'+esc(l)+"</div>"}).join(""):'<div class="empty">記入する項目がありません。設定の「記入位置を設定」で項目を割り当ててください。</div>')+'</div>';
+}
+function dxRun(fm,w,btn,el,setLast){
+  btn.textContent="作成中…";
+  dxFill(fm,w).then(function(r){
+    setLast({docx:r.blob,form:fm});btn.textContent="様式に記入して確認";
+    $("#tp-prev",el).innerHTML=dxPrevHtml(r.lines)+'<div class="acts"><span class="sub">位置がずれていたら、設定の「水道事業者」→「記入位置を設定」で直せます。</span><span><button type="button" class="btn sm pri" id="tp-docx">Wordで保存</button></span></div>';
+  },function(e){btn.textContent="様式に記入して確認";toast("作成できませんでした: "+((e&&e.message)||""))});
+}
+async function dxUpload(file){
+  WTE.msg="読み込み中…";render();
+  try{
+    if(file.size>450*1024)throw new Error("ファイルが大きすぎます(約450KBまで)。画像を減らして保存し直してください");
+    var buf=new Uint8Array(await file.arrayBuffer());await dxOpen(buf);
+    var f={id:nid("wf"),name:file.name.replace(/\.[^.]+$/,"").slice(0,40),org:"",kind:"使用開始",type:"docx",docx:dxBytesToB64(buf),img:DX_ICON,w:0,h:0,fields:[],at:TODAY()};
+    wtfSave(f);WTE.msg="";render();openDxEd(f.id);
+  }catch(e){WTE.msg="読み込めませんでした: "+((e&&e.message)||"");render()}
+}
+/* ---- 記入位置の編集(Word) ---- */
+var DXE=null;
+async function openDxEd(id){
+  var f0=S.wform.find(function(x){return x.id===id});if(!f0)return;
+  try{var o=await dxOpen(f0.docx);DXE={f:JSON.parse(JSON.stringify(f0)),info:dxInfo(o.doc),msg:"",prev:null};dxEdDraw()}
+  catch(e){toast("開けませんでした: "+((e&&e.message)||""))}
+}
+function dxLabel(k){return (WTF_KEYS.find(function(x){return x[0]===k})||[0,k])[1]}
+function dxEdDraw(){
+  var f=DXE.f,rows=DXE.info.filter(function(pi){return pi.text.trim()!==""||pi.cell}).slice(0,600);
+  var keyOpts='<option value="">＋ 項目を記入…</option>'+WTF_KEYS.map(function(k){return '<option value="'+k[0]+'">'+k[1]+"</option>"}).join("");
+  var h='<div class="mask" id="mask"><div class="dlg" style="width:min(1100px,100%)"><h2>記入位置の設定(Word): '+esc(f.name)+'</h2><div class="sub">文書の各行(表の中身も含む)に、記入する項目を割り当てます。<b>［0］［1］</b>は空欄(空白や下線)の位置です。「空欄に入れる」は空欄の番号を選び、「末尾に追加」は「氏名：」のような見出しの後ろに書き足します。</div>'+
+   '<div class="set-row"><button type="button" class="btn sm" id="dxe-ai">🪄 AIで自動割り当て</button><button type="button" class="btn sm" id="dxe-test">サンプルで確認</button><span class="sub" id="dxe-msg">'+esc(DXE.msg)+'</span></div>'+
+   '<div id="dxe-prev">'+(DXE.prev?dxPrevHtml(DXE.prev):"")+'</div>'+
+   '<div class="panel" style="padding:4px 10px;max-height:56vh;overflow:auto">'+rows.map(function(pi){
+     var shown=pi.text,out="",last=0;pi.blanks.forEach(function(b,n){out+=esc(pi.text.slice(last,b.s))+'<mark style="background:#ffe58a">［'+n+"］</mark>";last=b.e});out+=esc(pi.text.slice(last));
+     var mine=f.fields.filter(function(x){return x.p===pi.i});
+     return '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding:5px 0"><span class="sub" style="width:96px;flex:none">'+(pi.ctx||("行"+(pi.i+1)))+'</span><span style="flex:1 1 220px;min-width:0;font-size:13px;word-break:break-all">'+(out||'<span class="sub">(空欄)</span>')+"</span>"+
+      mine.map(function(x){return '<span style="display:inline-flex;gap:3px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 4px"><b style="font-size:12px">'+esc(dxLabel(x.k))+"</b>"+
+       (x.k==="mark"?'<input type="text" data-dxe="ph:'+x.id+'" value="'+esc(x.ph||"")+'" placeholder="○を付ける文字" style="width:110px;font-size:12px">':'<select data-dxe="m:'+x.id+'" style="font-size:12px">'+DX_MODES.filter(function(m){return m[0]!=="mark"}).map(function(m){return '<option value="'+m[0]+'"'+(x.mode===m[0]?" selected":"")+">"+m[1]+"</option>"}).join("")+"</select>"+
+        (x.mode==="fill"?'<select data-dxe="n:'+x.id+'" style="font-size:12px">'+pi.blanks.map(function(b,n){return '<option value="'+n+'"'+((x.n|0)===n?" selected":"")+">［"+n+"］</option>"}).join("")+"</select>":"")+
+        (/^(date|today)$/.test(x.k)?'<select data-dxe="f:'+x.id+'" style="font-size:12px">'+WTF_FMT.map(function(m){return '<option value="'+m[0]+'"'+((x.fmt||"wareki")===m[0]?" selected":"")+">"+m[1]+"</option>"}).join("")+"</select>":""))+
+       '<button type="button" class="btn sm danger" data-dxe="x:'+x.id+'" aria-label="外す">×</button></span>'}).join("")+
+      '<select data-dxadd="'+pi.i+'" style="font-size:12px;max-width:150px">'+keyOpts+"</select></div>"}).join("")+
+   '</div><div class="acts"><span></span><span><button type="button" class="btn" id="dxe-close">閉じる</button> <button type="button" class="btn pri" id="dxe-save">保存</button></span></div></div></div>';
+  var sc=$("#modal .panel[style*='max-height']"),top=sc?sc.scrollTop:0;
+  $("#modal").innerHTML=h;
+  var sc2=$("#modal .panel[style*='max-height']");if(sc2)sc2.scrollTop=top;
+}
+function dxAddField(pi,k){
+  var f=DXE.f,used=f.fields.filter(function(x){return x.p===pi.i&&x.mode==="fill"}).map(function(x){return x.n|0}),o={id:"f"+Math.random().toString(36).slice(2,7),k:k,p:pi.i,fmt:"wareki"};
+  if(k==="mark"){o.mode="mark";o.ph=""}
+  else if(pi.text.trim()==="")o.mode="set";
+  else{var n=-1;for(var j=0;j<pi.blanks.length;j++)if(used.indexOf(j)<0){n=j;break}if(n>=0){o.mode="fill";o.n=n}else o.mode="append"}
+  f.fields.push(o);
+}
+async function dxAi(){
+  var f=DXE.f,msg=$("#dxe-msg"),sample=await claude_use("sample");
+  if(!sample){if(msg)msg.textContent="この表示では自動読み取りを使えません";return}
+  if(msg)msg.textContent="割り当て中…(数十秒)";
+  var lines=DXE.info.filter(function(pi){return pi.text.trim()!==""||pi.cell}).slice(0,300).map(function(pi){
+    var out="",last=0;pi.blanks.forEach(function(b,n){out+=pi.text.slice(last,b.s)+"⟦"+n+"⟧";last=b.e});out+=pi.text.slice(last);
+    return "["+pi.i+"] "+(pi.ctx?"("+pi.ctx+") ":"")+(out.trim()?out.slice(0,90):"(空欄)")}).join("\n");
+  var prompt="次は、水道の"+(f.kind==="使用中止"?"使用中止(休止・廃止)":"使用開始")+"届のWord様式を、行ごとに番号を付けて書き出したものです。⟦0⟧⟦1⟧は空欄(空白・下線)の位置です。申込者が書き込む場所を探し、どの行にどの項目を書き込むか答えてください。次のJSONだけを出力してください。説明文やコードフェンスは付けないでください。\n"+
+   '{"fields":[{"k":"項目キー","p":行番号,"mode":"fill","n":0,"ph":""}]}\n'+
+   'mode は fill(空欄⟦n⟧に入れる。n に空欄番号) / append(「氏名：」のような見出しの後ろに書き足す) / set(空欄のセルを丸ごと埋める) / mark(選択肢の文字を○で囲う代わりに、その文字の前に○を付ける。ph にその文字を入れる)のどれか。\n日付は date_y(年) date_m(月) date_d(日) を「令和　年　月　日」の空欄ごとに fill で割り当てる(令和の文字は書き換えない)。1行に年月日がまとめて入る欄は date を append か set で。\n項目キー:\n'+
+   WTF_KEYS.filter(function(k){return k[0]!=="mark"}).map(function(k){return "- "+k[0]+" "+k[1]}).join("\n")+"\n- mark ○を付ける(使用開始/使用中止などの選択肢)\n書き込む場所が見当たらない項目は出力しない。見出し(氏名、住所など)の行自体には項目を割り当てず、書き込む場所の行(同じ行の空欄、または隣・下の空欄のセル)に割り当てる。\n\n"+lines;
+  try{
+    var ctl=new AbortController(),a=await sample.json(prompt,{signal:ctl.signal,modelTier:"default"}),n=0;
+    ((a&&a.fields)||[]).forEach(function(x){
+      if(!x||!WTF_KEYS.some(function(k){return k[0]===x.k})||!DXE.info[+x.p])return;
+      var pi=DXE.info[+x.p],mode=DX_MODES.some(function(m){return m[0]===x.mode})?x.mode:"append";
+      if(x.k==="mark")mode="mark";
+      if(mode==="fill"&&!pi.blanks[+x.n|0])mode="append";
+      if(f.fields.some(function(z){return z.k===x.k&&z.p===+x.p&&(z.n|0)===(+x.n|0)}))return;
+      f.fields.push({id:"f"+Math.random().toString(36).slice(2,7),k:x.k,p:+x.p,mode:mode,n:+x.n|0,ph:String(x.ph||""),fmt:"wareki"});n++});
+    DXE.msg=n?n+"か所を割り当てました。「サンプルで確認」で見て、違う所は直してください。":"割り当てられませんでした。手動で追加してください。";dxEdDraw();
+  }catch(e){var m=$("#dxe-msg");if(m)m.textContent=imErr(e)||"割り当てできませんでした"}
+}
+document.addEventListener("click",function(e){
+  if(!DXE)return;var t=e.target.closest&&e.target.closest("button");if(!t)return;
+  if(t.id==="dxe-close"){DXE=null;$("#modal").innerHTML="";render();return}
+  if(t.id==="dxe-save"){wtfSave(DXE.f);DXE=null;$("#modal").innerHTML="";render();toast("保存しました");return}
+  if(t.id==="dxe-ai"){dxAi();return}
+  if(t.id==="dxe-test"){
+    var w=S.water.find(function(x){return x.kind===DXE.f.kind})||wtfDummy(DXE.f.kind);
+    dxFill(DXE.f,w).then(function(r){DXE.prev=r.lines;DXE.msg="";dxEdDraw()},function(er){DXE.msg="確認できませんでした: "+((er&&er.message)||"");dxEdDraw()});return}
+  var d=t.dataset.dxe;if(d&&d.indexOf("x:")===0){DXE.f.fields=DXE.f.fields.filter(function(x){return x.id!==d.slice(2)});dxEdDraw()}
+},true);
+document.addEventListener("change",function(e){
+  if(!DXE)return;var t=e.target;if(!t||!t.dataset)return;
+  if(t.dataset.dxadd!==undefined){if(!t.value)return;var pi=DXE.info[+t.dataset.dxadd];if(pi){dxAddField(pi,t.value);dxEdDraw()}return}
+  var d=t.dataset.dxe;if(!d)return;var q=d.split(":"),x=DXE.f.fields.find(function(z){return z.id===q[1]});if(!x)return;
+  if(q[0]==="m"){x.mode=t.value;if(x.mode==="fill"&&x.n==null)x.n=0}else if(q[0]==="n")x.n=+t.value;else if(q[0]==="f")x.fmt=t.value;else if(q[0]==="ph")x.ph=t.value;
+  dxEdDraw();
+},true);
 
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
