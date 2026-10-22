@@ -380,11 +380,12 @@ var ICONS={
  clip:'<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/>',
  sliders:'<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
  drop:'<path d="M12 2.7s6 6.3 6 11a6 6 0 0 1-12 0c0-4.7 6-11 6-11z"/>',
+ help:'<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
  bell:'<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
  menu:'<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
  tool:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'};
 function ic(n,sz){sz=sz||20;return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[n]+"</svg>"}
-var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"info",label:"お知らせ",ic:"bell"},{tab:"docs",label:"書類ボックス",ic:"book"},
+var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"info",label:"お知らせ",ic:"bell"},{tab:"docs",label:"書類ボックス",ic:"book"},{tab:"qa",label:"Q&A",ic:"help"},
  {g:"原状回復工事"},{tab:"jobs",label:"案件一覧",ic:"list",d:"genkyo"},{tab:"sched",label:"施工予定",ic:"calendar",d:"genkyo"},{tab:"report",label:"完了報告",ic:"check",d:"genkyo"},{tab:"bill",label:"請求・入金",ic:"yen",d:"genkyo"},{tab:"water",label:"水道開始・中止届",ic:"drop",d:"genkyo"},
  {g:"緊急対応"},{tab:"elog",label:"出動一覧",ic:"alert",d:"emerg"},{tab:"eguide",label:"対応区分ガイド",ic:"book",d:"emerg"},{tab:"esum",label:"月次集計",ic:"chart",d:"emerg"},
  {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mscope",label:"業務内容",ic:"book",d:"maint"},
@@ -424,6 +425,7 @@ function pageHead(){
   var n=NAV.find(function(x){return x.tab===S.tab})||NAV[0],act="";
   if(n.d)S.div=n.d;
   if(S.tab==="home")act='<button class="btn out" id="qa-j">＋ 案件を登録</button><button class="btn out" id="qa-e">＋ 緊急出動</button><button class="btn out" id="qa-m">＋ 維持管理</button>';
+  else if(S.tab==="qa")act='<button class="btn pri" id="add">＋ Q&Aを追加</button>';
   else if(S.tab==="aclist")act='<button class="btn out" id="ac-imp">📄 書類から取り込む</button><input type="file" id="ac-file" accept="application/pdf,image/*" style="display:none"><button class="btn pri" id="add">＋ エアコン案件を追加</button>';
   else if(S.tab==="water")act='<button class="btn out" id="w-job">案件から作成</button><button class="btn pri" id="add">＋ 届出を追加</button>';
   else if(S.tab!=="set"&&S.tab!=="mscope")act='<button class="btn pri" id="add">'+({genkyo:"＋ 案件を登録",emerg:"＋ 緊急出動を記録",maint:S.tab==="mplan"?"＋ 年間計画を追加":"＋ 維持管理を追加"}[S.div]||"＋ 追加")+"</button>";
@@ -466,7 +468,7 @@ function render0(){
   var m=$("#main"),h="";
   if(!S.persist)h+='<div class="banner">共有保存が使えない表示です。入力内容はこのブラウザにだけ保存されます。</div>';
   h+=pageHead();
-  h+=({home:vHome,info:vInfo,docs:vDocs,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,water:vWater}[S.tab]||vJobs)();
+  h+=({home:vHome,info:vInfo,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,water:vWater}[S.tab]||vJobs)();
   m.innerHTML=h;
   decorate();
   if(fk){var fe=$(fk,m);if(fe){fe.focus();try{if(ss&&ss[0]!=null)fe.setSelectionRange(ss[0],ss[1])}catch(e){}}}
@@ -2595,6 +2597,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"Q&Aのページを追加",d:"左のメニューに「Q&A」を追加しました。アプリの使い方の質問と答えを入れてあり、検索や分類で探せます。社内のルールや確認事項も、自由に追加・編集できます。"},
  {v:"2026-10-22",t:"価値観共有シートを案件に自動で紐づけ",d:"案件の画面の「📎 価値観共有シートを取り込む」で、完了時のシート(PDF・写真)を選ぶと、物件名・号室から案件を探して自動で紐づけ、「価値観共有シート」のチェックも完了にします(Web版は書類も保管されプレビューできます)。FAX取込でも価値観共有シートを判別します。"},
  {v:"2026-10-22",t:"水道届の様式にWord(.docx)も使える",d:"設定「水道事業者」の様式アップロードで、PDF・画像に加えてWord(.docx)も登録できます。文書の各行に氏名・住所・日付などの項目を割り当て(AIの自動割り当てもあります)、水道届から記入済みのWordファイルとして保存できます。"},
  {v:"2026-10-22",t:"品質会議のメールをホームの予定に",d:"Gmailに届いた「災害防止協議会・品質会議」のメールから開催日時を読み取り、ホームの「会議・予定」に表示します(Teams参加リンク付き)。ホームを開いたときに自動で確認し、「📧 メールを確認」からも更新できます。"},
@@ -3391,6 +3394,45 @@ document.addEventListener("click",function(e){
     if(j2){if(r2.ref&&Array.isArray(j2.docs))j2.docs=j2.docs.filter(function(x){return x.id!==r2.ref});if(!r2.had&&j2.checks)j2.checks.value=false;saveDoc("jobs",j2,true)}
     r2.linked=null;r2.ref=null;vsDraw(i2);render();return}
 });
+
+/* ---------- Q&A ---------- */
+var QA_CATS=["アプリの使い方","業務ルール","大東建託","その他"];
+var QA_DEF=[
+ {q:"工事予定書(案件)はどうやって登録しますか?",a:"案件一覧の「＋ 案件を登録」→「書類から読み取る」で、工事予定書のPDF・写真を選びます。物件名・号室・工事項目を読み取るので、内容を確認して登録します。FAXで届いたものは、ホームの「FAX取込」からGmailのeFaxを読み込んでも登録できます。",c:"アプリの使い方"},
+ {q:"読み込んだ元の書類を、あとから見られますか?",a:"Web版(Vercel)では、読み取って登録した書類(PDF・画像)が自動で保管され、案件・緊急出動・維持管理・エアコンの編集画面の「📎 元の書類」から👁で見られます。保管した書類の一覧は「書類ボックス」にあります。",c:"アプリの使い方"},
+ {q:"価値観共有シートはどう紐づけますか?",a:"案件一覧の「📎 価値観共有シートを取り込む」に、完了時のシート(PDF・写真)を選びます。物件名・号室から案件を探して自動で紐づけ、「価値観共有シート」のチェックも完了にします。見つからないときだけ案件を選びます。",c:"アプリの使い方"},
+ {q:"水道の開始・中止届の様式に記入して出力するには?",a:"設定の「水道事業者」で、自治体の公式様式(PDF・画像・Word)をアップロードし、「記入位置を設定」で氏名・住所・日付などの項目を割り当てます。水道の届出の画面で「様式に記入して確認」を押すと、記入済みの様式を保存できます。",c:"アプリの使い方"},
+ {q:"エアコン設置の見積り依頼書はどう扱いますか?",a:"「エアコン設置」→「エアコン案件」の「書類から取り込む」で見積り依頼書を読み取ります。工事項目の単価は、設定の「エアコン工事の単価」で変えられます。状況は 見積依頼→見積提出→施工待ち→施工完了→請求済→入金済 の順に進めます。",c:"アプリの使い方"},
+ {q:"ホームの「会議・予定」はどこから来ますか?",a:"Gmailに届いた「災害防止協議会・品質会議」のメールの「開催日時」を読み取って表示します。ホームを開くたびに自動で確認し、「📧 メールを確認」でも更新できます。",c:"アプリの使い方"},
+ {q:"担当ごとにログインするには?",a:"管理者が設定画面で担当者のログインを発行します。担当者でログインすると、自分の担当分の案件だけが表示されます。(Web版のみ)",c:"アプリの使い方"},
+ {q:"データのバックアップはありますか?",a:"Web版では、データを更新した日の最初に1日1回、自動でバックアップを保存します(直近14回分)。設定の「バックアップ」から、手動のバックアップと復元もできます(管理者のみ)。",c:"アプリの使い方"}
+];
+function qaList(){var s=S.settings;if(!Array.isArray(s.qa)){s.qa=QA_DEF.map(function(x,i){return Object.assign({id:"qa"+i},x)})}return s.qa}
+S.qaCat=S.qaCat||"all";S.qaQ=S.qaQ||"";
+function vQa(){
+  var L=qaList(),q=(S.qaQ||"").trim().normalize("NFKC").toLowerCase();
+  var shown=L.filter(function(x){return (S.qaCat==="all"||x.c===S.qaCat)&&(!q||(x.q+" "+x.a).normalize("NFKC").toLowerCase().indexOf(q)>=0)});
+  var cats=["all"].concat(QA_CATS);
+  return '<div class="panel" style="padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="search" id="qa-q" value="'+esc(S.qaQ)+'" placeholder="質問・答えから探す" style="flex:1;min-width:180px"><span class="tools">'+
+   cats.map(function(c){return '<button type="button" class="btn sm'+(S.qaCat===c?" pri":" out")+'" data-qacat="'+esc(c)+'">'+(c==="all"?"すべて":esc(c))+"</button>"}).join(" ")+"</span></div>"+
+   (shown.length?shown.map(function(x){return '<details class="panel" style="padding:8px 14px;margin:6px 0"><summary style="cursor:pointer;font-weight:700;list-style-position:inside">Q. '+esc(x.q)+' <span class="tag" style="margin-left:6px">'+esc(x.c||"その他")+'</span></summary><div style="white-space:pre-wrap;margin-top:8px;line-height:1.7">A. '+esc(x.a)+'</div><div class="acts" style="margin-top:8px"><span></span><button type="button" class="btn sm" data-qaedit="'+esc(x.id)+'">編集</button></div></details>'}).join(""):'<div class="panel"><div class="empty">'+(L.length?"見つかりませんでした。":"まだ登録がありません。")+" 「＋ Q&Aを追加」から登録できます。</div></div>")+
+   '<div class="sub" style="padding:6px 2px">質問と答えは自由に追加・編集できます。社内のルールや大東建託への確認事項なども書き留めておけます。</div>';
+}
+function openQa(id){
+  var L=qaList(),ex=id&&L.find(function(x){return x.id===id}),d=ex?JSON.parse(JSON.stringify(ex)):{id:"qa"+Date.now().toString(36),q:"",a:"",c:QA_CATS[0]};
+  openForm({title:ex?"Q&Aの編集":"Q&Aを追加",data:d,fields:[{k:"c",label:"分類",type:"select",opts:QA_CATS},{k:"q",label:"質問",wide:true},{k:"a",label:"答え",type:"memo",wide:true}],
+   validate:function(d){return !d.q.trim()?"質問を入力してください":!d.a.trim()?"答えを入力してください":""},
+   onSave:function(d){d.q=d.q.trim();d.a=d.a.trim();var i=L.findIndex(function(x){return x.id===d.id});if(i<0)L.push(d);else L[i]=d;saveSettings(true);render();toast("保存しました")},
+   onDel:ex?function(){S.settings.qa=qaList().filter(function(x){return x.id!==d.id});saveSettings(true);render()}:null});
+  var ta=$("#ff-a");if(ta)ta.rows=8;
+}
+document.addEventListener("click",function(e){
+  var t=e.target.closest&&e.target.closest("[data-qacat],[data-qaedit]");if(!t||S.tab!=="qa")return;
+  if(t.dataset.qacat!==undefined){S.qaCat=t.dataset.qacat;render();return}
+  if(t.dataset.qaedit)openQa(t.dataset.qaedit);
+});
+document.addEventListener("input",function(e){if(e.target.id==="qa-q"&&S.tab==="qa"){S.qaQ=e.target.value;var pos=e.target.selectionStart;render();var el=$("#qa-q");if(el){el.focus();try{el.setSelectionRange(pos,pos)}catch(x){}}}});
+
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
@@ -3435,7 +3477,7 @@ function modClick(e,t,d){
   if(t.id==="ch-mocr"){openMtImport();return true}
   if(t.id==="ch-mman"){$("#modal").innerHTML="";openMaint();return true}
   if(d.todo){var q=d.todo.split(":");({j:openJob,e:openEmerg,m:openMaint,d:openDef,w:openWater,a:openAc}[q[0]])(q.slice(1).join(":"));return true}
-  if(t.id==="add"){S.tab==="aclist"?openAc():S.tab==="water"?openWater():S.div==="emerg"?openEmChoice():S.div==="maint"?(S.tab==="mplan"?openMpChoice():openMtChoice()):openJobChoice();return true}
+  if(t.id==="add"){S.tab==="qa"?openQa():S.tab==="aclist"?openAc():S.tab==="water"?openWater():S.div==="emerg"?openEmChoice():S.div==="maint"?(S.tab==="mplan"?openMpChoice():openMtChoice()):openJobChoice();return true}
   if(d.emfix){$("#modal").innerHTML="";openEmImport(d.emfix);return true}
   if(d.enext){advanceEm(d.enext);return true}
   if(d.mnext){advanceMt(d.mnext);return true}
