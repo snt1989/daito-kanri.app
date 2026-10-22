@@ -521,7 +521,7 @@ document.addEventListener("click",function(e){var t=e.target.closest&&e.target.c
 function mobTables(){
   if(!window.matchMedia||!matchMedia("(max-width:720px)").matches)return;
   [].slice.call(document.querySelectorAll("#main table")).forEach(function(tb){
-    var th=[].slice.call(tb.querySelectorAll("thead th"));if(th.length<2||tb.dataset.nocard)return;
+    var th=[].slice.call(tb.querySelectorAll("thead th"));if(th.length<2||tb.dataset.nocard||tb.style.minWidth)return;
     var labs=th.map(function(h){return h.textContent.trim()});tb.classList.add("rt");
     [].slice.call(tb.querySelectorAll("tbody tr")).forEach(function(tr){
       var tds=[].slice.call(tr.children),ti=-1;
