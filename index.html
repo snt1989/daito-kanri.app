@@ -396,6 +396,13 @@ a.btn{color:inherit;text-decoration:none}
 .vsz{position:absolute;transform:translate(-50%,-50%);background:transparent;border:1px dashed rgba(209,18,31,.22);border-radius:50%;padding:0;cursor:pointer;pointer-events:auto}
 .vsk{position:absolute;transform:translate(-50%,-50%) rotate(-14deg);border:2.5px solid #d1121f;border-radius:50%;pointer-events:none}
 .vst2{position:absolute;color:#d1121f;font-weight:600;pointer-events:none}
+.vcards{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+.vcard{flex-direction:row;gap:12px;align-items:stretch}
+.vth{flex:none;width:130px;min-height:172px;border:1px solid var(--line);border-radius:8px;background:#f3f1ef;padding:0;cursor:pointer;overflow:hidden;display:grid;place-items:center}
+.vth img{display:block;width:100%;height:auto}
+.vsph{font-size:11.5px;color:var(--muted);padding:6px;text-align:center}
+.vbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.vbtn{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
 </style>
 
 <div class="app" id="app">
@@ -712,16 +719,43 @@ function bindCal(){
 }
 
 /* ----- report ----- */
+function reportReady(j){return !!(j.checks&&j.checks.value)}
+var VPV={},VRT=false;
+function vrDoc(j){var a=Array.isArray(j.docs)?j.docs:[],an=null,bs=null;a.forEach(function(r){if(r.typeName==="価値観共有シート(記入済)")an=r;else if(r.typeName==="価値観共有シート")bs=r});return an||bs}
+function vrSetImg(el,u){el.innerHTML='<img src="'+u+'" alt="">'}
+async function vrThumbs(){
+  if(VRT)return;VRT=true;
+  try{
+    var els=[].slice.call(document.querySelectorAll("[data-vth]"));
+    for(var i=0;i<els.length;i++){
+      var el=els[i],j=S.jobs.find(function(x){return x.id===el.getAttribute("data-vth")});if(!j)continue;
+      var mem=VPV["j:"+j.id];if(mem){vrSetImg(el,mem);continue}
+      var r=vrDoc(j);if(!r||!window.dsFiles){el.innerHTML='<span class="vsph">'+(r?"プレビューなし":"シート未取込")+"</span>";continue}
+      var u=VPV[r.id];
+      if(u===undefined){
+        u="";
+        try{
+          var res=await window.dsFiles.blob(r.id);
+          if(res&&res.ok&&res.blob){var bl=res.blob;
+            if(/pdf/.test(r.mime||bl.type||"")){var im=null,old=IM.ctl;IM.ctl=new AbortController();try{await eachPage(new File([bl],"s.pdf",{type:"application/pdf"}),async function(b){if(!im)im=b},1,700)}finally{IM.ctl=old}bl=im}
+            u=bl?URL.createObjectURL(bl):""}
+        }catch(e){u=""}
+        VPV[r.id]=u}
+      if(document.body.contains(el)){if(u)vrSetImg(el,u);else el.innerHTML='<span class="vsph">プレビューなし</span>'}
+    }
+  }finally{VRT=false}
+}
 function vReport(){
   var L=S.jobs.filter(function(j){return j.status===3}).sort(function(a,b){return (a.workDate||"9999").localeCompare(b.workDate||"9999")});
-  var h='<div><h2 class="sec">価値観共有シート</h2><div class="sub">施工が終わったら各案件の「📝 価値観共有シート」でシートに記入し、項目にチェックして、すべて揃ったら「完了報告済」にします。</div></div>';
+  var h='<div><div class="sub">施工が終わったら各案件のシートをタップして記入します。記入(保存)すると「記入済」になり、「完了報告済にする」を押せます。</div></div>';
   if(!L.length)return h+'<div class="panel empty">施工予定の案件はありません。案件一覧で「施工日を確定」まで進めるとここに表示されます。</div>';
-  return h+'<div class="grid cards">'+L.map(function(j){
-    var n=checkCount(j),all=n===CHK.length;
-    return '<div class="panel card"><div><div class="site">'+esc(j.site)+" "+esc(j.room)+(j.sample?'<span class="tag ex">例</span>':"")+'</div><div class="sub">施工 '+md(j.workDate)+' ／ 完了予定 <span class="'+(overdue(j)?"late":"")+'">'+md(j.dueDate)+'</span> ／ '+esc((j.staff||[]).join("・")||"担当未設定")+"</div></div>"+
-     '<div class="checks">'+CHK.map(function(c){return '<label><input type="checkbox" data-chk="'+j.id+":"+c[0]+'"'+(j.checks&&j.checks[c[0]]?" checked":"")+"> "+c[1]+"</label>"}).join("")+"</div>"+
-     '<div class="meter"><i style="width:'+Math.round(n/CHK.length*100)+'%"></i></div>'+
-     '<div class="acts"><span class="sub">'+n+"/"+CHK.length+' 完了</span><span><button class="btn sm" data-vse="'+j.id+'">📝 価値観共有シート</button> <button class="btn sm" data-open="'+j.id+'">詳細</button> <button class="btn sm pri" data-next="'+j.id+'"'+(all?"":" disabled")+">完了報告済にする</button></span></div></div>";
+  setTimeout(vrThumbs,0);
+  return h+'<div class="grid cards vcards">'+L.map(function(j){
+    var ok=reportReady(j),has=!!vrDoc(j)||!!VPV["j:"+j.id];
+    return '<div class="panel card vcard"><button type="button" class="vth" data-vse="'+j.id+'" title="シートを開いて記入"><span data-vth="'+j.id+'"><span class="vsph">'+(has?"読み込み中…":"シート未取込")+'</span></span></button>'+
+     '<div class="vbody"><div class="site">'+esc(j.site)+" "+esc(j.room)+(j.sample?'<span class="tag ex">例</span>':"")+'</div><div class="sub">施工 '+md(j.workDate)+' ／ 完了予定 <span class="'+(overdue(j)?"late":"")+'">'+md(j.dueDate)+'</span><br>'+esc((j.staff||[]).join("・")||"担当未設定")+'</div>'+
+     '<div><span class="pill '+(ok?"s4":"s0")+'">'+(ok?"記入済":"未記入")+'</span></div>'+
+     '<div class="vbtn"><button class="btn sm" data-vse="'+j.id+'">📝 記入する</button> <button class="btn sm" data-open="'+j.id+'">詳細</button> <button class="btn sm pri" data-next="'+j.id+'"'+(ok?"":" disabled")+">完了報告済にする</button></div></div></div>";
   }).join("")+"</div>";
 }
 
@@ -829,7 +863,7 @@ function setBase(j){
 function advance(id){
   var j=S.jobs.find(function(x){return x.id===id});if(!j||j.status>=6)return;
   if(j.status===2&&!j.workDate){openJob(id);toast("施工日を入力してから確定してください");return}
-  if(j.status===3&&checkCount(j)<CHK.length){S.tab="report";render();toast("価値観共有シートのチェックをすべて済ませてください");return}
+  if(j.status===3&&!reportReady(j)){S.tab="report";render();toast("価値観共有シートを記入してください");return}
   var n=Object.assign({},j,{status:j.status+1});saveJob(n);toast(j.site+" "+j.room+" → "+STAT[n.status].n);
 }
 function csv(){
@@ -1331,8 +1365,7 @@ var SETGROUPS=[
   ["prices","単価マスタ","クリーニング・内装工事の単価表(税別)です。案件の明細の単価に使われます。",[P("jobs","案件一覧"),P("bill","請求・入金")]],
   ["layout","間取りの表示名","単価表のクリーニング基本料金と連動する間取りの、表示名です。",[P("jobs","案件一覧")]],
   ["genopts","案件の選択肢","案件の「契約」「地区」のプルダウンです。",[P("jobs","案件一覧"),P("sched","施工予定")]],
-  ["genstat","案件の状況名","案件の進捗の段階の名前と、次へ進めるボタンの文言です。",[P("jobs","案件一覧"),P("sched","施工予定"),P("bill","請求・入金")]],
-  ["chk","完了報告チェック","「完了報告済」にするために確認する項目です。",[P("report","価値観共有シート")]]]],
+  ["genstat","案件の状況名","案件の進捗の段階の名前と、次へ進めるボタンの文言です。",[P("jobs","案件一覧"),P("sched","施工予定"),P("bill","請求・入金")]]]],
  ["緊急対応",[
   ["emfee","緊急出動費","基本料金(日中・夜間)と、2時間超の加算(税別)です。",[P("elog","出動一覧"),P("esum","月次集計")]],
   ["emcat","対応区分","緊急出動対応表の区分です。出動一覧の選択肢とガイドに使われます。",[P("eguide","対応区分ガイド"),P("elog","出動一覧")]],
@@ -2347,7 +2380,7 @@ function bkApplyEdit(col,ids,ch){
     if(col==="jobs"&&ch.layout)setBase(x);
     if("status" in ch){
       var s=ch.status,ok=true;
-      if(col==="jobs"){if(s>=3&&!x.workDate)ok=false;if(s>=4&&checkCount(x)<CHK.length)ok=false}
+      if(col==="jobs"){if(s>=3&&!x.workDate)ok=false;if(s>=4&&!reportReady(x))ok=false}
       if(col==="maint"&&s>=4&&mtChecks(x)<3)ok=false;
       if(ok)x.status=s;else{skipped++;if(Object.keys(ch).length===1)return}
     }
@@ -2764,6 +2797,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"価値観共有シートの画面を一覧プレビューに",d:"価値観共有シートの画面から、チェック項目を無くしました。各案件のシート(記入済みがあればそれ、なければ取り込んだシート)の縮小プレビューが並び、タップして記入できます。記入(保存)すると「記入済」になり、「完了報告済にする」を押せます。設定の「完了報告チェック」も無くしました。"},
  {v:"2026-10-22",t:"「完了報告」の画面を「価値観共有シート」に変更",d:"メニューと画面の名前を「価値観共有シート」に変えました。各案件の「📝 価値観共有シート」でシートに記入し、チェックが揃ったら「完了報告済」にできます。"},
  {v:"2026-10-22",t:"価値観共有シートを読み込んだシートへ直接入力",d:"完了報告の「📝 価値観共有シート」で、取り込んだ(または選んだ)価値観共有チェックシートの画像の上に、○/×の欄をタップして記入できます。業者様・ワランティ・間取り・理由・確認事項は入力欄から書き込めます。ずれるときは「位置合わせ」で調整できます。記入済みのシートはPDFで保存でき、案件の書類にも保管されます(Web版)。完了報告のチェック項目から「作業報告書」「完了報告シート提出」を外し、価値観共有シートに統一しました。"},
  {v:"2026-10-22",t:"スマホ表示のはみ出しを修正",d:"長いメール本文でホームが横に広がる問題、日付と題名が重なる問題、案件一覧のボタンや状況タブが画面外に切れる問題を直しました。"},
@@ -3692,7 +3726,7 @@ function openVse(id){
    '<button type="button" class="btn sm" data-vsal="l">◀</button><button type="button" class="btn sm" data-vsal="r">▶</button><button type="button" class="btn sm" data-vsal="u">▲</button><button type="button" class="btn sm" data-vsal="d">▼</button>'+
    '<button type="button" class="btn sm" data-vsal="w-">横−</button><button type="button" class="btn sm" data-vsal="w+">横＋</button><button type="button" class="btn sm" data-vsal="h-">縦−</button><button type="button" class="btn sm" data-vsal="h+">縦＋</button><button type="button" class="btn sm" data-vsal="reset">戻す</button></div></details></div>'+
    '<div class="vwrap"><div id="vse-stage" class="vstage" style="width:'+VSE.z*100+'%"><div id="vse-empty" class="empty" style="padding:40px 10px">読み込み中…</div><div id="vse-ov" class="vov"></div></div></div>'+
-   '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="vse-chk"'+((j.checks&&j.checks.value)?"":" checked")+'> 完了報告の「価値観共有シート」にチェックを付ける</label>'+
+   '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="vse-chk"'+((j.checks&&j.checks.value)?"":" checked")+'> 記入済にする</label>'+
    '<div class="acts"><span class="sub" id="vse-msg"></span><span><button type="button" class="btn" id="vse-x">閉じる</button> <button type="button" class="btn" id="vse-save">保存</button> <button type="button" class="btn primary" id="vse-pdf">PDFで保存</button></span></div></div></div>';
   vseLoad(j);
 }
@@ -3767,19 +3801,19 @@ function vseSnapshot(j){
 async function vseDo(pdf){
   if(VSE.busy)return;var j=S.jobs.find(function(x){return x.id===VSE.id});if(!j)return;var msg=$("#vse-msg");
   vseSnapshot(j);
-  if(!pdf){saveDoc("jobs",j,true);if(msg)msg.textContent="保存しました";toast("保存しました");return}
+  if(!pdf){var w0=$("#vse-chk");if(w0&&w0.checked){if(!j.checks)j.checks={};j.checks.value=true}saveDoc("jobs",j,true);if(msg)msg.textContent="保存しました";toast("保存しました");render();return}
   if(!VSE.ready){if(msg)msg.textContent="先にシートを読み込んでください";return}
   VSE.busy=true;if(msg)msg.textContent="PDFを作成中…";
   try{
     var r=await vseRender(),nm=(j.site||"")+(j.room||""),name="価値観共有シート_記入済_"+nm+".pdf",pdfb=await wtfPdf(r.blob,r.w,r.h),ref=null;
     if(window.dsFiles){
       if(VSE.file){var br=await docKeep(VSE.file,{meta:{type:"value",typeName:"価値観共有シート",summary:nm}});if(br){var a0=Array.isArray(j.docs)?j.docs:[];if(!a0.some(function(z){return z.id===br.id}))a0.push(br);j.docs=a0}}
-      try{ref=await docKeep(new File([pdfb],name,{type:"application/pdf"}),{blob0:r.blob,meta:{type:"value",typeName:"価値観共有シート(記入済)",summary:nm}})}catch(e){ref=null}
+      try{ref=await docKeep(new File([r.blob],name.replace(/\.pdf$/,".jpg"),{type:"image/jpeg"}),{meta:{type:"value",typeName:"価値観共有シート(記入済)",summary:nm}})}catch(e){ref=null}
       if(ref){var old=(Array.isArray(j.docs)?j.docs:[]).filter(function(z){return /記入済/.test(z.name||"")&&z.id!==ref.id});
         j.docs=(Array.isArray(j.docs)?j.docs:[]).filter(function(z){return old.indexOf(z)<0});
         old.forEach(function(z){try{if(window.dsFiles.del)window.dsFiles.del(z.id)}catch(e){}});j.docs.push(ref)}
     }
-    var want=$("#vse-chk");if(want&&want.checked){if(!j.checks)j.checks={};j.checks.value=true}
+    VPV["j:"+j.id]=URL.createObjectURL(r.blob);var want=$("#vse-chk");if(want&&want.checked){if(!j.checks)j.checks={};j.checks.value=true}
     saveDoc("jobs",j,true);
     var d=await claude_use("downloads");
     if(d){try{await d.save({filename:name,data:pdfb});toast("PDFを保存しました"+(ref?"(案件の書類にも保管)":""))}catch(e2){if(e2&&e2.code!=="declined")toast("PDFを保存できませんでした")}}
