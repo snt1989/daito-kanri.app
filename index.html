@@ -518,7 +518,7 @@ var ICONS={
  tool:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'};
 function ic(n,sz){sz=sz||20;return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[n]+"</svg>"}
 var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"docs",label:"書類ボックス",ic:"book"},{tab:"qa",label:"Q&A",ic:"help"},
- {g:"原状回復工事"},{tab:"jobs",label:"案件一覧",ic:"list",d:"genkyo"},{tab:"sched",label:"施工予定",ic:"calendar",d:"genkyo"},{tab:"report",label:"完了報告",ic:"check",d:"genkyo"},{tab:"bill",label:"請求・入金",ic:"yen",d:"genkyo"},{tab:"water",label:"水道開始・中止届",ic:"drop",d:"genkyo"},
+ {g:"原状回復工事"},{tab:"jobs",label:"案件一覧",ic:"list",d:"genkyo"},{tab:"sched",label:"施工予定",ic:"calendar",d:"genkyo"},{tab:"report",label:"価値観共有シート",ic:"check",d:"genkyo"},{tab:"bill",label:"請求・入金",ic:"yen",d:"genkyo"},{tab:"water",label:"水道開始・中止届",ic:"drop",d:"genkyo"},
  {g:"緊急対応"},{tab:"elog",label:"出動一覧",ic:"alert",d:"emerg"},{tab:"eguide",label:"対応区分ガイド",ic:"book",d:"emerg"},{tab:"esum",label:"月次集計",ic:"chart",d:"emerg"},
  {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mscope",label:"業務内容",ic:"book",d:"maint"},
  {g:"エアコン設置"},{tab:"aclist",label:"エアコン案件",ic:"tool",d:"ac"},
@@ -714,7 +714,7 @@ function bindCal(){
 /* ----- report ----- */
 function vReport(){
   var L=S.jobs.filter(function(j){return j.status===3}).sort(function(a,b){return (a.workDate||"9999").localeCompare(b.workDate||"9999")});
-  var h='<div><h2 class="sec">施工予定・完了報告チェック</h2><div class="sub">施工が終わったら項目にチェックし、すべて揃ったら「完了報告済」にします。写真シートは各案件で作成し、提出後に「完了報告シート提出」をチェックしてください。</div></div>';
+  var h='<div><h2 class="sec">価値観共有シート</h2><div class="sub">施工が終わったら各案件の「📝 価値観共有シート」でシートに記入し、項目にチェックして、すべて揃ったら「完了報告済」にします。</div></div>';
   if(!L.length)return h+'<div class="panel empty">施工予定の案件はありません。案件一覧で「施工日を確定」まで進めるとここに表示されます。</div>';
   return h+'<div class="grid cards">'+L.map(function(j){
     var n=checkCount(j),all=n===CHK.length;
@@ -829,7 +829,7 @@ function setBase(j){
 function advance(id){
   var j=S.jobs.find(function(x){return x.id===id});if(!j||j.status>=6)return;
   if(j.status===2&&!j.workDate){openJob(id);toast("施工日を入力してから確定してください");return}
-  if(j.status===3&&checkCount(j)<CHK.length){S.tab="report";render();toast("完了報告のチェックをすべて済ませてください");return}
+  if(j.status===3&&checkCount(j)<CHK.length){S.tab="report";render();toast("価値観共有シートのチェックをすべて済ませてください");return}
   var n=Object.assign({},j,{status:j.status+1});saveJob(n);toast(j.site+" "+j.room+" → "+STAT[n.status].n);
 }
 function csv(){
@@ -911,7 +911,7 @@ function sampleJobs(){
 /* ====== 追加モジュール: 部門切替・緊急対応・建物維持管理 ====== */
 var DIVS=[["genkyo","原状回復工事"],["emerg","緊急対応"],["maint","建物維持管理"]];
 var TABSET={
- genkyo:[["jobs","案件一覧"],["sched","施工予定"],["report","完了報告"],["bill","請求・入金"],["set","設定"]],
+ genkyo:[["jobs","案件一覧"],["sched","施工予定"],["report","価値観共有シート"],["bill","請求・入金"],["set","設定"]],
  emerg:[["elog","出動一覧"],["eguide","対応区分ガイド"],["esum","月次集計"],["set","設定"]],
  maint:[["mmonth","作業一覧"],["mplan","年間予定"],["mscope","業務内容"],["set","設定"]]};
 var DEF_EMFEE={day:5000,night:7000,over:1000};
@@ -1332,7 +1332,7 @@ var SETGROUPS=[
   ["layout","間取りの表示名","単価表のクリーニング基本料金と連動する間取りの、表示名です。",[P("jobs","案件一覧")]],
   ["genopts","案件の選択肢","案件の「契約」「地区」のプルダウンです。",[P("jobs","案件一覧"),P("sched","施工予定")]],
   ["genstat","案件の状況名","案件の進捗の段階の名前と、次へ進めるボタンの文言です。",[P("jobs","案件一覧"),P("sched","施工予定"),P("bill","請求・入金")]],
-  ["chk","完了報告チェック","「完了報告済」にするために確認する項目です。",[P("report","完了報告")]]]],
+  ["chk","完了報告チェック","「完了報告済」にするために確認する項目です。",[P("report","価値観共有シート")]]]],
  ["緊急対応",[
   ["emfee","緊急出動費","基本料金(日中・夜間)と、2時間超の加算(税別)です。",[P("elog","出動一覧"),P("esum","月次集計")]],
   ["emcat","対応区分","緊急出動対応表の区分です。出動一覧の選択肢とガイドに使われます。",[P("eguide","対応区分ガイド"),P("elog","出動一覧")]],
@@ -2764,6 +2764,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"「完了報告」の画面を「価値観共有シート」に変更",d:"メニューと画面の名前を「価値観共有シート」に変えました。各案件の「📝 価値観共有シート」でシートに記入し、チェックが揃ったら「完了報告済」にできます。"},
  {v:"2026-10-22",t:"価値観共有シートを読み込んだシートへ直接入力",d:"完了報告の「📝 価値観共有シート」で、取り込んだ(または選んだ)価値観共有チェックシートの画像の上に、○/×の欄をタップして記入できます。業者様・ワランティ・間取り・理由・確認事項は入力欄から書き込めます。ずれるときは「位置合わせ」で調整できます。記入済みのシートはPDFで保存でき、案件の書類にも保管されます(Web版)。完了報告のチェック項目から「作業報告書」「完了報告シート提出」を外し、価値観共有シートに統一しました。"},
  {v:"2026-10-22",t:"スマホ表示のはみ出しを修正",d:"長いメール本文でホームが横に広がる問題、日付と題名が重なる問題、案件一覧のボタンや状況タブが画面外に切れる問題を直しました。"},
  {v:"2026-10-22",t:"画面の配色を大東建託パートナーズのロゴの色に",d:"メニューの色をチャコールブラック、アクセント(ボタン・選択中の項目)を赤に変更しました。ダークモードも同じ色合いです。"},
