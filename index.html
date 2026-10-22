@@ -386,18 +386,16 @@ a.btn{color:inherit;text-decoration:none}
   .pipe button:nth-child(4n){border-right:0}
   .alerts{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-.vsw{overflow-x:auto;flex:none}
-.vstb{width:100%;min-width:0;border-collapse:collapse;font-size:13px}
-.vstb th{font-size:12px;padding:6px 4px;border-bottom:1px solid var(--line);text-align:center}
-.vstb th:first-child{text-align:left}
-.vstb td{border-top:1px solid var(--line);padding:5px 4px;text-align:center}
-.vstb td.vst{text-align:left;line-height:1.45;min-width:0;overflow-wrap:anywhere}
-@media(max-width:720px){.vsb{width:38px;height:36px}.vstb td{padding:5px 2px}.vstb th{font-size:10.5px;padding:4px 1px}.vstb th .btn{padding:2px 6px;min-height:28px;font-size:11px}.vsn{width:38px}.vstb td.vst{font-size:12.5px}}
-.vstb tr.vsg td{background:var(--accent-soft);font-weight:700;text-align:left;font-size:12.5px;padding:4px 8px}
-.vsn{color:var(--muted);width:56px}
-.vsb{width:46px;height:36px;border:1px solid var(--line);border-radius:8px;background:none;font-size:18px;cursor:pointer;color:var(--muted)}
-.vsb[data-v=o]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);font-weight:700}
-.vsb[data-v=x]{background:var(--bad-soft);color:var(--bad);border-color:var(--bad);font-weight:700}
+.vsf{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.vstool{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.vsad{flex:1 0 100%}
+.vsal{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px 0}
+.vwrap{overflow:auto;max-height:64vh;border:1px solid var(--line);border-radius:8px;background:#e9e6e4;flex:none}
+.vstage{position:relative;container-type:inline-size;background:#fff}
+.vov{position:absolute;inset:0;pointer-events:none}
+.vsz{position:absolute;transform:translate(-50%,-50%);background:transparent;border:1px dashed rgba(209,18,31,.22);border-radius:50%;padding:0;cursor:pointer;pointer-events:auto}
+.vsk{position:absolute;transform:translate(-50%,-50%) rotate(-14deg);border:2.5px solid #d1121f;border-radius:50%;pointer-events:none}
+.vst2{position:absolute;color:#d1121f;font-weight:600;pointer-events:none}
 </style>
 
 <div class="app" id="app">
@@ -424,7 +422,7 @@ a.btn{color:inherit;text-decoration:none}
 var STAT=[
  {n:"指示書受領",next:"注文書を受領"},{n:"注文書受領",next:"請書を提出"},{n:"請書提出済",next:"施工日を確定"},
  {n:"施工予定",next:"完了報告へ"},{n:"完了報告済",next:"請求済にする"},{n:"請求済",next:"入金済にする"},{n:"入金済",next:""}];
-var CHK=[["pre","作業前の写真"],["post","作業後の写真"],["value","価値観共有シート"],["report","作業報告書"],["keys","鍵の返却・施錠確認"],["sheet","完了報告シート提出"]];
+var CHK=[["pre","作業前の写真"],["post","作業後の写真"],["value","価値観共有シート"],["keys","鍵の返却・施錠確認"]];
 var TAXRATE=10,PAYDAY=25,ALERTDAYS=3;
 function taxOf(sub){return Math.floor(sub*(100+TAXRATE)/100)}
 var KINDS=["元請","下請"];
@@ -1795,7 +1793,7 @@ function applyMasters(){
   STATGROUPS.forEach(function(g){var ov=(s.stat&&Array.isArray(s.stat[g[0]]))?s.stat[g[0]]:[];
     g[2].forEach(function(x,i){var o=ov[i]||{},d=STATDEF[g[0]][i];x.n=String(o.n||"").trim()||d.n;x.next=d.next?(String(o.next||"").trim()||d.next):""})});
   LAYOUTS.forEach(function(l,i){var n=s.layoutNames&&s.layoutNames[l[0]];l[1]=n&&String(n).trim()?String(n).trim():LAYDEF[i][1]});
-  setInPlace(CHK,Array.isArray(s.chk)?s.chk.filter(function(c){return c&&c[0]&&String(c[1]||"").trim()}).map(function(c){return [String(c[0]),String(c[1]).trim()]}):CHKDEF.map(function(c){return c.slice()}));
+  setInPlace(CHK,Array.isArray(s.chk)?s.chk.filter(function(c){return c&&c[0]&&c[0]!=="report"&&c[0]!=="sheet"&&String(c[1]||"").trim()}).map(function(c){return [String(c[0]),String(c[1]).trim()]}):CHKDEF.map(function(c){return c.slice()}));
   setInPlace(EM_CATS,Array.isArray(s.emCats)?s.emCats.filter(function(c){return Array.isArray(c)&&c[0]&&String(c[2]||"").trim()}).map(function(c){return [String(c[0]),String(c[1]||"その他"),String(c[2]),String(c[3]||"")]}):EMCATDEF.map(function(c){return c.slice()}));
   Object.keys(WT_ORG).forEach(function(k){delete WT_ORG[k]});
   var base=JSON.parse(JSON.stringify(WT_ORG_BASE)),ov=(s.orgs&&typeof s.orgs==="object")?s.orgs:{};
@@ -2766,7 +2764,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
- {v:"2026-10-22",t:"価値観共有チェックシートを様式に合わせて入力・PDF保存",d:"完了報告の「📝 価値観共有シート」で、大東建託の「価値観共有チェックシート」と同じ項目(確認日・営業所名・建物名称・部屋番号・担当者名・業者様、ワランティ加入・間取り、玄関〜全体のチェック項目と立会終了後の確認、確認事項)を入力できます。各項目は ○/× をボタンで切り替え、列ごとの「全て○」も使えます。様式に近いPDFとして保存でき、案件の書類にも保管されます(Web版)。"},
+ {v:"2026-10-22",t:"価値観共有シートを読み込んだシートへ直接入力",d:"完了報告の「📝 価値観共有シート」で、取り込んだ(または選んだ)価値観共有チェックシートの画像の上に、○/×の欄をタップして記入できます。確認日・業者様・ワランティ・間取り・理由・確認事項は入力欄から書き込めます。ずれるときは「位置合わせ」で調整できます。記入済みのシートはPDFで保存でき、案件の書類にも保管されます(Web版)。完了報告のチェック項目から「作業報告書」「完了報告シート提出」を外し、価値観共有シートに統一しました。"},
  {v:"2026-10-22",t:"スマホ表示のはみ出しを修正",d:"長いメール本文でホームが横に広がる問題、日付と題名が重なる問題、案件一覧のボタンや状況タブが画面外に切れる問題を直しました。"},
  {v:"2026-10-22",t:"画面の配色を大東建託パートナーズのロゴの色に",d:"メニューの色をチャコールブラック、アクセント(ボタン・選択中の項目)を赤に変更しました。ダークモードも同じ色合いです。"},
  {v:"2026-10-22",t:"右上のアカウント表示を1つにまとめました",d:"名前のマークと「アカウント」ボタンが並んでいたのを、名前の表示を押すとアカウント画面(パスワード変更・ログアウト)が開く1つのボタンにしました。"},
@@ -3638,86 +3636,113 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("input",function(e){if(e.target.id==="qa-q"&&S.tab==="qa"){S.qaQ=e.target.value;var pos=e.target.selectionStart;render();var el=$("#qa-q");if(el){el.focus();try{el.setSelectionRange(pos,pos)}catch(x){}}}});
 
-/* ---------- 完了報告: 価値観共有チェックシートの入力・PDF保存 ---------- */
-var VSE={id:"",chk:{},aft:{},busy:false};
-var VSG=[
- {g:"玄関・廊下・部屋",it:[
-  ["玄関ドアの開閉はスムーズか。鍵のかかりに問題は無いか。(メモリーキーリセット必要)"],
-  ["ドアスコープは曇っていないか。ドアポスト・アメリカンポスト・集合ポストに異常は無いか。ポストシールは貼ってあるか。"],
-  ["玄関の上がり口はふかふかしていないか。ドア枠に白蟻の被害は無いか。"],
-  ["インターフォンの呼び出し音、モニターの映りは正常か。録画履歴はリセットしたか。"],
-  ["下駄箱の扉の開閉はスムーズか。下駄箱棚板の不足は無いか。"],
-  ["玄関・廊下・各部屋の照明は点灯するか。"],
-  ["各部屋の建具はスムーズに開閉できるか。転倒防止ビス、外止め、戸当たりゴムは固定されているか。"],
-  ["シーリングのぐらつきや通電確認は問題ないか。(つうでん君使用)"],
-  ["バルコニー・専用庭、クローゼット内に残置物は無いか。排水につまりは無いか。"],
-  ["部屋に不快な匂い(タバコ・排水)はないか。クロス・床・内部建具等に汚れ、傷の修繕指示"]]},
- {g:"浴室",it:[["照明器具は点灯するか。扉の開閉に問題無いか。"],["水栓・シャワーホースの付け根等から水漏れはないか。棚や排水溝の確認"],["鏡にウロコ、汚れ、カビは残っていないか。"]]},
- {g:"洗面",it:[["照明器具 点灯するか。洗面台にぐらつきは無いか。"],["収納扉・底板 破損・汚れはないか。"],["水栓・洗面シャワーホース・洗濯水栓 水漏れは無いか。(水漏れおさむ君使用)"],["洗濯パン 破損がないか 部品は正しく設置されているか。"]]},
- {g:"トイレ",it:[["便座にぐらつきが無いか。便座・ノズル(洗浄付便座の場合)の確認・指示"],["棚やペーパーホルダーにグラつきは無いか。"],["ロータンク内に汚れや異物はなく、水漏れはないか。"]]},
- {g:"リビング・キッチン",it:[["水栓に水漏れは無いか。ホース(タカギ)に水漏れは無いか。(タカギ水漏れおさむ君使用)"],["吊棚・収納扉・底板 破損無いか。コンロ等の油汚れの確認・指示"],["小元灯・換気扇は正常に作動するか。(児音にも注意)換気扇の油汚れ確認・指示"],["ビルトインコンロの電池確認と魚焼きグリルの汚れ確認"],["建具はスムーズに開閉できるか。転倒防止ビス、外止めは固定されているか。"]]},
- {g:"全体",it:[
-  ["コンセントは100Vですか?(グラつき・破損の有無・未通電について確認)(通電チェッカー使用)","oo-"],
-  ["床下収納 ふたは開くか、床下に 蟻道が確認できるか(基礎面)ゴミは落ちていないか。"],
-  ["タオル掛け(トイレ・洗面・浴室)カーテンレールぐらつきは無いか。カーテンランナーに不足は無いか。"],
-  ["換気扇(トイレ・浴室)、浴室乾燥機・通気口は正常に作動するか。"],
-  ["建具・網戸はスムーズに開閉できるか。傷等は無く転倒防止ビス、外止めは固定されているか。"],
-  ["エアコンは正常に動くか。(不快な匂い・汚れの有無・ドレンホースの詰まり・スリーブの設置を確認)"],
-  ["エアコンや照明などの設置されている設備の有無は確認したか。"],
-  ["外部物置の残置・建物周りの蟻道の確認は行ったか。個人情報の残置は無いか。"],
-  ["クリーニング不足は無いか。(特に床・浴室・キッチン)","-oo"],
-  ["現場演出備品の設置は行ったか。(タカギカートリッジ、クリーニングシート(水回り)、その他ゴミ出し案内等)","--o"]]}
-];
-var VSA=["退去確定入力は行ったか。","かんたん君入力は行ったか。","原状回復工期の設定は退去確定日からS7日、C9日、F11日以内で設定しているか。","資材等の発注がある場合は発注は行っているか。"];
-var VSC=["管理担当者","業者様","完成確認者"];
-function vseKeys(){var k=[];VSG.forEach(function(g,gi){g.it.forEach(function(it,ii){k.push([gi+"-"+ii,it[1]||"ooo"])})});return k}
+/* ---------- 完了報告: 読み込んだ価値観共有チェックシートへ直接入力 ---------- */
+var VSE={id:"",f:{},chk:{},aft:{},al:{dx:0,dy:0,sx:1,sy:1},z:1,bmp:null,url:"",file:null,name:"",busy:false,ready:false};
+var VSR={w:1728,h:2288,row0:405,pitch:36.6,cx:[[1248,1307],[1367,1426],[1485,1544]],ay:[1692,1728,1763,1798],ax:[1047,1092],
+  dy:154,dx:[[975,1030],[1225,1280],[1445,1510]],co:[1326,231],wy:305,wx:{"有":397,"無":473},lx:{"シングル":739,"カップル":865,"ファミリー":997},lw:{"シングル":95,"カップル":95,"ファミリー":120}};
+var VSM=[];(function(){for(var i=0;i<35;i++)VSM.push("ooo");VSM[25]="oo-";VSM[33]="-oo";VSM[34]="--o"})();
 function vseDef(j){
   var v=j.vsheet||{},co=(S.settings.company&&S.settings.company.name)||"",pick=function(a,b){return v[a]!=null?v[a]:b};
-  return {date:pick("date",j.workDate||TODAY()),orderDate:pick("orderDate",""),doneDate:pick("doneDate",""),office:pick("office",String(j.area||"").replace(/[市郡町村]$/,"")),
-    site:pick("site",j.site||""),room:pick("room",j.room||""),person:pick("person",j.daitoStaff||""),company:pick("company",co),bldgCd:pick("bldgCd",j.bldgCd||""),
-    warranty:pick("warranty",""),layout:pick("layout",""),memo:pick("memo",v.note||""),afterWhy:pick("afterWhy",""),chk:v.chk||{},aft:v.aft||{}};
+  return {date:pick("date",j.workDate||TODAY()),orderDate:pick("orderDate",""),doneDate:pick("doneDate",""),company:pick("company",co),warranty:pick("warranty",""),layout:pick("layout",""),memo:pick("memo",""),afterWhy:pick("afterWhy","")};
 }
-function vseBtn(key,col,val,na){
-  if(na)return '<td class="vsn">—</td>';
-  return '<td><button type="button" class="vsb" data-vsc="'+key+':'+col+'" data-v="'+(val||"")+'">'+(val==="o"?"○":val==="x"?"×":"·")+'</button></td>'}
+function vseXY(X,Y){var a=VSE.al;return [X*a.sx+a.dx,Y*a.sy+a.dy]}
+function vseMd(s){var m=String(s||"").match(/^(\d+)-(\d+)-(\d+)$/);return m?[String(+m[2]),String(+m[3])]:["",""]}
+// 画面・PDF共通の記入内容(基準座標で表現)
+function vseItems(){
+  var it=[],f=VSE.f;
+  function circ(X,Y,w,h){it.push({t:"c",x:X,y:Y,w:w,h:h})}
+  for(var k=0;k<35;k++){var cur=VSE.chk[k]||"...";for(var c=0;c<3;c++){if(VSM[k][c]==="-")continue;var ch=cur[c];if(ch==="o")circ(VSR.cx[c][0],VSR.row0+k*VSR.pitch,46,30);else if(ch==="x")circ(VSR.cx[c][1],VSR.row0+k*VSR.pitch,46,30)}}
+  for(var i=0;i<4;i++){var a=VSE.aft[i];if(a==="o")circ(VSR.ax[0],VSR.ay[i],42,28);else if(a==="x")circ(VSR.ax[1],VSR.ay[i],42,28)}
+  [f.date,f.orderDate,f.doneDate].forEach(function(d,n){var m=vseMd(d);if(m[0])it.push({t:"s",x:VSR.dx[n][0],y:VSR.dy,s:m[0],fs:26,al:"c"});if(m[1])it.push({t:"s",x:VSR.dx[n][1],y:VSR.dy,s:m[1],fs:26,al:"c"})});
+  if(f.company)it.push({t:"s",x:VSR.co[0],y:VSR.co[1],s:f.company,fs:34,al:"c",w:470});
+  if(f.warranty)circ(VSR.wx[f.warranty],VSR.wy,64,40);
+  if(f.layout)circ(VSR.lx[f.layout],VSR.wy,VSR.lw[f.layout],40);
+  if(f.afterWhy)it.push({t:"p",x:1172,y:1690,s:f.afterWhy,fs:22,w:395,lh:28,max:5});
+  if(f.memo)it.push({t:"p",x:192,y:1884,s:f.memo,fs:27,w:1170,lh:36,max:3});
+  return it;
+}
+function vseStageHtml(){
+  var P=function(X,Y){var p=vseXY(X,Y);return [p[0]/VSR.w*100,p[1]/VSR.h*100]},a=VSE.al,h="";
+  vseItems().forEach(function(m){var p=P(m.x,m.y);
+    if(m.t==="c")h+='<i class="vsk" style="left:'+p[0]+'%;top:'+p[1]+'%;width:'+m.w*a.sx/VSR.w*100+'%;height:'+m.h*a.sy/VSR.h*100+'%"></i>';
+    else if(m.t==="s")h+='<span class="vst2" style="left:'+p[0]+'%;top:'+p[1]+'%;font-size:'+m.fs*a.sx/VSR.w*100+'cqw;text-align:center;transform:translate(-50%,-50%)">'+esc(m.s)+"</span>";
+    else{h+='<span class="vst2" style="left:'+p[0]+'%;top:'+p[1]+'%;width:'+m.w*a.sx/VSR.w*100+'%;font-size:'+m.fs*a.sx/VSR.w*100+'cqw;line-height:'+m.lh/m.fs+';white-space:pre-wrap;overflow-wrap:anywhere">'+esc(m.s)+"</span>"}});
+  for(var k=0;k<35;k++)for(var c=0;c<3;c++){if(VSM[k][c]==="-")continue;[0,1].forEach(function(s){var p=P(VSR.cx[c][s],VSR.row0+k*VSR.pitch);
+    h+='<button type="button" class="vsz" data-vsz="'+k+":"+c+":"+(s?"x":"o")+'" style="left:'+p[0]+'%;top:'+p[1]+'%;width:'+50*a.sx/VSR.w*100+'%;height:'+32*a.sy/VSR.h*100+'%"></button>'})}
+  for(var i=0;i<4;i++)[0,1].forEach(function(s){var p=P(VSR.ax[s],VSR.ay[i]);
+    h+='<button type="button" class="vsz" data-vsz="a'+i+":0:"+(s?"x":"o")+'" style="left:'+p[0]+'%;top:'+p[1]+'%;width:'+44*a.sx/VSR.w*100+'%;height:'+30*a.sy/VSR.h*100+'%"></button>'});
+  return h;
+}
+function vseDraw(){var el=$("#vse-ov");if(el)el.innerHTML=vseStageHtml();var st=$("#vse-stage");if(st)st.style.width=(VSE.z*100)+"%"}
 function openVse(id){
   var j=S.jobs.find(function(x){return x.id===id});if(!j)return;
-  VSE.id=id;VSE.busy=false;var v=vseDef(j);VSE.chk=JSON.parse(JSON.stringify(v.chk));VSE.aft=JSON.parse(JSON.stringify(v.aft));
-  var T=function(k,l,t){return '<label>'+l+'<input type="'+(t||"text")+'" id="vse-'+k+'" value="'+esc(v[k])+'"></label>'},
-      R=function(k,l,opts){return '<label>'+l+'<select id="vse-'+k+'"><option value=""></option>'+opts.map(function(o){return "<option"+(v[k]===o?" selected":"")+">"+o+"</option>"}).join("")+"</select></label>"};
-  var rows="";
-  VSG.forEach(function(g,gi){
-    rows+='<tr class="vsg"><td colspan="4">'+esc(g.g)+"</td></tr>";
-    g.it.forEach(function(it,ii){var key=gi+"-"+ii,m=it[1]||"ooo",cur=VSE.chk[key]||"...";
-      rows+="<tr><td class=\"vst\">"+(ii+1)+". "+esc(it[0])+"</td>"+[0,1,2].map(function(c){var ch=cur[c];return vseBtn(key,c,ch==="o"||ch==="x"?ch:"",m[c]==="-")}).join("")+"</tr>"});
-  });
-  rows+='<tr class="vsg"><td colspan="4">立会終了後の確認</td></tr>';
-  VSA.forEach(function(t,i){var cur=VSE.aft[i]||"";rows+="<tr><td class=\"vst\">"+(i+1)+". "+esc(t)+"</td>"+vseBtn("a"+i,0,cur)+'<td class="vsn"></td><td class="vsn"></td></tr>'});
-  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(900px,100%)"><h2>📝 価値観共有チェックシート</h2><div class="sub">'+esc(j.site+" "+j.room)+' ／ ボタンを押すごとに「○(問題なし)→×(問題あり)→空欄」と切り替わります。記入内容は案件に保存され、「PDFで保存」で正式な様式に近い形のPDFにできます。</div>'+
-   '<div class="fields">'+T("date","確認日","date")+T("orderDate","e注文確認日","date")+T("doneDate","完了日","date")+T("office","営業所名")+T("site","建物名称")+T("room","部屋番号")+T("person","担当者名")+T("company","業者様")+T("bldgCd","建物CD")+
-   R("warranty","①ワランティ加入",["有","無"])+R("layout","②間取りの確認",["シングル","カップル","ファミリー"])+'</div>'+
-   '<div class="sub">※工期の目安: シングル7日 / カップル9日 / ファミリー11日</div>'+
-   '<div class="vsw"><table class="vstb"><thead><tr><th>チェック項目</th>'+VSC.map(function(c,i){return '<th>'+c+'<br><button type="button" class="btn sm" data-vscol="'+i+'">全て○</button></th>'}).join("")+"</tr></thead><tbody>"+rows+"</tbody></table></div>"+
-   '<div class="fields"><label class="wide">立会終了後の確認で「×」の場合の理由<textarea id="vse-afterWhy" rows="2">'+esc(v.afterWhy)+'</textarea></label><label class="wide">確認事項<textarea id="vse-memo" rows="3">'+esc(v.memo)+'</textarea></label></div>'+
+  var v=j.vsheet||{};
+  VSE.id=id;VSE.f=vseDef(j);VSE.chk=Object.assign({},v.chk2||{});VSE.aft=Object.assign({},v.aft2||{});VSE.al=Object.assign({dx:0,dy:0,sx:1,sy:1},v.al||{});
+  VSE.z=(window.innerWidth<720)?2.4:1;VSE.bmp=null;VSE.file=null;VSE.name="";VSE.ready=false;VSE.busy=false;if(VSE.url){try{URL.revokeObjectURL(VSE.url)}catch(e){}VSE.url=""}
+  var f=VSE.f,T=function(k,l,t){return '<label>'+l+'<input type="'+(t||"text")+'" id="vse-'+k+'" value="'+esc(f[k])+'"></label>'},
+      R=function(k,l,opts){return '<label>'+l+'<select id="vse-'+k+'"><option value=""></option>'+opts.map(function(o){return "<option"+(f[k]===o?" selected":"")+">"+o+"</option>"}).join("")+"</select></label>"};
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(1000px,100%)"><h2>📝 価値観共有チェックシート</h2><div class="sub">'+esc(j.site+" "+j.room)+' ／ 読み込んだシートの上で、○や×の欄をタップして記入します(もう一度タップで消去)。</div>'+
+   '<div class="vsf"><span id="vse-src" class="sub">シートを探しています…</span> <label class="btn sm" style="cursor:pointer">📎 シートを選ぶ<input type="file" id="vse-file" accept="application/pdf,image/*" style="display:none"></label></div>'+
+   '<div class="fields">'+T("date","確認日","date")+T("orderDate","e注文確認日","date")+T("doneDate","完了日","date")+T("company","業者様")+R("warranty","①ワランティ加入",["有","無"])+R("layout","②間取りの確認",["シングル","カップル","ファミリー"])+
+   '<label class="wide">立会終了後の確認で「×」の場合の理由<textarea id="vse-afterWhy" rows="2">'+esc(f.afterWhy)+'</textarea></label><label class="wide">確認事項<textarea id="vse-memo" rows="2">'+esc(f.memo)+'</textarea></label></div>'+
+   '<div class="vstool"><span class="sub">拡大</span><button type="button" class="btn sm" data-vsal="z-">－</button><button type="button" class="btn sm" data-vsal="z+">＋</button>'+
+   '<span class="sub">全て○</span>'+[0,1,2].map(function(c){return '<button type="button" class="btn sm" data-vscol="'+c+'">'+["管理担当者","業者様","完成確認者"][c]+"</button>"}).join("")+
+   '<details class="vsad"><summary class="sub">位置合わせ</summary><div class="vsal"><span class="sub">ずれるときに、記入欄の位置を動かします</span>'+
+   '<button type="button" class="btn sm" data-vsal="l">◀</button><button type="button" class="btn sm" data-vsal="r">▶</button><button type="button" class="btn sm" data-vsal="u">▲</button><button type="button" class="btn sm" data-vsal="d">▼</button>'+
+   '<button type="button" class="btn sm" data-vsal="w-">横−</button><button type="button" class="btn sm" data-vsal="w+">横＋</button><button type="button" class="btn sm" data-vsal="h-">縦−</button><button type="button" class="btn sm" data-vsal="h+">縦＋</button><button type="button" class="btn sm" data-vsal="reset">戻す</button></div></details></div>'+
+   '<div class="vwrap"><div id="vse-stage" class="vstage" style="width:'+VSE.z*100+'%"><div id="vse-empty" class="empty" style="padding:40px 10px">読み込み中…</div><div id="vse-ov" class="vov"></div></div></div>'+
    '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="vse-chk"'+((j.checks&&j.checks.value)?"":" checked")+'> 完了報告の「価値観共有シート」にチェックを付ける</label>'+
    '<div class="acts"><span class="sub" id="vse-msg"></span><span><button type="button" class="btn" id="vse-x">閉じる</button> <button type="button" class="btn" id="vse-save">保存</button> <button type="button" class="btn primary" id="vse-pdf">PDFで保存</button></span></div></div></div>';
+  vseLoad(j);
 }
-function vseSet(btn,val){btn.dataset.v=val;btn.textContent=val==="o"?"○":val==="x"?"×":"·"}
-function vseCycle(btn){
-  var p=btn.dataset.vsc.split(":"),key=p[0],col=+p[1],cur=btn.dataset.v||"",nx=cur===""?"o":cur==="o"?"x":"";vseSet(btn,nx);
-  if(key[0]==="a"&&key.indexOf("-")<0){VSE.aft[key.slice(1)]=nx;return}
-  var s=(VSE.chk[key]||"...").split("");s[col]=nx||".";VSE.chk[key]=s.join("");
+async function vseSetBlob(blob,name,mime){
+  var img=blob;
+  if(mime==="application/pdf"||/\.pdf$/i.test(name||"")){
+    var old=IM.ctl;IM.ctl=new AbortController();img=null;
+    try{await eachPage(new File([blob],name||"sheet.pdf",{type:"application/pdf"}),async function(b){if(!img)img=b},1,2200)}finally{IM.ctl=old}
+    if(!img)throw new Error("render")}
+  var bmp=await createImageBitmap(img);
+  if(VSE.url){try{URL.revokeObjectURL(VSE.url)}catch(e){}}
+  VSE.bmp=bmp;VSE.url=URL.createObjectURL(img);VSE.name=name||"";VSE.ready=true;
+  var st=$("#vse-stage");if(!st)return;
+  var e=$("#vse-empty");if(e)e.remove();var im=$("#vse-img");if(im)im.remove();
+  var el=document.createElement("img");el.id="vse-img";el.src=VSE.url;el.alt="";el.style.cssText="display:block;width:100%;height:auto";st.insertBefore(el,st.firstChild);
+  var s=$("#vse-src");if(s)s.textContent="読み込んだシート: "+(name||"");vseDraw();var w=$(".vwrap");if(w&&VSE.z>1)w.scrollLeft=w.scrollWidth;
+}
+async function vseLoad(j){
+  var s=$("#vse-src");
+  try{
+    var ref=null;(j.docs||[]).slice().reverse().some(function(r){if(r.typeName==="価値観共有シート"&&!/記入済/.test(r.name||"")){ref=r;return true}});
+    if(ref&&window.dsFiles){var r=await window.dsFiles.blob(ref.id);if(r&&r.ok&&r.blob){VSE.baseRef=ref;await vseSetBlob(r.blob,ref.name,ref.mime);return}}
+  }catch(e){}
+  var e2=$("#vse-empty");if(e2)e2.innerHTML="読み込んだ価値観共有シートがありません。<br>上の「📎 シートを選ぶ」でシート(PDF・写真)を選んでください。";
+  if(s)s.textContent="この案件に取り込んだシートはありません";
+}
+function vseAl(a){
+  var A=VSE.al;
+  if(a==="z+")VSE.z=Math.min(4,VSE.z+0.4);else if(a==="z-")VSE.z=Math.max(1,VSE.z-0.4);
+  else if(a==="l")A.dx-=3;else if(a==="r")A.dx+=3;else if(a==="u")A.dy-=3;else if(a==="d")A.dy+=3;
+  else if(a==="w+")A.sx+=0.005;else if(a==="w-")A.sx-=0.005;else if(a==="h+")A.sy+=0.005;else if(a==="h-")A.sy-=0.005;
+  else if(a==="reset")VSE.al={dx:0,dy:0,sx:1,sy:1};
+  vseDraw();
+}
+function vseZone(z){
+  var p=z.split(":"),k=p[0],c=+p[1],ch=p[2];
+  if(k[0]==="a"){var i=+k.slice(1);VSE.aft[i]=VSE.aft[i]===ch?"":ch}
+  else{var s=(VSE.chk[k]||"...").split("");s[c]=s[c]===ch?".":ch;VSE.chk[k]=s.join("")}
+  vseDraw();
 }
 function vseCol(c){
-  document.querySelectorAll("#modal [data-vsc]").forEach(function(b){var p=b.dataset.vsc.split(":");if(+p[1]===c){if(b.dataset.vsc[0]==="a"&&p[0].indexOf("-")<0&&c!==0)return;if(b.dataset.v!=="o"){vseSet(b,"o");vseCycleSync(b,"o")}}});
+  for(var k=0;k<35;k++){if(VSM[k][c]==="-")continue;var s=(VSE.chk[k]||"...").split("");s[c]="o";VSE.chk[k]=s.join("")}
+  if(c===0)for(var i=0;i<4;i++)VSE.aft[i]="o";
+  vseDraw();
 }
-function vseCycleSync(b,val){var p=b.dataset.vsc.split(":"),key=p[0],col=+p[1];
-  if(key[0]==="a"&&key.indexOf("-")<0){VSE.aft[key.slice(1)]=val;return}
-  var s=(VSE.chk[key]||"...").split("");s[col]=val||".";VSE.chk[key]=s.join("")}
-function vseRead(){
-  var g=function(k){var e=$("#vse-"+k);return e?e.value.trim():""};
-  return {date:g("date"),orderDate:g("orderDate"),doneDate:g("doneDate"),office:g("office"),site:g("site"),room:g("room"),person:g("person"),company:g("company"),bldgCd:g("bldgCd"),warranty:g("warranty"),layout:g("layout"),memo:g("memo"),afterWhy:g("afterWhy"),chk:VSE.chk,aft:VSE.aft};
-}
+document.addEventListener("input",function(e){var t=e.target;if(!t||!t.id||t.id.indexOf("vse-")!==0)return;var k=t.id.slice(4);if(k in VSE.f){VSE.f[k]=t.value;vseDraw()}});
+document.addEventListener("change",async function(e){
+  var t=e.target;if(!t||t.id!=="vse-file"||!t.files||!t.files[0])return;
+  var f=t.files[0],msg=$("#vse-msg");if(msg)msg.textContent="読み込み中…";
+  try{await vseSetBlob(f,f.name,f.type);VSE.file=f;f._dk={type:"value",typeName:"価値観共有シート"};if(msg)msg.textContent=""}catch(er){if(msg)msg.textContent="シートを読み込めませんでした"}
+});
 function vseWrap(ctx,text,w){
   var out=[];String(text||"").split(/\r?\n/).forEach(function(p){
     if(!p){out.push("");return}var line="";
@@ -3725,60 +3750,35 @@ function vseWrap(ctx,text,w){
     out.push(line)});
   return out;
 }
-function vseCanvas(v){
-  var W=1240,H=1754,c=document.createElement("canvas");c.width=W;c.height=H;var x=c.getContext("2d"),F='"Noto Sans JP","Hiragino Sans","Meiryo",sans-serif',M=40,TW=W-2*M;
-  x.fillStyle="#fff";x.fillRect(0,0,W,H);x.fillStyle="#111";x.strokeStyle="#111";x.lineWidth=1.5;x.textBaseline="middle";
-  var fd=function(s){var m=String(s||"").match(/^(\d+)-(\d+)-(\d+)$/);return m?[+m[2],+m[3]]:["",""]};
-  function txt(s,px,py,size,w,bold,al){x.font=(bold?"700 ":"")+size+"px "+F;s=String(s||"");while(size>11&&w&&x.measureText(s).width>w){size--;x.font=(bold?"700 ":"")+size+"px "+F}x.textAlign=al||"left";x.fillText(s,px,py);x.textAlign="left"}
-  function box(a,b,w,h,fill){if(fill){x.fillStyle=fill;x.fillRect(a,b,w,h);x.fillStyle="#111"}x.strokeRect(a,b,w,h)}
-  function circle(cx,cy,rx,ry,rot){x.save();x.lineWidth=2.6;x.beginPath();x.ellipse(cx,cy,rx,ry,rot||-0.3,0,Math.PI*2);x.stroke();x.restore()}
-  txt("価値観共有チェックシート",M+8,62,40,520,true);x.beginPath();x.moveTo(M,86);x.lineTo(M+560,86);x.stroke();
-  var dt=[["確認日",v.date],["e注文確認日",v.orderDate],["完了日",v.doneDate]],dx=M+590,dw=(TW-590)/3;
-  dt.forEach(function(d,i){var a=dx+i*dw,m=fd(d[1]);box(a,30,dw,44);txt(d[0],a+8,52,17,70);txt((m[0]||"　　")+" 月 "+(m[1]||"　　")+" 日",a+dw-8,52,18,dw-90,false,"right")});
-  var hy=96,hc=[["営業所名",v.office,150],["建物名称",v.site,330],["部屋番号",v.room,150],["担当者名",v.person,200],["業者様",v.company,TW-830]],hx=M;
-  hc.forEach(function(h){box(hx,hy,h[2],30,"#f1eeec");txt(h[0],hx+h[2]/2,hy+15,16,h[2]-8,false,"center");box(hx,hy+30,h[2],50);txt(h[1],hx+h[2]/2,hy+55,22,h[2]-14,true,"center");hx+=h[2]});
-  var y=hy+80+18;txt("確認事項",M+4,y+8,16,100,true);y+=34;
-  x.font="20px "+F;var px=M+16;
-  function opts(label,list,cur,x0){txt(label,x0,y,20,300);var xx=x0+x.measureText(label).width+10;list.forEach(function(o,i){x.font="20px "+F;var w=x.measureText(o).width;x.fillText(o,xx,y);if(cur===o)circle(xx+w/2,y,w/2+12,17,0);xx+=w+(i<list.length-1?34:0)});return xx}
-  var e1=opts("①ワランティ加入(",["有","無"],v.warranty,px);x.fillText(")",e1+8,y);
-  var e2=opts("②間取りの確認(",["シングル","カップル","ファミリー"],v.layout,px+360);x.fillText(")",e2+8,y);
-  txt("※工期の目安:シングル7日 カップル9日 ファミリー11日",px+80,y+30,15,420);txt("※ご自分の主観で必ず確認をお願いします!!",W-M-8,y+30,15,420,false,"right");y+=54;
-  var gW=44,cw=48,tx=M+gW,txw=TW-gW-6*cw,rh=28;
-  box(M,y,gW,48,"#f1eeec");box(tx,y,txw,48,"#f1eeec");txt("チェック項目",tx+txw/2,y+24,22,txw,true,"center");
-  VSC.forEach(function(cn,i){var a=tx+txw+i*2*cw;box(a,y,2*cw,26,"#f1eeec");txt(cn,a+cw,y+13,15,2*cw-4,true,"center");box(a,y+26,cw,22,"#f1eeec");box(a+cw,y+26,cw,22,"#f1eeec");txt("○",a+cw/2,y+37,14,0,false,"center");txt("×",a+cw*1.5,y+37,14,0,false,"center")});
-  y+=48;
-  function mark(a,yy,val,col){ // a=left x of the 2-cell pair
-    var cx1=a+cw/2,cx2=a+cw*1.5,cy=yy+rh/2;
-    x.lineWidth=1.5;x.beginPath();x.arc(cx1,cy,7,0,Math.PI*2);x.stroke();
-    x.beginPath();x.moveTo(cx2-6,cy-6);x.lineTo(cx2+6,cy+6);x.moveTo(cx2+6,cy-6);x.lineTo(cx2-6,cy+6);x.stroke();
-    if(val==="o")circle(cx1,cy,17,11);else if(val==="x")circle(cx2,cy,17,11)}
-  VSG.forEach(function(g,gi){
-    var gh=g.it.length*rh;box(M,y,gW,gh);var n=g.g.length,fs=Math.min(18,Math.floor(gh/(n+0.6)));x.font=fs+"px "+F;x.textAlign="center";for(var k=0;k<n;k++)x.fillText(g.g[k],M+gW/2,y+(gh-n*fs)/2+fs*(k+0.5));x.textAlign="left";
-    g.it.forEach(function(it,ii){var key=gi+"-"+ii,m=it[1]||"ooo",cur=(v.chk&&v.chk[key])||"...",yy=y+ii*rh;
-      box(tx,yy,txw,rh);txt(String.fromCharCode(0x2460+ii)+it[0],tx+6,yy+rh/2,16,txw-12);
-      for(var c2=0;c2<3;c2++){var a=tx+txw+c2*2*cw;box(a,yy,cw,rh);box(a+cw,yy,cw,rh);
-        if(m[c2]==="-"){txt("—",a+cw/2,yy+rh/2,16,0,false,"center");txt("—",a+cw*1.5,yy+rh/2,16,0,false,"center")}else mark(a,yy,cur[c2]==="o"||cur[c2]==="x"?cur[c2]:"")}});
-    y+=gh});
-  y+=14;
-  var ah=VSA.length*rh,aw=txw-300;box(M,y,gW,ah);var an="立会終了後の確認",afs=Math.min(15,Math.floor(ah/(an.length+0.6)));x.font=afs+"px "+F;x.textAlign="center";for(var q=0;q<an.length;q++)x.fillText(an[q],M+gW/2,y+(ah-an.length*afs)/2+afs*(q+0.5));x.textAlign="left";
-  VSA.forEach(function(t,i){var yy=y+i*rh;box(tx,yy,aw,rh);txt(String.fromCharCode(0x2460+i)+t,tx+6,yy+rh/2,16,aw-12);var a=tx+aw;box(a,yy,cw,rh);box(a+cw,yy,cw,rh);mark(a,yy,(v.aft&&v.aft[i])||"")});
-  var rx=tx+aw+2*cw;box(rx,y,TW-gW-aw-2*cw,ah);txt("×の場合の理由は",rx+8,y+14,14,200,true);x.font="17px "+F;vseWrap(x,v.afterWhy,TW-gW-aw-2*cw-16).slice(0,3).forEach(function(l,i){x.fillText(l,rx+8,y+40+i*24)});
-  y+=ah+14;
-  var mh=H-y-70;box(M,y,TW,mh);txt("確認事項 :",M+14,y+22,18,150,true);x.font="21px "+F;var ml=vseWrap(x,v.memo,TW-40),mx=Math.max(1,Math.floor((mh-44)/30));ml.slice(0,mx).forEach(function(l,i){x.fillText(l,M+20,y+56+i*30)});
-  txt("大建-616 ① 25.07 を参考に作成",M+4,H-34,14,500);txt("建物CD: "+(v.bldgCd||""),W-M-4,H-34,16,300,false,"right");
-  return new Promise(function(res){c.toBlob(function(b){res({blob:b,w:W,h:H})},"image/jpeg",0.85)});
+function vseRender(){
+  var b=VSE.bmp,sc=Math.min(1,2400/Math.max(b.width,b.height)),W=Math.round(b.width*sc),H=Math.round(b.height*sc),c=document.createElement("canvas");c.width=W;c.height=H;
+  var x=c.getContext("2d"),F='"Noto Sans JP","Hiragino Sans","Meiryo",sans-serif',a=VSE.al,K=W/VSR.w,KY=H/VSR.h,ink="#d1121f";
+  x.drawImage(b,0,0,W,H);x.strokeStyle=ink;x.fillStyle=ink;x.lineWidth=Math.max(2.5,W/520);x.textBaseline="middle";
+  vseItems().forEach(function(m){var p=vseXY(m.x,m.y),px=p[0]*K,py=p[1]*KY;
+    if(m.t==="c"){x.beginPath();x.ellipse(px,py,m.w*a.sx*K/2,m.h*a.sy*KY/2,-0.25,0,Math.PI*2);x.stroke()}
+    else if(m.t==="s"){var fs=m.fs*a.sx*K;x.font="600 "+fs+"px "+F;var s=m.s;if(m.w)while(s.length>1&&x.measureText(s).width>m.w*a.sx*K){fs*=0.92;x.font="600 "+fs+"px "+F}x.textAlign="center";x.fillText(s,px,py);x.textAlign="left"}
+    else{var fs2=m.fs*a.sx*K;x.font="600 "+fs2+"px "+F;x.textAlign="left";x.textBaseline="top";vseWrap(x,m.s,m.w*a.sx*K).slice(0,m.max).forEach(function(l,i){x.fillText(l,px,py+i*m.lh*a.sy*KY)});x.textBaseline="middle"}});
+  return new Promise(function(res){c.toBlob(function(bl){res({blob:bl,w:W,h:H})},"image/jpeg",0.88)});
+}
+function vseSnapshot(j){
+  var v=Object.assign({},j.vsheet||{},VSE.f);v.chk2=VSE.chk;v.aft2=VSE.aft;v.al=VSE.al;j.vsheet=v;
 }
 async function vseDo(pdf){
-  if(VSE.busy)return;var j=S.jobs.find(function(x){return x.id===VSE.id});if(!j)return;
-  var v=vseRead(),msg=$("#vse-msg");j.vsheet=v;
+  if(VSE.busy)return;var j=S.jobs.find(function(x){return x.id===VSE.id});if(!j)return;var msg=$("#vse-msg");
+  vseSnapshot(j);
   if(!pdf){saveDoc("jobs",j,true);if(msg)msg.textContent="保存しました";toast("保存しました");return}
+  if(!VSE.ready){if(msg)msg.textContent="先にシートを読み込んでください";return}
   VSE.busy=true;if(msg)msg.textContent="PDFを作成中…";
   try{
-    var r=await vseCanvas(v),name="価値観共有チェックシート_"+(v.site||"")+(v.room||"")+".pdf",pdfb=await wtfPdf(r.blob,r.w,r.h);
-    var want=$("#vse-chk"),ref=null;
-    if(window.dsFiles){try{ref=await docKeep(new File([pdfb],name,{type:"application/pdf"}),{blob0:r.blob,meta:{type:"value",typeName:"価値観共有シート",summary:(v.site||"")+" "+(v.room||"")}})}catch(e){ref=null}}
-    if(ref){var a=Array.isArray(j.docs)?j.docs:[];if(!a.some(function(z){return z.id===ref.id}))a.push(ref);j.docs=a}
-    if(want&&want.checked){if(!j.checks)j.checks={};j.checks.value=true}
+    var r=await vseRender(),nm=(j.site||"")+(j.room||""),name="価値観共有シート_記入済_"+nm+".pdf",pdfb=await wtfPdf(r.blob,r.w,r.h),ref=null;
+    if(window.dsFiles){
+      if(VSE.file){var br=await docKeep(VSE.file,{meta:{type:"value",typeName:"価値観共有シート",summary:nm}});if(br){var a0=Array.isArray(j.docs)?j.docs:[];if(!a0.some(function(z){return z.id===br.id}))a0.push(br);j.docs=a0}}
+      try{ref=await docKeep(new File([pdfb],name,{type:"application/pdf"}),{blob0:r.blob,meta:{type:"value",typeName:"価値観共有シート(記入済)",summary:nm}})}catch(e){ref=null}
+      if(ref){var old=(Array.isArray(j.docs)?j.docs:[]).filter(function(z){return /記入済/.test(z.name||"")&&z.id!==ref.id});
+        j.docs=(Array.isArray(j.docs)?j.docs:[]).filter(function(z){return old.indexOf(z)<0});
+        old.forEach(function(z){try{if(window.dsFiles.del)window.dsFiles.del(z.id)}catch(e){}});j.docs.push(ref)}
+    }
+    var want=$("#vse-chk");if(want&&want.checked){if(!j.checks)j.checks={};j.checks.value=true}
     saveDoc("jobs",j,true);
     var d=await claude_use("downloads");
     if(d){try{await d.save({filename:name,data:pdfb});toast("PDFを保存しました"+(ref?"(案件の書類にも保管)":""))}catch(e2){if(e2&&e2.code!=="declined")toast("PDFを保存できませんでした")}}
@@ -3805,7 +3805,8 @@ function modClick(e,t,d){
   if(t.id==="nt-all"){var dn=ntDone();NT.list.forEach(function(x){if(dn.indexOf(x.id)<0)dn.push(x.id)});if(dn.length>300)dn.splice(0,dn.length-300);saveSettings(true);render();return true}
   if(t.dataset&&t.dataset.nt){var dn2=ntDone();if(dn2.indexOf(t.dataset.nt)<0)dn2.push(t.dataset.nt);if(dn2.length>300)dn2.splice(0,dn2.length-300);saveSettings(true);render();return true}
   if(d.vse){openVse(d.vse);return true}
-  if(d.vsc){vseCycle(t);return true}
+  if(d.vsz){vseZone(d.vsz);return true}
+  if(d.vsal){vseAl(d.vsal);return true}
   if(d.vscol!==undefined){vseCol(+d.vscol);return true}
   if(t.id==="vse-x"){$("#modal").innerHTML="";return true}
   if(t.id==="vse-save"){vseDo(false);return true}
