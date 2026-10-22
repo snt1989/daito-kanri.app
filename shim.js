@@ -32,6 +32,12 @@
     list: function () { return window.dsApi("/api/files", { op: "list" }); },
     exists: function (ids) { return window.dsApi("/api/files", { op: "exists", ids: ids }); },
     del: function (id) { return window.dsApi("/api/files", { op: "del", id: id }); },
+    blob: async function (id) {
+      var j = await window.dsApi("/api/files", { op: "get", id: id });
+      if (!j.ok) return j;
+      var bin = atob(j.b64), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      return { ok: true, meta: j.meta, blob: new Blob([u], { type: (j.meta && j.meta.mime) || "application/octet-stream" }) };
+    },
     open: async function (id) {
       var j = await window.dsApi("/api/files", { op: "get", id: id });
       if (!j.ok) return j;

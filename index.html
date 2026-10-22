@@ -337,9 +337,11 @@ function toast(t){var el=$("#toast");el.innerHTML='<div class="toast">'+esc(t)+"
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 function saveJob(j){
+  var _s=j._src;delete j._src;
   var i=S.jobs.findIndex(function(x){return x.id===j.id}); if(i<0)S.jobs.push(j); else S.jobs[i]=j;
   if(db){db.doc("jobs/"+j.id).set(j).catch(function(){toast("保存に失敗しました。もう一度お試しください")})}
   else lsSet("jobs",S.jobs);
+  dkLater(j,_s,function(){saveJob(j)});
   render();
 }
 function delJob(id){
@@ -615,7 +617,7 @@ function openJob(id){
      '<div class="tools"><select id="addsel"><option value="">＋ 追加工事・項目を選ぶ</option>'+S.settings.prices.filter(function(p){return !p.base}).map(function(p){return '<option value="'+p.id+'">'+esc(p.name)+" ("+yen(p.price)+"/"+esc(p.unit)+")</option>"}).join("")+'</select><label class="sub">金額を固定する(税別) <input type="number" id="f-ovr" min="0" value="'+(j.override||"")+'" placeholder="自動計算" style="width:120px"></label></div>'+
      '<div class="sum"><span>税別 <b>'+yen(c.sub)+"</b></span><span>消費税 "+yen(c.tax)+"</span><span>税込 <b>"+yen(c.total)+"</b></span></div>"+
      '<div class="fields"><label class="wide">備考・メモ(その他欄、間取り図の手書きメモ、オーナー連絡など)<textarea id="f-memo" rows="2">'+esc(j.memo)+"</textarea></label></div>"+
-     '<div class="acts"><span>'+(isNew?"":'<button type="button" class="btn danger" id="f-del">削除</button>')+'</span><span><button type="button" class="btn" id="f-cancel">キャンセル</button> <button type="submit" class="btn pri">保存</button></span></div></form></div>';
+     dkBox(j)+'<div class="acts"><span>'+(isNew?"":'<button type="button" class="btn danger" id="f-del">削除</button>')+'</span><span><button type="button" class="btn" id="f-cancel">キャンセル</button> <button type="submit" class="btn pri">保存</button></span></div></form></div>';
     bind();
   }
   function pull(){
@@ -762,9 +764,11 @@ function nowLocal(){var d=new Date();return ymd(d)+"T"+pad(d.getHours())+":"+pad
 function fmtDT(s){return s?(+s.slice(5,7))+"/"+(+s.slice(8,10))+" "+s.slice(11,16):"—"}
 function shiftMonth(m,n){var p=m.split("-");return ym(new Date(+p[0],+p[1]-1+n,1))}
 function saveDoc(col,o,quiet){
+  var _s=o._src;delete o._src;
   var arr=S[col],i=arr.findIndex(function(x){return x.id===o.id}); if(i<0)arr.push(o); else arr[i]=o;
   if(db){db.doc(col+"/"+o.id).set(o).catch(function(){toast("保存に失敗しました。もう一度お試しください")})}
   else lsSet(col,arr);
+  dkLater(o,_s,function(){saveDoc(col,o,true)});
   if(!quiet)render();
 }
 function delDoc(col,id){
@@ -803,7 +807,7 @@ function openForm(cfg){
   function prev(){var p=$("#ff-prev",el);if(p&&cfg.preview)p.innerHTML=cfg.preview(d)}
   function draw(){
     el.innerHTML='<div class="mask" id="mask"><form class="dlg" id="jf" autocomplete="off"><h2>'+cfg.title+'</h2><div class="fields">'+cfg.fields.map(fieldHtml).join("")+'</div><div id="ff-prev">'+(cfg.preview?cfg.preview(d):"")+'</div>'+
-     '<div class="acts"><span>'+(cfg.onDel?'<button type="button" class="btn danger" id="f-del">削除</button>':"")+'</span><span><button type="button" class="btn" id="f-cancel">キャンセル</button> <button type="submit" class="btn pri">保存</button></span></div></form></div>';
+     dkBox(d)+'<div class="acts"><span>'+(cfg.onDel?'<button type="button" class="btn danger" id="f-del">削除</button>':"")+'</span><span><button type="button" class="btn" id="f-cancel">キャンセル</button> <button type="submit" class="btn pri">保存</button></span></div></form></div>';
     $("#mask",el).addEventListener("mousedown",function(e){if(e.target.id==="mask")el.innerHTML=""});
     $("#f-cancel",el).onclick=function(){el.innerHTML=""};
     var del=$("#f-del",el);
@@ -1297,7 +1301,7 @@ function imJob(c){
   if(c.notes)memo.push("間取り図のメモ: "+c.notes);
   if(c.remarks)memo.push("備考: "+c.remarks);
   if(c.other)memo.push("その他: "+c.other);
-  return {id:nid("j"),site:c.site||"(物件名未入力)",room:c.room,area:(c.address.match(/^[^\s]*?[市郡町村]/)||[""])[0],kind:c.kind,orderNo:"",layout:c.layout||"1LDK",
+  return {_src:c.file,id:nid("j"),site:c.site||"(物件名未入力)",room:c.room,area:(c.address.match(/^[^\s]*?[市郡町村]/)||[""])[0],kind:c.kind,orderNo:"",layout:c.layout||"1LDK",
     receivedDate:c.orderDate||TODAY(),dueDate:c.dueDate,workDate:"",staff:[],items:items,override:0,status:0,checks:{},memo:memo.join("\n"),
     bldgCd:c.bldgCd,roomCd:c.roomCd,address:c.address,visitDate:c.visitDate,orderDate:c.orderDate,daitoStaff:c.daitoStaff,daitoStaffCd:c.daitoStaffCd,parking:c.parking,lockNo:c.lockNo,sample:false};
 }
@@ -1345,6 +1349,7 @@ async function imRun(files){
   var stopAll=false;
   try{
     for(var fi=0;fi<files.length&&!stopAll;fi++){
+      files[fi]._dk={type:"koji",typeName:"工事予定書"};
       try{
         await eachPage(files[fi],async function(blob,label){
           if(stopAll||IM.ctl.signal.aborted)return;
@@ -1353,7 +1358,7 @@ async function imRun(files){
           try{
             var r=await sample.json(IM_PROMPT,{images:[blob],signal:IM.ctl.signal,modelTier:"default"});
             if(!r||typeof r!=="object"||Array.isArray(r))throw {code:"bad_answer"};
-            IM.cards[idx]=imCard(r,label,c.thumb);
+            IM.cards[idx]=imCard(r,label,c.thumb);IM.cards[idx].file=files[fi];
           }catch(e){c.status="err";c.err=imErr(e);if(e&&(e.code==="not_granted"||e.code==="cancelled"))stopAll=true}
           imRedraw(idx);imProg();
         });
@@ -1755,18 +1760,19 @@ async function emoRun(file){
     if(!r||typeof r!=="object"||Array.isArray(r))throw {code:"bad_answer"};
     var T=function(v){return String(v==null?"":v).trim()};
     var isFix=T(r.docType)==="fix"||(+r.fixAmt>0&&!T(r.recvAt));
+    file._dk={type:isFix?"fix":"request",typeName:isFix?"金額確定通知書":"出動要請書"};
     if(EMO.target&&!isFix)throw {message:"金額確定通知書として読み取れませんでした。書類を確認してください。"};
     if(isFix){
       var amt=Math.round(+String(r.fixAmt).replace(/[^\d.]/g,""))||0,rn=T(r.reqNo).replace(/\s/g,""),bc=T(r.bldgCd),rm=T(r.room),rd=T(r.requestDate).replace(/\//g,"-").replace(/-(\d)(?!\d)/g,"-0$1");
       if(!amt)throw {message:"確定金額を読み取れませんでした。"};
       var ex=EMO.target?S.emerg.find(function(e){return e.id===EMO.target}):S.emerg.find(function(e){return rn&&(e.reqNo===rn||(e.content||"").indexOf(rn)>=0)})||S.emerg.find(function(e){return bc&&e.bldgCd===bc&&e.room===rm&&rd&&(e.recvAt||"").slice(0,10)===rd});
-      var fx={fixAmt:amt,fixDate:/^\d{4}-\d{2}-\d{2}$/.test(T(r.noticeDate))?T(r.noticeDate):TODAY(),_thumb:URL.createObjectURL(blob)};
+      var fx={fixAmt:amt,fixDate:/^\d{4}-\d{2}-\d{2}$/.test(T(r.noticeDate))?T(r.noticeDate):TODAY(),_thumb:URL.createObjectURL(blob),_src:file};
       var mis=EMO.target&&ex&&rn&&ex.reqNo&&ex.reqNo!==rn;
       if(rn&&!mis)fx.reqNo=rn;
       var line="【金額確定通知書】発注金額(税込) "+amt.toLocaleString()+"円"+(+r.fixTax>0?"(消費税 "+(+r.fixTax).toLocaleString()+"円)":"");
       if(ex){fx.content=(ex.content||"").indexOf("【金額確定通知書】")>=0?ex.content:(ex.content?ex.content+"\n":"")+line;if(!ex.bldgCd&&bc)fx.bldgCd=bc;
         EMO.busy=false;EMO.ctl=null;$("#modal").innerHTML="";openEmerg(ex.id,fx);toast(mis?"注意: 通知書の依頼番号("+rn+")が、この出動の依頼番号("+ex.reqNo+")と違います。書類を確認してください":"確定金額 "+yen(amt)+" を反映しました。内容を確認して保存してください");return}
-      var nw={site:T(r.site),room:rm,address:T(r.address),bldgCd:bc,reqNo:rn,fixAmt:amt,fixDate:fx.fixDate,content:"【金額確定通知書から取込】依頼番号 "+rn+"(対応する出動が未登録のため新規。出動要請日時は未確認)\n"+line,_thumb:fx._thumb};
+      var nw={_src:file,site:T(r.site),room:rm,address:T(r.address),bldgCd:bc,reqNo:rn,fixAmt:amt,fixDate:fx.fixDate,content:"【金額確定通知書から取込】依頼番号 "+rn+"(対応する出動が未登録のため新規。出動要請日時は未確認)\n"+line,_thumb:fx._thumb};
       if(/^\d{4}-\d{2}-\d{2}$/.test(rd))nw.recvAt=rd+"T09:00";
       EMO.busy=false;EMO.ctl=null;$("#modal").innerHTML="";openEmerg(null,nw);toast("同じ依頼番号の出動が見つからないので、新規として開きました。要請日時を確認してください");return}
     var rc=T(r.recvAt).replace(/[\/\s]+/g,function(m){return m.indexOf("/")>=0?"-":"T"}),pre={};
@@ -1779,7 +1785,7 @@ async function emoRun(file){
     if(T(r.title))L.push("依頼: "+T(r.title));if(T(r.place))L.push("場所: "+T(r.place));if(T(r.inquiry))L.push("問合せ内容: "+T(r.inquiry));
     if(T(r.hopeAt))L.push("出動希望日時: "+T(r.hopeAt)+"(時間指定あり)");if(T(r.advance))L.push("事前連絡: "+T(r.advance));
     var cf=Array.isArray(r.confidence)?r.confidence.filter(Boolean).join("、"):"";if(cf)L.push("※読み取りに自信がない項目: "+cf);
-    pre.content=L.join("\n");pre._thumb=URL.createObjectURL(blob);
+    pre.content=L.join("\n");pre._thumb=URL.createObjectURL(blob);pre._src=file;
     EMO.busy=false;EMO.ctl=null;$("#modal").innerHTML="";openEmerg(null,pre);
     toast(cf?"読み取りました。自信がない項目があります:"+cf:"読み取りました。内容を確認して保存してください");
   }catch(e){EMO.busy=false;EMO.ctl=null;emoProg(imErr(e)||((e&&e.message)||"読み取れませんでした"))}
@@ -1840,6 +1846,7 @@ async function mtiRun(files){
   MTI.busy=true;MTI.ctl=new AbortController();IM.ctl=MTI.ctl;var stop=false;mtiProg("読み取り中…",true);mtiDraw();
   try{
     for(var fi=0;fi<files.length&&!stop;fi++){
+      files[fi]._dk={type:"order",typeName:"維持管理作業注文書"};
       try{
         await eachPage(files[fi],async function(blob,label){
           if(stop||MTI.ctl.signal.aborted)return;
@@ -1855,7 +1862,7 @@ async function mtiRun(files){
             var low=(Array.isArray(r.confidence)?r.confidence:[]).map(String);
             r.rows.forEach(function(x){
               var o={docNo:docNo,month:d.month,no:T(x.no),bldgCd:T(x.bldgCd),bldgName:T(x.bldgName),address:T(x.address),item:mtiItem(x.item),qty:+x.qty||1,price:Math.round(+String(x.price).replace(/[^\d.]/g,""))||Math.round(+String(x.amount).replace(/[^\d.]/g,""))/(+x.qty||1)||0,mgr:T(x.mgr),kind:MT_KIND.indexOf(T(x.kind))>=0?T(x.kind):(/追加/.test(T(x.kind))?(MT_KIND[1]||""):/臨時/.test(T(x.kind))?(MT_KIND[2]||""):(kk||MT_KIND[0])),doc:/request/.test(T(r.docType))||/作業依頼/.test(T(r.docType))?"作業依頼書":"注文書",low:low.indexOf(T(x.no))>=0};
-              if(!o.bldgName&&!o.item)return;
+              if(!o.bldgName&&!o.item)return;o.file=files[fi];
               o.dup=mtiDup(o);o.include=!o.dup;MTI.rows.push(o);
             });
             MTI.rows.forEach(function(r2){if(!r2.month&&MTI.docs[r2.docNo])r2.month=MTI.docs[r2.docNo].month});
@@ -1870,7 +1877,7 @@ function mtiRegister(){
   var n=0,add=[];
   MTI.rows.forEach(function(r){if(!r.include)return;
     if(r.item&&S.settings.mItems.indexOf(r.item)<0&&add.indexOf(r.item)<0)add.push(r.item);
-    var d={id:nid("m"),month:r.month||S.mMonth,bldgCd:r.bldgCd,bldgName:r.bldgName,address:r.address,item:r.item||S.settings.mItems[0],price:+r.price||0,qty:+r.qty||1,kind:r.kind,docNo:r.docNo,mgr:r.mgr,doneDate:"",status:1,cPhoto:false,cSheet:false,cDefect:false,memo:"【"+(r.doc||"注文書")+"から取込】No."+r.no};
+    var d={_src:r.file,id:nid("m"),month:r.month||S.mMonth,bldgCd:r.bldgCd,bldgName:r.bldgName,address:r.address,item:r.item||S.settings.mItems[0],price:+r.price||0,qty:+r.qty||1,kind:r.kind,docNo:r.docNo,mgr:r.mgr,doneDate:"",status:1,cPhoto:false,cSheet:false,cDefect:false,memo:"【"+(r.doc||"注文書")+"から取込】No."+r.no};
     saveDoc("maint",d,true);n++});
   if(add.length){S.settings.mItems=S.settings.mItems.concat(add);try{saveSettings(true)}catch(e){}}
   var mo=(MTI.rows.find(function(r){return r.include&&r.month})||{}).month;
@@ -1948,7 +1955,7 @@ async function mpiRun(files){
             r.rows.forEach(function(x){
               var ms=Array.isArray(x.months)?x.months.slice(0,12).map(N):[];while(ms.length<12)ms.push(0);
               var o={no:T(x.no),item:mtiItem(x.item),bldgCd:T(x.bldgCd),bldgName:T(x.bldgName),address:T(x.address),price:N(x.price),months:ms,annual:N(x.annual),include:true};
-              if(!o.bldgName&&!o.item)return;MPI.rows.push(o)});
+              if(!o.bldgName&&!o.item)return;o.file=files[fi];MPI.rows.push(o)});
             if(!MPI.fy){var d0=new Date();MPI.fy=d0.getMonth()>=3?d0.getFullYear():d0.getFullYear()-1}
             MPI.rows.forEach(function(rw){rw.include=rw.include});
             mpiDraw();
@@ -1963,7 +1970,7 @@ function mpiRegister(){
   MPI.rows.forEach(function(r){if(!r.include)return;
     if(r.item&&S.settings.mItems.indexOf(r.item)<0&&add.indexOf(r.item)<0)add.push(r.item);
     r.months.forEach(function(v,i){if(!(+v>0)||mpiDup(r,i))return;
-      saveDoc("maint",{id:nid("m"),month:mpiMonth(MPI.fy,i),bldgCd:r.bldgCd,bldgName:r.bldgName,address:r.address,item:r.item||S.settings.mItems[0],price:+v,qty:1,kind:MT_KIND[0],docNo:"",mgr:"",doneDate:"",status:0,cPhoto:false,cSheet:false,cDefect:false,memo:"【年間発注予定一覧表("+MPI.fy+"年度)から取込】"},true);n++})});
+      saveDoc("maint",{_src:r.file,id:nid("m"),month:mpiMonth(MPI.fy,i),bldgCd:r.bldgCd,bldgName:r.bldgName,address:r.address,item:r.item||S.settings.mItems[0],price:+v,qty:1,kind:MT_KIND[0],docNo:"",mgr:"",doneDate:"",status:0,cPhoto:false,cSheet:false,cDefect:false,memo:"【年間発注予定一覧表("+MPI.fy+"年度)から取込】"},true);n++})});
   if(add.length){S.settings.mItems=S.settings.mItems.concat(add);try{saveSettings(true)}catch(e){}}
   var fy=MPI.fy;MPI.open=false;$("#modal").innerHTML="";S.mFy=fy;S.tab="mplan";S.div="maint";S.mItem="";saveUi();render();
   toast(n+"件を「予定」として登録しました"+(add.length?"。項目マスタに追加: "+add.join("、"):""));
@@ -2585,6 +2592,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"読み込んだ書類を案件に紐づけて保存・プレビュー(Web版)",d:"工事予定書・出動要請書・金額確定通知書・維持管理の注文書・年間発注予定一覧表・エアコンの見積り依頼書を読み取って登録すると、元の書類(PDF・画像)がサーバーに保管され、その案件に紐づきます。案件の画面の「📎 元の書類」から、👁でその場でプレビューできます。書類を後から添付することもできます。"},
  {v:"2026-10-22",t:"エアコン設置のページを追加",d:"大東建託パートナーズの「営業エアコン設置のみ 見積り依頼書」に沿った案件管理です。書類(PDF・FAX画像)から読み取って登録でき、工事項目と単価は設定の「エアコン工事の単価」で変更できます。FAX取込でもこの書類を判別します。"},
  {v:"2026-10-22",t:"水道届の様式に記入して出力",d:"設定「水道事業者」に自治体の公式様式(PDF・画像)をアップロードし、記入位置を設定すると、水道届の「申込内容シート」から様式に氏名・住所・日付などを書き込んでPDF・画像で出力できます。"},
  {v:"2026-10-22",t:"書類ボックスとバックアップ(Web版)",d:"FAX取込で読み取った書類のPDF・画像をサーバーに自動で保管し、「書類ボックス」からいつでも開けます。全データのバックアップは1日1回自動で保存され、設定の「バックアップ」から手動保存・ダウンロード・復元もできます。"},
@@ -2651,13 +2659,9 @@ async function fitBlob(b,max){
 var FXST={};
 async function fxStore(row,file,blob0){
   if(!window.dsFiles||!row.fid||FXST[row.fid])return;
-  try{
-    var blob=file,name=file.name,mime=file.type||"application/octet-stream",max=650*1024;
-    if(file.size>max){blob=blob0?await fitBlob(blob0,max):null;name=name.replace(/\.[^.]+$/,"")+"_1ページ目.jpg";mime="image/jpeg"}
-    if(!blob)return;
-    var j=await window.dsFiles.put(row.fid,blob,{name:name,mime:mime,type:row.type,typeName:fxAll()[row.type]||"",summary:row.summary,sender:row.sender,date:row.isoDate||""});
-    if(j&&j.ok){FXST[row.fid]=1;row.stored=true;DF.state="idle"}
-  }catch(e){}
+  FXST[row.fid]=1;
+  var ref=await docKeep(file,{id:row.fid,blob0:blob0,meta:{type:row.type,typeName:fxAll()[row.type]||"",summary:row.summary,sender:row.sender,date:row.isoDate||""}});
+  if(ref){row.stored=true;DF.state="idle"}else delete FXST[row.fid];
 }
 var DF={list:[],state:"idle",msg:"",q:""};
 function dfKick(force){
@@ -2862,7 +2866,7 @@ function acNorm(r){
   ["pipeExt","coverExt","drainExt","docTotal"].forEach(function(k){r[k]=+r[k]||0});
   r.items=Array.isArray(r.items)?r.items.filter(function(i){return i&&i.id}).map(function(i){return {id:String(i.id),qty:+i.qty||0,price:i.price===""||i.price==null?null:(+i.price||0)}}):[];
   r.staff=Array.isArray(r.staff)?r.staff.map(String):[];return r}
-function saveAc(o){var a=S.ac,i=a.findIndex(function(x){return x.id===o.id});if(i<0)a.push(o);else a[i]=o;if(db)db.doc("ac/"+o.id).set(o).catch(function(){toast("保存に失敗しました。もう一度お試しください")});else lsSet("ac",a)}
+function saveAc(o){var _s=o._src;delete o._src;var a=S.ac,i=a.findIndex(function(x){return x.id===o.id});if(i<0)a.push(o);else a[i]=o;if(db)db.doc("ac/"+o.id).set(o).catch(function(){toast("保存に失敗しました。もう一度お試しください")});else lsSet("ac",a);dkLater(o,_s,function(){saveAc(o)})}
 function delAc(id){S.ac=S.ac.filter(function(x){return x.id!==id});if(db)db.doc("ac/"+id).delete().catch(function(){});else lsSet("ac",S.ac)}
 function acPrice(it){var m=acPrices().find(function(p){return p.id===it.id});return it.price!=null?it.price:(m?m.price:0)}
 function acCalc(r){var sub=0;r.items.forEach(function(it){sub+=(+it.qty||0)*acPrice(it)});return {sub:sub,total:taxOf(sub)}}
@@ -2915,6 +2919,7 @@ async function acImport(file){
       power:YN(a.power,"有","無"),sleeve:YN(a.sleeve,"有","無"),existing:YN(a.existing,"有","無"),outdoorNeed:YN(a.outdoorNeed,"要","否"),pipeExt:N(a.pipeExt),coverExt:N(a.coverExt),drainExt:N(a.drainExt),
       occ:YN(a.occ,"入居済","空室"),occName:T(a.occName),hopeDate:okDate(a.hopeDate)||"",hopeTime:T(a.hopeTime),keyNo:T(a.keyNo),lockLimit:okDate(a.lockLimit)||"",note:T(a.note),items:items,docTotal:N(a.total)};
     var cf=Array.isArray(a.confidence)?a.confidence.filter(Boolean).map(String).join("、"):"";
+    file._dk={type:"ac",typeName:"エアコン見積り依頼書"};pre._src=file;
     ACI.busy=false;$("#modal").innerHTML="";openAc(null,pre,cf);
   }catch(e){ACI.busy=false;toast(imErr(e)||((e&&e.message)||"読み取れませんでした"))}
 }
@@ -2942,7 +2947,7 @@ function openAc(id,pre,conf){
      '<div class="sum" id="ac-total" style="margin:6px 0">'+totalHtml()+"</div>"+
      '<h3 style="margin:12px 0 4px;font-size:14px">進行</h3><div class="fields"><label>状況<select data-ac="status">'+AC_STAT.map(function(s,i){return '<option value="'+i+'"'+(d.status===i?" selected":"")+">"+s.n+"</option>"}).join("")+"</select></label>"+inp("workDate","施工日","date")+
      '<div class="lab wide"><span>担当</span><div class="staffs">'+S.settings.staff.map(function(s){return '<label><input type="checkbox" data-acst="'+esc(s)+'"'+(d.staff.indexOf(s)>=0?" checked":"")+"> "+esc(s)+"</label>"}).join("")+'</div></div><label class="wide">メモ<textarea rows="2" data-ac="memo">'+esc(d.memo)+"</textarea></label></div>"+
-     '<div class="acts"><span>'+(isNew?"":'<button type="button" class="btn danger" id="ac-del">削除</button>')+'</span><span><button type="button" class="btn" id="ac-x">キャンセル</button> <button type="button" class="btn pri" id="ac-ok">保存</button></span></div></div></div>';
+     dkBox(d)+'<div class="acts"><span>'+(isNew?"":'<button type="button" class="btn danger" id="ac-del">削除</button>')+'</span><span><button type="button" class="btn" id="ac-x">キャンセル</button> <button type="button" class="btn pri" id="ac-ok">保存</button></span></div></div></div>';
     el.innerHTML=h;
   }
   function item(pid){var it=d.items.find(function(x){return x.id===pid});if(!it){it={id:pid,qty:0,price:null};d.items.push(it)}return it}
@@ -2970,6 +2975,93 @@ document.addEventListener("click",function(e){
   if(d.acopen&&!e.target.closest("button"))openAc(d.acopen)
 });
 document.addEventListener("input",function(e){if(e.target.id==="acq"){S.acq=e.target.value;var p=e.target.selectionStart;render();var n=$("#acq");if(n){n.focus();try{n.setSelectionRange(p,p)}catch(x){}}}});
+
+/* ---------- 取り込んだ書類の保管・紐づけ・プレビュー ---------- */
+var DK=new Map(),DKCUR={d:null},DKT=0;
+function docKeep(file,o){
+  o=o||{};
+  if(!window.dsFiles||!file)return Promise.resolve(null);
+  if(DK.has(file))return DK.get(file);
+  var p=(async function(){
+    var isPdf=file.type==="application/pdf"||/\.pdf$/i.test(file.name||""),max=650*1024,blob=file,name=file.name||"書類",mime=file.type||"application/octet-stream";
+    if(isPdf&&file.size>max){
+      var b0=o.blob0;
+      if(!b0){var old=IM.ctl;IM.ctl=new AbortController();try{await eachPage(file,async function(b){if(!b0)b0=b},1,1400)}finally{IM.ctl=old}}
+      blob=b0?await fitBlob(b0,max):null;name=name.replace(/\.[^.]+$/,"")+"_1ページ目.jpg";mime="image/jpeg";
+    }else if(!isPdf&&file.size>max){blob=await fitBlob(file,max);name=name.replace(/\.[^.]+$/,"")+".jpg";mime="image/jpeg"}
+    if(!blob)throw new Error("size");
+    var id=o.id||("d"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),m=Object.assign({},file._dk||{},o.meta||{});
+    var j=await window.dsFiles.put(id,blob,{name:name,mime:mime,type:m.type||"import",typeName:m.typeName||"取込書類",summary:m.summary||name,sender:m.sender||"",date:m.date||new Date().toISOString()});
+    if(!(j&&j.ok))throw new Error("put");
+    return {id:id,name:name,mime:mime,typeName:m.typeName||"",at:new Date().toISOString()};
+  })();
+  DK.set(file,p);
+  p.catch(function(){DK.delete(file)});
+  return p.catch(function(){return null});
+}
+function dkLater(o,src,resave){
+  if(!src||!window.dsFiles)return;
+  docKeep(src).then(function(ref){
+    if(!ref){toast("元の書類を保管できませんでした(登録は完了しています)");return}
+    var a=Array.isArray(o.docs)?o.docs:[];if(!a.some(function(x){return x.id===ref.id}))a.push(ref);o.docs=a;resave();
+    clearTimeout(DKT);DKT=setTimeout(function(){if(!$("#modal").innerHTML)render()},400);
+  });
+}
+function dkInner(d){
+  if(!window.dsFiles||!d)return "";
+  var a=Array.isArray(d.docs)?d.docs:[];
+  return '<div class="lab"><b>📎 元の書類</b></div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:4px 0 8px">'+
+   (a.length?a.map(function(r){return '<span style="display:inline-flex;gap:2px"><button type="button" class="btn sm" data-dkview="'+esc(r.id)+'" data-dkname="'+esc(r.name||"")+'" title="プレビュー">👁 '+esc((r.typeName?r.typeName+" ":"")+String(r.name||"").slice(0,22))+'</button><button type="button" class="btn sm" data-dkrm="'+esc(r.id)+'" title="この案件から外す(書類ボックスには残ります)" aria-label="外す">×</button></span>'}).join(""):'<span class="sub">取り込んだ書類はありません</span>')+
+   ' <label class="btn sm" style="cursor:pointer">＋ 書類を添付<input type="file" id="dk-file" accept="application/pdf,image/*" style="display:none"></label></div>';
+}
+function dkBox(d){DKCUR={d:d};return window.dsFiles?'<div id="dk-box" style="margin-top:10px">'+dkInner(d)+"</div>":""}
+function dkRefresh(){var b=$("#dk-box");if(b&&DKCUR.d)b.innerHTML=dkInner(DKCUR.d)}
+async function dkView(id,name){
+  var old=$("#dkv");if(old)old.remove();
+  var m=document.createElement("div");m.id="dkv";m.className="mask";m.style.zIndex=120;
+  m.innerHTML='<div class="dlg" style="width:min(980px,100%)"><h2>'+esc(name||"書類")+'</h2><div class="sub" id="dkv-st">読み込み中…</div><div id="dkv-body" style="text-align:center"></div><div class="acts"><span><button type="button" class="btn" id="dkv-open">別タブで開く</button></span><button type="button" class="btn pri" id="dkv-x">閉じる</button></div></div>';
+  document.body.appendChild(m);
+  m.addEventListener("mousedown",function(e){if(e.target===m)m.remove()});
+  m._id=id;
+  var st=$("#dkv-st"),bd=$("#dkv-body");
+  try{
+    var j=await window.dsFiles.blob(id);
+    if(!document.body.contains(m))return;
+    if(!j||!j.ok)throw new Error((j&&j.error&&j.error.message)||(j&&j.error)||"書類が見つかりません");
+    var url=URL.createObjectURL(j.blob),isPdf=/pdf/i.test(j.blob.type||"");
+    if(!isPdf){bd.innerHTML='<img src="'+url+'" alt="" style="max-width:100%;border:1px solid var(--line)">';st.textContent="";return}
+    try{
+      await loadPdfjs();if(typeof pdfjsLib==="undefined")throw 0;
+      var doc=await pdfjsLib.getDocument({data:new Uint8Array(await j.blob.arrayBuffer())}).promise,n=Math.min(doc.numPages,10);
+      bd.innerHTML="";
+      for(var i=1;i<=n;i++){
+        var pg=await doc.getPage(i),v0=pg.getViewport({scale:1}),vp=pg.getViewport({scale:Math.min(3,1400/v0.width)});
+        var cv=document.createElement("canvas");cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);cv.style.cssText="width:100%;max-width:"+Math.round(v0.width*1.6)+"px;border:1px solid var(--line);margin-bottom:8px;background:#fff";
+        bd.appendChild(cv);await pg.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;
+      }
+      st.textContent=doc.numPages>n?"先頭の"+n+"ページを表示しています(全"+doc.numPages+"ページ)":"";
+    }catch(e){bd.innerHTML='<iframe src="'+url+'" style="width:100%;height:70vh;border:1px solid var(--line)"></iframe>';st.textContent=""}
+  }catch(e){st.textContent=(e&&e.message)||"開けませんでした"}
+}
+document.addEventListener("click",function(e){
+  var t=e.target.closest?e.target.closest("[data-dkview],[data-dkrm],#dkv-x,#dkv-open"):null;if(!t)return;
+  if(t.dataset.dkview){e.preventDefault();dkView(t.dataset.dkview,t.dataset.dkname);return}
+  if(t.dataset.dkrm){e.preventDefault();var d=DKCUR.d;if(d&&Array.isArray(d.docs)){d.docs=d.docs.filter(function(x){return x.id!==t.dataset.dkrm});dkRefresh()}return}
+  var v=$("#dkv");
+  if(t.id==="dkv-x"){if(v)v.remove();return}
+  if(t.id==="dkv-open"&&v){window.dsFiles.open(v._id).then(function(j){if(j&&!j.ok)toast((j.error&&j.error.message)||"開けませんでした")})}
+});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"){var v=$("#dkv");if(v){v.remove();e.stopPropagation()}}},true);
+document.addEventListener("change",function(e){
+  var t=e.target;if(!t||t.id!=="dk-file"||!t.files||!t.files[0])return;
+  var f=t.files[0],d=DKCUR.d;t.value="";e.stopPropagation();if(!d)return;
+  toast("書類を保管中…");
+  docKeep(f).then(function(ref){
+    if(!ref){toast("保管できませんでした");return}
+    var a=Array.isArray(d.docs)?d.docs:[];if(!a.some(function(x){return x.id===ref.id}))a.push(ref);d.docs=a;dkRefresh();toast("添付しました。保存すると案件に紐づきます");
+  });
+},true);
+
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
