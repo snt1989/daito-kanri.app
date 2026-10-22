@@ -46,6 +46,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .menu{display:none}
 .bd{position:absolute;top:0;right:0;min-width:17px;height:17px;border-radius:9px;background:var(--warn);color:#fff;font-size:10.5px;line-height:17px;text-align:center;padding:0 4px}
 .user{display:flex;align-items:center;gap:10px;font-size:13px}
+.who{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:none;border-radius:999px;padding:3px 12px 3px 3px;cursor:pointer;color:inherit;font:inherit;font-size:13px}
+.who:hover{background:rgba(0,0,0,.04)}
+.who .av{width:28px;height:28px;font-size:13px}
+.who .cv{font-size:10px;color:var(--muted)}
 .av{width:34px;height:34px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700}
 .tb-brand{font-family:var(--f-head);font-weight:700;display:none}
 .scrim{display:none}
@@ -258,7 +262,7 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
   .side{position:fixed;inset:0 auto 0 0;width:min(284px,84vw);height:100%;transform:translateX(-102%);transition:transform .2s}
   body.nav-open .side{transform:none}
   body.nav-open .scrim{display:block;position:fixed;inset:0;background:rgba(8,20,14,.45);z-index:55}
-  .menu{display:inline-grid}.tb-brand{display:block}.user .un{display:none}
+  .menu{display:inline-grid}.tb-brand{display:block}.user .un,.user .cv{display:none}.who{padding:2px}
   .home{grid-template-columns:minmax(0,1fr)}
   .todo{grid-template-columns:88px minmax(0,1fr)} .todo .go{display:none}
   body.folded .lbl,body.folded .nv-g,body.folded .brand span{display:revert}
@@ -2728,6 +2732,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"右上のアカウント表示を1つにまとめました",d:"名前のマークと「アカウント」ボタンが並んでいたのを、名前の表示を押すとアカウント画面(パスワード変更・ログアウト)が開く1つのボタンにしました。"},
  {v:"2026-10-22",t:"大東建託からのお知らせをホームに移動",d:"大東建託からのメールはホームの「📩 大東建託からのお知らせ」に表示します。「お知らせ」タブは廃止しました。アプリの更新や対応が必要な項目は、これまでどおり右上のベルから確認できます。"},
  {v:"2026-10-22",t:"お知らせと更新履歴を見やすく",d:"右上のベルから「お知らせ」ウィンドウが開き、アプリの更新・対応が必要な案件・大東建託のメールをまとめて確認できます。アプリが新しくなったときは「アプリが新しくなりました」と案内し、内容を読むと既読になります。「更新の履歴」で過去の更新を日付ごとに見返せます。"},
  {v:"2026-10-22",t:"Q&Aのページを追加",d:"左のメニューに「Q&A」を追加しました。アプリの使い方の質問と答えを入れてあり、検索や分類で探せます。社内のルールや確認事項も、自由に追加・編集できます。"},
@@ -2802,7 +2807,7 @@ function userChipHtml(){
   var m=ME();if(!m)return null;
   var nm=m.role==="staff"?m.name:"管理者";
   return (m.role==="staff"?'<label class="sub" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="mine-t"'+(S.mine!==false?" checked":"")+'> <span>自分の担当のみ</span></label>':"")+
-   '<span class="av">'+esc(nm.slice(0,1))+'</span><span class="un">'+esc(nm)+(m.role==="staff"?" さん":"")+'</span><button type="button" class="btn sm" id="me-menu">アカウント</button>'
+   '<button type="button" class="who" id="me-menu" title="アカウント" aria-label="アカウント"><span class="av">'+esc(nm.slice(0,1))+'</span><span class="un">'+esc(nm)+(m.role==="staff"?" さん":"")+'</span><span class="cv">▾</span></button>'
 }
 function openMe(){
   var m=ME();if(!m)return;
