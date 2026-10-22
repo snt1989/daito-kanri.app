@@ -264,6 +264,89 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
   body.folded .lbl,body.folded .nv-g,body.folded .brand span{display:revert}
   .fold{display:none}
 }
+
+/* ===== スマホ表示(見やすさ重視) ===== */
+.bnav{display:none}
+.agenda{display:none}
+@media(max-width:720px){
+  body{font-size:15px}
+  main{padding:14px max(12px,env(safe-area-inset-right,0px)) calc(88px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));gap:12px}
+  .tb-in{padding:6px max(10px,env(safe-area-inset-right,0px)) 6px max(10px,env(safe-area-inset-left,0px));gap:6px;min-height:50px}
+  .tb-sp{display:none}
+  .tb-brand{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px}
+  .tb-in .btn{padding:6px 12px;margin-right:0!important;white-space:nowrap}
+  .tb-t{display:none}
+  .pghead{gap:8px}
+  .pghead h2.pt{font-size:21px}
+  .pgact{width:100%;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .pgact::-webkit-scrollbar{display:none}
+  .pgact .btn{white-space:nowrap;flex:none}
+  .btn{min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+  .btn.sm{min-height:36px;padding:4px 13px;font-size:13px}
+  input[type=text],input[type=date],input[type=number],input[type=search],input[type=datetime-local],input[type=tel],input[type=email],input[type=password],select,textarea{font-size:16px;min-height:44px;padding:8px 10px}
+  textarea{min-height:80px}
+  .kv{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .kv:has(>div:nth-child(4)){grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kv div{padding:9px 11px}
+  .kv span{font-size:11px}
+  .kv b{font-size:18px}
+  .alerts{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .alert{padding:8px 12px;flex-direction:row;align-items:center;gap:10px}
+  .alert b{font-size:22px;min-width:1.2em}
+  .alert span{font-size:12.5px;line-height:1.3}
+  .pgact .btn.pri{order:-1}
+  #bk-exp,#bk-imp,#bk-tpl{display:none}
+  .pipe button{flex:1 0 92px;padding:8px 10px}
+  .card2{padding:14px;border-radius:14px}
+  .home{gap:12px}.home .col{gap:12px}
+  .todo{grid-template-columns:78px minmax(0,1fr);gap:10px;padding:12px 10px}
+  .toast{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+  .set-row{flex-wrap:wrap}
+  input[type=search]{flex:1 1 100%;min-width:0}
+  .bulk{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none}
+  .bulk .sub{display:none}
+  .bulk .btn{flex:none;white-space:nowrap}
+  /* 表 → カード */
+  .panel.scroll:has(>table.rt){overflow:visible;border:0;background:none}
+  table.rt{min-width:0;display:block}
+  table.rt thead{display:none}
+  table.rt tbody{display:block}
+  table.rt tr{display:flex;flex-direction:column;position:relative;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+  table.rt td{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border:0;padding:3px 0;text-align:right;min-width:0}
+  table.rt td::before{content:attr(data-l);color:var(--muted);font-size:12px;flex:none;text-align:left}
+  table.rt td:not([data-l])::before{display:none}
+  table.rt td:empty{display:none}
+  table.rt td.rt0{order:-1;display:block;text-align:left;font-size:15px;font-weight:700;padding:0 34px 6px 0;margin-bottom:4px;border-bottom:1px solid var(--line)}
+  table.rt td.rta{justify-content:flex-end;flex-wrap:wrap;gap:6px;padding-top:8px}
+  table.rt td[colspan]{display:block;text-align:center}
+  table.rt td.selc{position:absolute;right:6px;top:6px;width:auto;padding:0;order:-2}
+  table.rt td.selc input{width:22px;height:22px}
+  table.rt td.num{white-space:normal}
+  /* カレンダー */
+  .cal{min-width:0!important}
+  .cal>div{min-height:46px;padding:2px}
+  .cal .chip{font-size:0;height:6px;padding:0;margin-top:2px;border-radius:3px;border-left-width:0;background:var(--accent)}
+  .cal .chip.sub{background:var(--warn)}
+  .agenda{display:block}
+  .agenda .up{align-items:flex-start;padding:8px 12px;border-bottom:1px solid var(--line)}
+  .agenda .up .d{flex:none;width:78px}
+  .agenda .chip{display:block;font-size:13px;height:auto;padding:5px 8px;border-left-width:3px;margin:2px 0 4px;background:var(--accent-soft);white-space:normal}
+  /* ダイアログ */
+  .mask{padding:0;align-items:stretch}
+  .dlg,.dlg.lg{width:100%!important;max-width:none;min-height:100%;border-radius:0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));gap:12px}
+  .fields{grid-template-columns:repeat(auto-fit,minmax(138px,1fr))}
+  .dlg>.acts{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);margin:0 -14px;padding:10px 14px calc(8px + env(safe-area-inset-bottom,0px));z-index:3;flex-wrap:nowrap}
+  .dlg>.acts .btn{flex:1 1 auto;white-space:nowrap;padding-left:12px;padding-right:12px}
+  .dlg>.acts>span{display:flex;gap:8px;flex:1}
+  .dlg>.acts>span:first-child:not(:last-child){flex:0 0 auto}
+  .dlg>.acts>span:first-child:empty{display:none}
+  /* 下タブ */
+  .bnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--surface);border-top:1px solid var(--line);padding:4px max(4px,env(safe-area-inset-right,0px)) calc(4px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px));box-shadow:0 -2px 10px rgba(0,0,0,.06)}
+  .bnav button{position:relative;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;font-size:10.5px;color:var(--muted);cursor:pointer;border-radius:10px;min-height:52px}
+  .bnav button[aria-current=page]{color:var(--accent);font-weight:700;background:var(--accent-soft)}
+  .bnav .n{position:absolute;top:2px;left:calc(50% + 6px);min-width:17px;height:17px;border-radius:9px;background:var(--bad);color:#fff;font-size:10.5px;line-height:17px;text-align:center;padding:0 4px}
+  body.nav-open .bnav{z-index:40}
+}
 @media(prefers-reduced-motion:reduce){.side{transition:none}}
 </style>
 
@@ -274,13 +357,14 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
     <header class="topbar"><div class="tb-in">
       <button class="icon-btn menu" id="menu" aria-label="メニューを開く"></button>
       <span class="tb-brand">大東受注ナビ</span><span class="tb-sp"></span>
-      <button class="btn out" id="qa-f" style="margin-right:8px">📠 FAX取込</button>
+      <button class="btn out" id="qa-f" style="margin-right:8px" aria-label="FAX取込">📠<span class="tb-t"> FAX取込</span></button>
       <button class="icon-btn" id="bell" aria-label="対応が必要な項目"></button>
       <div class="user"><span class="av">三</span><span class="un">株式会社三桜</span></div>
     </div></header>
     <main id="main"></main>
   </div>
 </div>
+<nav class="bnav" id="bnav" aria-label="主なメニュー"></nav>
 <div id="modal"></div>
 <div id="toast"></div>
 
@@ -406,6 +490,35 @@ function todos(){
   S.water.forEach(function(w){if(w.status===0&&w.date&&w.date<=soon)T.push({date:w.date,kind:"w",id:w.id,tag:"水道届",title:w.kind+"届 "+wtLabel(w),note:"予定日 "+md(w.date)+" までに申請"})});
   return T.sort(function(a,b){return a.date.localeCompare(b.date)});
 }
+/*MOB*/
+function renderBnav(B){
+  var el=document.getElementById("bnav");if(!el)return;
+  var cur=NAV.find(function(n){return n.tab===S.tab})||{},items=[["home","ホーム","home"],["jobs","案件","list"],["elog","緊急","alert"],["mmonth","維持管理","building"]];
+  var hit=false;
+  el.innerHTML=items.map(function(it){
+    var n=NAV.find(function(x){return x.tab===it[0]})||{},on=S.tab===it[0]||(!!cur.d&&cur.d===n.d&&it[0]!=="home");if(on)hit=true;
+    return '<button type="button" data-tab="'+it[0]+'"'+(on?' aria-current="page"':"")+">"+ic(it[2],22)+"<span>"+it[1]+"</span>"+(B[it[0]]?'<span class="n">'+B[it[0]]+"</span>":"")+"</button>"}).join("")+
+   '<button type="button" id="bn-more"'+(hit?"":' aria-current="page"')+">"+ic("menu",22)+"<span>メニュー</span></button>";
+}
+document.addEventListener("click",function(e){var t=e.target.closest&&e.target.closest("#bn-more");if(t){e.preventDefault();document.body.classList.toggle("nav-open")}});
+function mobTables(){
+  if(!window.matchMedia||!matchMedia("(max-width:720px)").matches)return;
+  [].slice.call(document.querySelectorAll("#main table")).forEach(function(tb){
+    var th=[].slice.call(tb.querySelectorAll("thead th"));if(th.length<2||tb.dataset.nocard)return;
+    var labs=th.map(function(h){return h.textContent.trim()});tb.classList.add("rt");
+    [].slice.call(tb.querySelectorAll("tbody tr")).forEach(function(tr){
+      var tds=[].slice.call(tr.children),ti=-1;
+      tds.forEach(function(td,i){if(ti<0&&!td.hasAttribute("colspan")&&!td.classList.contains("selc")&&td.querySelector(".site"))ti=i});
+      if(ti<0)tds.forEach(function(td,i){if(ti<0&&!td.hasAttribute("colspan")&&!td.classList.contains("selc")&&!td.querySelector("input,button,select"))ti=i});
+      tds.forEach(function(td,i){
+        if(td.hasAttribute("colspan")||td.classList.contains("selc"))return;
+        if(i===ti){td.classList.add("rt0");return}
+        var l=labs[i]||"";if(!l)td.classList.add("rta");else td.dataset.l=l;
+      });
+    });
+  });
+}
+try{matchMedia("(max-width:720px)").addEventListener("change",function(){if(S.ready)render()})}catch(e){}
 function renderTabs(){
   var c=counts(),eAct=S.emerg.filter(function(x){return x.status<2}).length,mSei=S.maint.filter(function(x){return x.status===1}).length;
   var B={aclist:S.ac.filter(function(r){return r.status===0&&mineOk(r)}).length,info:infoNew(),jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
@@ -417,7 +530,7 @@ function renderTabs(){
   sd.scrollTop=sTop;
   var cur=sd.querySelector('[aria-current="page"]');
   if(cur&&sd.scrollHeight>sd.clientHeight){var cr=cur.getBoundingClientRect(),sr=sd.getBoundingClientRect();if(cr.bottom>sr.bottom-8)sd.scrollTop+=cr.bottom-sr.bottom+16;else if(cr.top<sr.top+8)sd.scrollTop-=sr.top-cr.top+16}
-  $("#menu").innerHTML=ic("menu");
+  $("#menu").innerHTML=ic("menu");renderBnav(B);
   var uc=userChipHtml();if(uc!==null){var ue=document.querySelector(".user");if(ue&&ue.dataset.c!==uc){ue.innerHTML=uc;ue.dataset.c=uc}}
   var tn=todos().length+infoNew();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");
 }
@@ -470,7 +583,7 @@ function render0(){
   h+=pageHead();
   h+=({home:vHome,info:vInfo,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,water:vWater}[S.tab]||vJobs)();
   m.innerHTML=h;
-  decorate();
+  decorate();mobTables();
   if(fk){var fe=$(fk,m);if(fe){fe.focus();try{if(ss&&ss[0]!=null)fe.setSelectionRange(ss[0],ss[1])}catch(e){}}}
   if(S.tab==="sched")bindCal();
 }
@@ -512,6 +625,11 @@ function vJobs(){
 }
 
 /* ----- schedule ----- */
+function agendaHtml(by){
+  var WD="日月火水木金土",days=Object.keys(by).filter(function(k){return k.slice(0,7)===S.calMonth}).sort();
+  return '<div class="panel agenda"><h3>'+S.calMonth.replace("-","年")+'月の施工予定</h3>'+(days.length?days.map(function(k){var d=new Date(k+"T00:00:00");
+    return '<div class="up"><span class="d">'+md(k)+"("+WD[d.getDay()]+')</span><span style="flex:1;min-width:0">'+by[k].map(function(j){return '<button type="button" class="chip '+(j.kind==="下請"?"sub ":"")+(done(j)?"done":"")+'" data-chip="'+j.id+'">'+esc(j.site)+" "+esc(j.room)+"</button>"}).join("")+"</span></div>"}).join(""):'<div class="empty">この月の施工予定はありません。</div>')+"</div>";
+}
 function vSched(){
   var p=S.calMonth.split("-"),y=+p[0],mo=+p[1]-1,first=new Date(y,mo,1),start=new Date(y,mo,1-first.getDay());
   var by={};S.jobs.forEach(function(j){if(j.workDate&&mineOk(j))(by[j.workDate]=by[j.workDate]||[]).push(j)});
@@ -526,7 +644,7 @@ function vSched(){
   var load=S.settings.staff.map(function(s){var n=S.jobs.filter(function(j){return j.workDate&&j.workDate.slice(0,7)===S.calMonth&&(j.staff||[]).indexOf(s)>=0}).length;return '<span class="pill">'+esc(s)+" "+n+"件</span>"}).join("");
   var noStaff=S.jobs.filter(function(j){return j.workDate&&j.workDate.slice(0,7)===S.calMonth&&!(j.staff||[]).length}).length;
   return '<div class="bar"><div class="mon"><button class="btn sm" data-cal="-1">◀</button><h2 class="sec">'+y+"年"+(mo+1)+'月</h2><button class="btn sm" data-cal="1">▶</button><button class="btn sm" data-cal="0">今月</button></div><span class="sub">案件をドラッグすると施工日を変更できます。赤枠は1日'+(MAX_PER_DAY+1)+"件以上の日です。</span></div>"+
-   '<div class="split"><div class="panel scroll"><div class="cal" style="min-width:520px">'+cells+'</div></div><div class="sidep panel"><h3>施工日が未定('+un.length+")</h3>"+
+   '<div class="split"><div class="panel scroll"><div class="cal" style="min-width:520px">'+cells+'</div></div>'+agendaHtml(by)+'<div class="sidep panel"><h3>施工日が未定('+un.length+")</h3>"+
    (un.length?un.map(function(j){return '<div class="it" data-open="'+j.id+'"><div class="site">'+esc(j.site)+" "+esc(j.room)+'</div><div class="sub">完了予定 '+md(j.dueDate)+(overdue(j)?' <span class="late">超過</span>':"")+"</div></div>"}).join(""):'<div class="empty">すべて日程が決まっています</div>')+
    "<h3>担当別 件数(今月表示分)</h3><div class='load'>"+load+(noStaff?'<span class="pill s0">担当未設定 '+noStaff+"件</span>":"")+"</div></div></div>";
 }
