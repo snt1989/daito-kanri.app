@@ -482,7 +482,7 @@ var ICONS={
  menu:'<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
  tool:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'};
 function ic(n,sz){sz=sz||20;return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[n]+"</svg>"}
-var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"info",label:"お知らせ",ic:"bell"},{tab:"docs",label:"書類ボックス",ic:"book"},{tab:"qa",label:"Q&A",ic:"help"},
+var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"docs",label:"書類ボックス",ic:"book"},{tab:"qa",label:"Q&A",ic:"help"},
  {g:"原状回復工事"},{tab:"jobs",label:"案件一覧",ic:"list",d:"genkyo"},{tab:"sched",label:"施工予定",ic:"calendar",d:"genkyo"},{tab:"report",label:"完了報告",ic:"check",d:"genkyo"},{tab:"bill",label:"請求・入金",ic:"yen",d:"genkyo"},{tab:"water",label:"水道開始・中止届",ic:"drop",d:"genkyo"},
  {g:"緊急対応"},{tab:"elog",label:"出動一覧",ic:"alert",d:"emerg"},{tab:"eguide",label:"対応区分ガイド",ic:"book",d:"emerg"},{tab:"esum",label:"月次集計",ic:"chart",d:"emerg"},
  {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mscope",label:"業務内容",ic:"book",d:"maint"},
@@ -534,7 +534,7 @@ function mobTables(){
 try{matchMedia("(max-width:720px)").addEventListener("change",function(){if(S.ready)render()})}catch(e){}
 function renderTabs(){
   var c=counts(),eAct=S.emerg.filter(function(x){return x.status<2}).length,mSei=S.maint.filter(function(x){return x.status===1}).length;
-  var B={aclist:S.ac.filter(function(r){return r.status===0&&mineOk(r)}).length,info:infoBadge(),jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
+  var B={aclist:S.ac.filter(function(r){return r.status===0&&mineOk(r)}).length,jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
   var sd=$("#side"),sTop=sd.scrollTop;
   sd.innerHTML='<div class="brand"><i>'+ic("tool",20)+'</i><span>大東受注ナビ</span></div>'+NAV.filter(function(n){return n.tab!=="docs"||window.dsFiles}).map(function(n){
     if(n.g!==undefined)return n.g.trim()?'<div class="nv-g">'+n.g+"</div>":'<div class="nv-g" style="padding:6px"></div>';
@@ -566,7 +566,7 @@ function vHome(){
   var up=S.jobs.filter(function(j){return j.status<4&&j.workDate&&j.workDate>=today}).sort(function(a,b){return a.workDate.localeCompare(b.workDate)}).slice(0,6);
   var rows=T.slice(0,12).map(function(t){var d=daysTo(t.date),lab=d>0?"あと"+d+"日":d===0?"今日":(-d)+"日超過";
     return '<button class="todo" data-todo="'+t.kind+":"+esc(t.id)+'"><span class="dt'+(d<0?" late":"")+'">'+t.date.replace(/-/g,"/")+"<br>"+lab+'</span><span class="tt"><span class="tag" style="margin:0 6px 0 0">'+t.tag+"</span>"+esc(t.title)+"<small>"+esc(t.note)+'</small></span><span class="go sub">開く ›</span></button>'}).join("");
-  var h='<div class="home"><div class="col">'+infoBanner()+'<div class="card2"><h3>対応が必要な案件(TODO)'+(T.length?' <span class="sub">'+T.length+"件</span>":"")+"</h3>"+(rows||'<div class="empty">いま対応が必要な項目はありません。</div>')+(T.length>12?'<div class="sub" style="padding-top:8px">ほか '+(T.length-12)+" 件は各画面で確認できます。</div>":"")+"</div></div>"+
+  var h='<div class="home"><div class="col">'+infoBanner()+ntHtml()+'<div class="card2"><h3>対応が必要な案件(TODO)'+(T.length?' <span class="sub">'+T.length+"件</span>":"")+"</h3>"+(rows||'<div class="empty">いま対応が必要な項目はありません。</div>')+(T.length>12?'<div class="sub" style="padding-top:8px">ほか '+(T.length-12)+" 件は各画面で確認できます。</div>":"")+"</div></div>"+
    '<div class="col">'+mtgCard()+'<div class="card2"><h3>本日の稼働状況</h3>'+
    '<div class="stat"><span>施工予定の現場</span><b>'+S.jobs.filter(function(j){return j.status===3}).length+"</b></div>"+
    '<div class="stat"><span>本日の施工</span><b>'+S.jobs.filter(function(j){return j.workDate===today&&j.status<4}).length+"</b></div>"+
@@ -594,7 +594,7 @@ function render0(){
   var m=$("#main"),h="";
   if(!S.persist)h+='<div class="banner">共有保存が使えない表示です。入力内容はこのブラウザにだけ保存されます。</div>';
   h+=pageHead();
-  h+=({home:vHome,info:vInfo,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,water:vWater}[S.tab]||vJobs)();
+  h+=({home:vHome,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,water:vWater}[S.tab]||vJobs)();
   m.innerHTML=h;
   decorate();mobTables();
   if(fk){var fe=$(fk,m);if(fe){fe.focus();try{if(ss&&ss[0]!=null)fe.setSelectionRange(ss[0],ss[1])}catch(e){}}}
@@ -2640,7 +2640,7 @@ async function ntLoad(){
     out.sort(function(a,b){return String(b.date).localeCompare(String(a.date))});
     NT.list=out;NT.state="ok";NT.at=Date.now();
   }catch(e){NT.state="err";NT.msg=(e&&e.code==="server_not_connected"||e&&e.code==="needs_reauth")?"Gmailが未接続です":"お知らせを取得できませんでした";NT.connect=(e&&e.connectUrl)||""}
-  if(S.tab==="home"||S.tab==="info")render();
+  if(S.tab==="home")render();
 }
 function ntHtml(){
   if(NT.state==="off"||NT.state==="idle")return "";
@@ -2728,6 +2728,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"大東建託からのお知らせをホームに移動",d:"大東建託からのメールはホームの「📩 大東建託からのお知らせ」に表示します。「お知らせ」タブは廃止しました。アプリの更新や対応が必要な項目は、これまでどおり右上のベルから確認できます。"},
  {v:"2026-10-22",t:"お知らせと更新履歴を見やすく",d:"右上のベルから「お知らせ」ウィンドウが開き、アプリの更新・対応が必要な案件・大東建託のメールをまとめて確認できます。アプリが新しくなったときは「アプリが新しくなりました」と案内し、内容を読むと既読になります。「更新の履歴」で過去の更新を日付ごとに見返せます。"},
  {v:"2026-10-22",t:"Q&Aのページを追加",d:"左のメニューに「Q&A」を追加しました。アプリの使い方の質問と答えを入れてあり、検索や分類で探せます。社内のルールや確認事項も、自由に追加・編集できます。"},
  {v:"2026-10-22",t:"価値観共有シートを案件に自動で紐づけ",d:"案件の画面の「📎 価値観共有シートを取り込む」で、完了時のシート(PDF・写真)を選ぶと、物件名・号室から案件を探して自動で紐づけ、「価値観共有シート」のチェックも完了にします(Web版は書類も保管されプレビューできます)。FAX取込でも価値観共有シートを判別します。"},
@@ -2778,22 +2779,15 @@ function openNotices(){
   var row=function(attr,icon,title,sub,urgent){return '<button type="button" class="nrow'+(urgent?" urgent":"")+'" '+attr+'><span class="ni">'+icon+'</span><span class="nb"><b>'+esc(title)+'</b><span class="sub">'+esc(sub)+"</span></span></button>"};
   if(U.length)h+='<div class="ngrp">アプリの更新</div>'+row('id="rel-open"',"🆕","アプリが新しくなりました","新しい機能・変更点があります("+U.length+"件)",true);
   if(T.length)h+='<div class="ngrp">対応が必要な案件('+T.length+")</div>"+T.slice(0,5).map(function(t){return row('data-todo="'+t.kind+":"+esc(t.id)+'"',"✓",t.title,t.tag+(t.note?" ／ "+t.note:""),false)}).join("")+(T.length>5?'<div class="sub" style="padding:6px 2px">ほか '+(T.length-5)+" 件はホームで確認できます。</div>":"");
-  if(M.length)h+='<div class="ngrp">大東建託からのメール('+M.length+")</div>"+M.slice(0,5).map(function(x){var d=x.date?new Date(x.date):null,ds=d&&!isNaN(d)?(d.getMonth()+1)+"/"+d.getDate()+" ":"";return '<a class="nrow" href="'+esc(x.url)+'" target="_blank" rel="noopener"><span class="ni">📩</span><span class="nb"><b>'+esc(x.subject||"(件名なし)")+'</b><span class="sub">'+ds+esc(x.sender)+"</span></span></a>"}).join("")+(M.length>5?'<div class="sub" style="padding:6px 2px">ほか '+(M.length-5)+" 件はお知らせ画面で確認できます。</div>":"");
+  if(M.length)h+='<div class="ngrp">大東建託からのメール('+M.length+")</div>"+M.slice(0,5).map(function(x){var d=x.date?new Date(x.date):null,ds=d&&!isNaN(d)?(d.getMonth()+1)+"/"+d.getDate()+" ":"";return '<a class="nrow" href="'+esc(x.url)+'" target="_blank" rel="noopener"><span class="ni">📩</span><span class="nb"><b>'+esc(x.subject||"(件名なし)")+'</b><span class="sub">'+ds+esc(x.sender)+"</span></span></a>"}).join("")+(M.length>5?'<div class="sub" style="padding:6px 2px">ほか '+(M.length-5)+" 件はホームで確認できます。</div>":"");
   if(!h)h='<div class="empty" style="padding:26px 6px;text-align:center">新しいお知らせはありません</div>';
-  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(560px,100%)"><h2>お知らせ</h2><div>'+h+'</div><div class="acts"><span><button type="button" class="btn" id="rel-hist">更新の履歴</button> <button type="button" class="btn" id="nf-page">お知らせ画面</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(560px,100%)"><h2>お知らせ</h2><div>'+h+'</div><div class="acts"><span><button type="button" class="btn" id="rel-hist">更新の履歴</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
 }
 function infoBanner(){
   var n=ntUnread().length,u=infoNew(),h="";
   if(u)h+='<button type="button" class="todo" id="rel-open"><span class="dt">更新</span><span class="tt">アプリが新しくなりました<small>新しい機能・変更点 '+u+'件 — タップして内容を見る</small></span><span class="go sub">見る ›</span></button>';
-  if(n)h+='<button class="todo" data-tab="info"><span class="dt">お知らせ</span><span class="tt">大東建託からのメール '+n+'件<small>お知らせ画面で内容を確認できます</small></span><span class="go sub">開く ›</span></button>';
+  if(0)h+='<button class="todo" data-tab="info"><span class="dt">お知らせ</span><span class="tt">大東建託からのメール '+n+'件<small>お知らせ画面で内容を確認できます</small></span><span class="go sub">開く ›</span></button>';
   return h}
-function vInfo(){
-  ntKick();
-  var T=todos(),u=infoNew();
-  var up=u?'<button type="button" class="todo" id="rel-open"><span class="dt">更新</span><span class="tt">アプリが新しくなりました<small>新しい機能・変更点 '+u+'件</small></span><span class="go sub">見る ›</span></button>':"";
-  var todo='<button class="todo" data-tab="home"><span class="dt">TODO</span><span class="tt">'+(T.length?"対応が必要な案件が "+T.length+" 件あります":"いま対応が必要な項目はありません")+'<small>ホームの一覧で確認・対応できます</small></span><span class="go sub">ホームへ ›</span></button>';
-  return '<div class="home"><div class="col">'+up+todo+ntHtml()+'</div><div class="col"><div class="card2"><h3>更新の履歴'+(u?' <button type="button" class="btn sm" id="info-read" style="float:right">既読にする</button>':"")+"</h3>"+relHtml()+"</div></div></div>";
-}
 /* ---------- 担当ログイン(Web版のみ) ---------- */
 function ME(){return window.dsAuth&&window.dsAuth.me||null}
 function isStaff(){var m=ME();return !!(m&&m.role==="staff"&&m.name)}
@@ -3613,9 +3607,7 @@ function modClick(e,t,d){
   if(t.id==="rel-hist"){openRel(true);return true}
   if(t.id==="nf-open"){openNotices();return true}
   if(t.id==="nf-x"){$("#modal").innerHTML="";render();return true}
-  if(t.id==="nf-page"){$("#modal").innerHTML="";S.tab="info";resetFilters();saveUi();render();return true}
   if(d.stab){S.setTab=d.stab;render();return true}
-  if(t.id==="info-read"){infoMarkSeen();render();return true}
   if(t.id==="nt-reload"){NT.state="idle";ntLoad();render();return true}
   if(t.id==="nt-all"){var dn=ntDone();NT.list.forEach(function(x){if(dn.indexOf(x.id)<0)dn.push(x.id)});if(dn.length>300)dn.splice(0,dn.length-300);saveSettings(true);render();return true}
   if(t.dataset&&t.dataset.nt){var dn2=ntDone();if(dn2.indexOf(t.dataset.nt)<0)dn2.push(t.dataset.nt);if(dn2.length>300)dn2.splice(0,dn2.length-300);saveSettings(true);render();return true}
