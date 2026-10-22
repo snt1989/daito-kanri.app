@@ -348,6 +348,19 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
   body.nav-open .bnav{z-index:40}
 }
 @media(prefers-reduced-motion:reduce){.side{transition:none}}
+
+.ngrp{font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 2px}
+.nrow{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 2px;cursor:pointer;color:inherit;font:inherit;text-decoration:none}
+.nrow:hover{background:rgba(0,0,0,.03)}
+.nrow .ni{width:22px;text-align:center;flex:none}
+.nrow .nb{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.nrow.urgent .nb b{color:var(--warn)}
+.rel-list{max-height:min(60vh,520px);overflow-y:auto}
+.rel-day{margin:2px 0 14px}
+.rel-h{font-size:13px;font-weight:700;margin-bottom:4px}
+.rel-it{padding:8px 0;border-top:1px solid var(--line)}
+.rel-it b{font-size:13px}
+.rel-new{font-size:10.5px;color:#fff;background:#c0392b;border-radius:8px;padding:1px 7px;margin-left:4px;vertical-align:1px;font-weight:600}
 </style>
 
 <div class="app" id="app">
@@ -358,7 +371,7 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
       <button class="icon-btn menu" id="menu" aria-label="メニューを開く"></button>
       <span class="tb-brand">大東受注ナビ</span><span class="tb-sp"></span>
       <button class="btn out" id="qa-f" style="margin-right:8px" aria-label="FAX取込">📠<span class="tb-t"> FAX取込</span></button>
-      <button class="icon-btn" id="bell" aria-label="対応が必要な項目"></button>
+      <button class="icon-btn" id="bell" aria-label="お知らせ"></button>
       <div class="user"><span class="av">三</span><span class="un">株式会社三桜</span></div>
     </div></header>
     <main id="main"></main>
@@ -521,7 +534,7 @@ function mobTables(){
 try{matchMedia("(max-width:720px)").addEventListener("change",function(){if(S.ready)render()})}catch(e){}
 function renderTabs(){
   var c=counts(),eAct=S.emerg.filter(function(x){return x.status<2}).length,mSei=S.maint.filter(function(x){return x.status===1}).length;
-  var B={aclist:S.ac.filter(function(r){return r.status===0&&mineOk(r)}).length,info:infoNew(),jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
+  var B={aclist:S.ac.filter(function(r){return r.status===0&&mineOk(r)}).length,info:infoBadge(),jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
   var sd=$("#side"),sTop=sd.scrollTop;
   sd.innerHTML='<div class="brand"><i>'+ic("tool",20)+'</i><span>大東受注ナビ</span></div>'+NAV.filter(function(n){return n.tab!=="docs"||window.dsFiles}).map(function(n){
     if(n.g!==undefined)return n.g.trim()?'<div class="nv-g">'+n.g+"</div>":'<div class="nv-g" style="padding:6px"></div>';
@@ -532,7 +545,7 @@ function renderTabs(){
   if(cur&&sd.scrollHeight>sd.clientHeight){var cr=cur.getBoundingClientRect(),sr=sd.getBoundingClientRect();if(cr.bottom>sr.bottom-8)sd.scrollTop+=cr.bottom-sr.bottom+16;else if(cr.top<sr.top+8)sd.scrollTop-=sr.top-cr.top+16}
   $("#menu").innerHTML=ic("menu");renderBnav(B);
   var uc=userChipHtml();if(uc!==null){var ue=document.querySelector(".user");if(ue&&ue.dataset.c!==uc){ue.innerHTML=uc;ue.dataset.c=uc}}
-  var tn=todos().length+infoNew();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");
+  var tn=todos().length+infoBadge();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn);
 }
 function pageHead(){
   var n=NAV.find(function(x){return x.tab===S.tab})||NAV[0],act="";
@@ -2715,6 +2728,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"お知らせと更新履歴を見やすく",d:"右上のベルから「お知らせ」ウィンドウが開き、アプリの更新・対応が必要な案件・大東建託のメールをまとめて確認できます。アプリが新しくなったときは「アプリが新しくなりました」と案内し、内容を読むと既読になります。「更新の履歴」で過去の更新を日付ごとに見返せます。"},
  {v:"2026-10-22",t:"Q&Aのページを追加",d:"左のメニューに「Q&A」を追加しました。アプリの使い方の質問と答えを入れてあり、検索や分類で探せます。社内のルールや確認事項も、自由に追加・編集できます。"},
  {v:"2026-10-22",t:"価値観共有シートを案件に自動で紐づけ",d:"案件の画面の「📎 価値観共有シートを取り込む」で、完了時のシート(PDF・写真)を選ぶと、物件名・号室から案件を探して自動で紐づけ、「価値観共有シート」のチェックも完了にします(Web版は書類も保管されプレビューできます)。FAX取込でも価値観共有シートを判別します。"},
  {v:"2026-10-22",t:"水道届の様式にWord(.docx)も使える",d:"設定「水道事業者」の様式アップロードで、PDF・画像に加えてWord(.docx)も登録できます。文書の各行に氏名・住所・日付などの項目を割り当て(AIの自動割り当てもあります)、水道届から記入済みのWordファイルとして保存できます。"},
@@ -2731,18 +2745,54 @@ var CHANGELOG=[
  {v:"2026-10-18",t:"FAX取込(eFax)",d:"上部の「📠 FAX取込」からeFaxラベルのFAXを読み取り、案件登録などに使えます。大東建託関連の書類のみ表示します。"},
  {v:"2026-10-17",t:"Web版(Vercel)を公開",d:"パスワードログイン付きでブラウザから利用できます。データはクラウドに保存されます。"}
 ];
+function ckey(c){return c.v+"|"+c.t}
+function infoUnseen(){
+  var k=lsGet("infoSeenK");
+  if(typeof k==="string"){var i=-1;CHANGELOG.forEach(function(c,n){if(i<0&&ckey(c)===k)i=n});if(i>=0)return CHANGELOG.slice(0,i)}
+  else{var s=infoSeen();if(s)return CHANGELOG.filter(function(c){return c.v>s})}
+  return CHANGELOG.slice(0,3);
+}
 function infoSeen(){var v=lsGet("infoSeen");return typeof v==="string"?v:""}
-function infoNew(){var s=infoSeen();return CHANGELOG.filter(function(c){return c.v>s}).length}
+function infoNew(){return infoUnseen().length}
+function infoMarkSeen(){lsSet("infoSeenK",ckey(CHANGELOG[0]));lsSet("infoSeen",CHANGELOG[0].v)}
+function ntUnread(){return NT.list.filter(function(x){return ntDone().indexOf(x.id)<0})}
+function infoBadge(){return ntUnread().length+(infoNew()?1:0)}
+function appBadge(n){try{if(n>0&&navigator.setAppBadge)navigator.setAppBadge(n).catch(function(){});else if(n<=0&&navigator.clearAppBadge)navigator.clearAppBadge().catch(function(){})}catch(e){}}
+function infoDay(v){var a=String(v).split("-");return (+a[1])+"月"+(+a[2])+"日"}
+function relHtml(){
+  var un=infoUnseen().map(ckey),days=[],map={};
+  CHANGELOG.forEach(function(c){if(!map[c.v]){map[c.v]=[];days.push(c.v)}map[c.v].push(c)});
+  return days.map(function(v){
+    var L=map[v],nw=L.some(function(c){return un.indexOf(ckey(c))>=0});
+    return '<div class="rel-day"><div class="rel-h">'+infoDay(v)+'の更新'+(nw?' <span class="rel-new">NEW</span>':"")+"</div>"+
+      L.map(function(c){var n=un.indexOf(ckey(c))>=0;return '<div class="rel-it"><b>'+esc(c.t)+(n?' <span class="rel-new">NEW</span>':"")+'</b><div class="sub">'+esc(c.d)+"</div></div>"}).join("")+"</div>"}).join("");
+}
+function openRel(all){
+  var has=infoNew()>0,ttl=(has&&!all)?"アプリが新しくなりました":"更新の履歴";
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(620px,100%)"><h2>'+ttl+'</h2>'+(has?'<div class="sub">新しい機能・変更点をお知らせします。</div>':"")+'<div class="rel-list">'+relHtml()+'</div><div class="acts"><span><button type="button" class="btn" id="nf-open">お知らせに戻る</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+  if(has){infoMarkSeen();var b=$("#bell");if(b){var tn=todos().length+infoBadge();b.innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn)}}
+}
+function openNotices(){
+  ntKick();
+  var T=todos(),M=ntUnread(),U=infoUnseen(),h="";
+  var row=function(attr,icon,title,sub,urgent){return '<button type="button" class="nrow'+(urgent?" urgent":"")+'" '+attr+'><span class="ni">'+icon+'</span><span class="nb"><b>'+esc(title)+'</b><span class="sub">'+esc(sub)+"</span></span></button>"};
+  if(U.length)h+='<div class="ngrp">アプリの更新</div>'+row('id="rel-open"',"🆕","アプリが新しくなりました","新しい機能・変更点があります("+U.length+"件)",true);
+  if(T.length)h+='<div class="ngrp">対応が必要な案件('+T.length+")</div>"+T.slice(0,5).map(function(t){return row('data-todo="'+t.kind+":"+esc(t.id)+'"',"✓",t.title,t.tag+(t.note?" ／ "+t.note:""),false)}).join("")+(T.length>5?'<div class="sub" style="padding:6px 2px">ほか '+(T.length-5)+" 件はホームで確認できます。</div>":"");
+  if(M.length)h+='<div class="ngrp">大東建託からのメール('+M.length+")</div>"+M.slice(0,5).map(function(x){var d=x.date?new Date(x.date):null,ds=d&&!isNaN(d)?(d.getMonth()+1)+"/"+d.getDate()+" ":"";return '<a class="nrow" href="'+esc(x.url)+'" target="_blank" rel="noopener"><span class="ni">📩</span><span class="nb"><b>'+esc(x.subject||"(件名なし)")+'</b><span class="sub">'+ds+esc(x.sender)+"</span></span></a>"}).join("")+(M.length>5?'<div class="sub" style="padding:6px 2px">ほか '+(M.length-5)+" 件はお知らせ画面で確認できます。</div>":"");
+  if(!h)h='<div class="empty" style="padding:26px 6px;text-align:center">新しいお知らせはありません</div>';
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(560px,100%)"><h2>お知らせ</h2><div>'+h+'</div><div class="acts"><span><button type="button" class="btn" id="rel-hist">更新の履歴</button> <button type="button" class="btn" id="nf-page">お知らせ画面</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+}
 function infoBanner(){
-  var n=NT.list.filter(function(x){return ntDone().indexOf(x.id)<0}).length,u=infoNew();
-  if(!n&&!u)return "";
-  return '<button class="todo" data-tab="info"><span class="dt">お知らせ</span><span class="tt">'+(n?"大東建託からのメール "+n+"件":"")+(n&&u?" ／ ":"")+(u?"アプリの更新 "+u+"件":"")+'<small>お知らせ画面で内容を確認できます</small></span><span class="go sub">開く ›</span></button>'}
+  var n=ntUnread().length,u=infoNew(),h="";
+  if(u)h+='<button type="button" class="todo" id="rel-open"><span class="dt">更新</span><span class="tt">アプリが新しくなりました<small>新しい機能・変更点 '+u+'件 — タップして内容を見る</small></span><span class="go sub">見る ›</span></button>';
+  if(n)h+='<button class="todo" data-tab="info"><span class="dt">お知らせ</span><span class="tt">大東建託からのメール '+n+'件<small>お知らせ画面で内容を確認できます</small></span><span class="go sub">開く ›</span></button>';
+  return h}
 function vInfo(){
   ntKick();
-  var seen=infoSeen(),T=todos();
-  var log=CHANGELOG.map(function(c){return '<div class="up" style="align-items:flex-start"><span class="d">'+c.v.slice(5).replace("-","/")+'</span><span style="flex:1;min-width:0"><b>'+esc(c.t)+(c.v>seen?' <span class="tag" style="background:#c0392b;color:#fff">NEW</span>':"")+'</b><div class="sub">'+esc(c.d)+"</div></span></div>"}).join("");
+  var T=todos(),u=infoNew();
+  var up=u?'<button type="button" class="todo" id="rel-open"><span class="dt">更新</span><span class="tt">アプリが新しくなりました<small>新しい機能・変更点 '+u+'件</small></span><span class="go sub">見る ›</span></button>':"";
   var todo='<button class="todo" data-tab="home"><span class="dt">TODO</span><span class="tt">'+(T.length?"対応が必要な案件が "+T.length+" 件あります":"いま対応が必要な項目はありません")+'<small>ホームの一覧で確認・対応できます</small></span><span class="go sub">ホームへ ›</span></button>';
-  return '<div class="home"><div class="col">'+todo+ntHtml()+'</div><div class="col"><div class="card2"><h3>アプリの更新履歴'+(infoNew()?' <button type="button" class="btn sm" id="info-read" style="float:right">既読にする</button>':"")+"</h3>"+log+"</div></div></div>";
+  return '<div class="home"><div class="col">'+up+todo+ntHtml()+'</div><div class="col"><div class="card2"><h3>更新の履歴'+(u?' <button type="button" class="btn sm" id="info-read" style="float:right">既読にする</button>':"")+"</h3>"+relHtml()+"</div></div></div>";
 }
 /* ---------- 担当ログイン(Web版のみ) ---------- */
 function ME(){return window.dsAuth&&window.dsAuth.me||null}
@@ -3558,9 +3608,14 @@ function modClick(e,t,d){
   if(d.tab){S.tab=d.tab;resetFilters();saveUi();document.body.classList.remove("nav-open");render();window.scrollTo(0,0);return true}
   if(t.id==="menu"){document.body.classList.toggle("nav-open");return true}
   if(t.id==="fold"){document.body.classList.toggle("folded");render();return true}
-  if(t.id==="bell"){S.tab="info";resetFilters();saveUi();render();return true}
+  if(t.id==="bell"){openNotices();return true}
+  if(t.id==="rel-open"){openRel(false);return true}
+  if(t.id==="rel-hist"){openRel(true);return true}
+  if(t.id==="nf-open"){openNotices();return true}
+  if(t.id==="nf-x"){$("#modal").innerHTML="";render();return true}
+  if(t.id==="nf-page"){$("#modal").innerHTML="";S.tab="info";resetFilters();saveUi();render();return true}
   if(d.stab){S.setTab=d.stab;render();return true}
-  if(t.id==="info-read"){lsSet("infoSeen",CHANGELOG[0].v);render();return true}
+  if(t.id==="info-read"){infoMarkSeen();render();return true}
   if(t.id==="nt-reload"){NT.state="idle";ntLoad();render();return true}
   if(t.id==="nt-all"){var dn=ntDone();NT.list.forEach(function(x){if(dn.indexOf(x.id)<0)dn.push(x.id)});if(dn.length>300)dn.splice(0,dn.length-300);saveSettings(true);render();return true}
   if(t.dataset&&t.dataset.nt){var dn2=ntDone();if(dn2.indexOf(t.dataset.nt)<0)dn2.push(t.dataset.nt);if(dn2.length>300)dn2.splice(0,dn2.length-300);saveSettings(true);render();return true}
