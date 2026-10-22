@@ -711,7 +711,7 @@ function vReport(){
     return '<div class="panel card"><div><div class="site">'+esc(j.site)+" "+esc(j.room)+(j.sample?'<span class="tag ex">例</span>':"")+'</div><div class="sub">施工 '+md(j.workDate)+' ／ 完了予定 <span class="'+(overdue(j)?"late":"")+'">'+md(j.dueDate)+'</span> ／ '+esc((j.staff||[]).join("・")||"担当未設定")+"</div></div>"+
      '<div class="checks">'+CHK.map(function(c){return '<label><input type="checkbox" data-chk="'+j.id+":"+c[0]+'"'+(j.checks&&j.checks[c[0]]?" checked":"")+"> "+c[1]+"</label>"}).join("")+"</div>"+
      '<div class="meter"><i style="width:'+Math.round(n/CHK.length*100)+'%"></i></div>'+
-     '<div class="acts"><span class="sub">'+n+"/"+CHK.length+' 完了</span><span><button class="btn sm" data-open="'+j.id+'">詳細</button> <button class="btn sm pri" data-next="'+j.id+'"'+(all?"":" disabled")+">完了報告済にする</button></span></div></div>";
+     '<div class="acts"><span class="sub">'+n+"/"+CHK.length+' 完了</span><span><button class="btn sm" data-vse="'+j.id+'">📝 価値観共有シート</button> <button class="btn sm" data-open="'+j.id+'">詳細</button> <button class="btn sm pri" data-next="'+j.id+'"'+(all?"":" disabled")+">完了報告済にする</button></span></div></div>";
   }).join("")+"</div>";
 }
 
@@ -2754,6 +2754,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"完了報告の画面で価値観共有シートを入力・PDF保存",d:"完了報告の各案件に「📝 価値観共有シート」ボタンを追加しました。建物名称・号室・建物CD・所在地・作業完了日・担当者・作業内容・共有事項・特記事項を入力でき(案件の情報は自動で入ります)、写真(最大4枚)を付けて「PDFで保存」できます。PDFは案件の書類にも保管され(Web版)、完了報告のチェックも付けられます。"},
  {v:"2026-10-22",t:"スマホ表示のはみ出しを修正",d:"長いメール本文でホームが横に広がる問題、日付と題名が重なる問題、案件一覧のボタンや状況タブが画面外に切れる問題を直しました。"},
  {v:"2026-10-22",t:"画面の配色を大東建託パートナーズのロゴの色に",d:"メニューの色をチャコールブラック、アクセント(ボタン・選択中の項目)を赤に変更しました。ダークモードも同じ色合いです。"},
  {v:"2026-10-22",t:"右上のアカウント表示を1つにまとめました",d:"名前のマークと「アカウント」ボタンが並んでいたのを、名前の表示を押すとアカウント画面(パスワード変更・ログアウト)が開く1つのボタンにしました。"},
@@ -3535,6 +3536,7 @@ async function vsLinkTo(r,j){
   if(window.dsFiles&&r.file){ref=await docKeep(r.file,{meta:{type:"value",typeName:"価値観共有シート",summary:(r.site||"")+" "+(r.room||"")}})}
   r.stored=window.dsFiles?!!ref:true;
   if(ref){var a=Array.isArray(j.docs)?j.docs:[];if(!a.some(function(x){return x.id===ref.id}))a.push(ref);j.docs=a;r.ref=ref.id}
+  if(!j.vsheet){j.vsheet={};["bldgCd","roomCd","address","date","company"].forEach(function(k){if(r[k])j.vsheet[k]=r[k]})}
   if(!j.checks)j.checks={};r.had=!!j.checks.value;j.checks.value=true;
   saveDoc("jobs",j,true);r.linked=j.id;
 }
@@ -3624,6 +3626,87 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("input",function(e){if(e.target.id==="qa-q"&&S.tab==="qa"){S.qaQ=e.target.value;var pos=e.target.selectionStart;render();var el=$("#qa-q");if(el){el.focus();try{el.setSelectionRange(pos,pos)}catch(x){}}}});
 
+/* ---------- 完了報告: 価値観共有シートの入力・PDF保存 ---------- */
+var VSE={id:"",photos:[],busy:false};
+function vseDef(j){
+  var v=j.vsheet||{},co=(S.settings.company&&S.settings.company.name)||"";
+  return {site:v.site!=null?v.site:(j.site||""),room:v.room!=null?v.room:(j.room||""),bldgCd:v.bldgCd!=null?v.bldgCd:(j.bldgCd||""),roomCd:v.roomCd!=null?v.roomCd:(j.roomCd||""),
+    address:v.address!=null?v.address:(j.address||""),date:v.date!=null?v.date:(j.workDate||TODAY()),company:v.company!=null?v.company:co,
+    person:v.person!=null?v.person:((j.staff||[]).join("・")),work:v.work||"",share:v.share||"",note:v.note||""};
+}
+function openVse(id){
+  var j=S.jobs.find(function(x){return x.id===id});if(!j)return;
+  VSE.id=id;VSE.photos=[];VSE.busy=false;
+  var v=vseDef(j),T=function(k,l,w){return '<label'+(w?' class="wide"':"")+'>'+l+'<input type="text" id="vse-'+k+'" value="'+esc(v[k])+'"></label>'},
+      A=function(k,l,ph){return '<label class="wide">'+l+'<textarea id="vse-'+k+'" rows="3" placeholder="'+ph+'">'+esc(v[k])+'</textarea></label>'};
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg lg"><h2>📝 価値観共有シート</h2><div class="sub">'+esc(j.site+" "+j.room)+' の完了報告用シートです。記入内容は案件に保存され、「PDFで保存」でPDFにして書類へ保管できます。</div>'+
+   '<div class="fields">'+T("site","建物名称")+T("room","号室")+T("bldgCd","建物CD")+T("roomCd","部屋CD")+T("address","所在地",1)+'<label>作業完了日<input type="date" id="vse-date" value="'+esc(v.date)+'"></label>'+T("company","施工会社名")+T("person","担当者",1)+
+   A("work","作業内容","実施した作業の内容")+A("share","お客様・管理会社へ共有した事項","共有・説明した内容")+A("note","特記事項","気づいた点・申し送り")+
+   '<label class="wide">写真(PDFに載せます。最大4枚・保存はPDFのみ)<input type="file" id="vse-ph" accept="image/*" multiple></label></div><div id="vse-pv" class="sub"></div>'+
+   '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="vse-chk"'+((j.checks&&j.checks.value)?"":" checked")+'> 完了報告の「価値観共有シート」にチェックを付ける</label>'+
+   '<div class="acts"><span class="sub" id="vse-msg"></span><span><button type="button" class="btn" id="vse-x">閉じる</button> <button type="button" class="btn" id="vse-save">保存</button> <button type="button" class="btn primary" id="vse-pdf">PDFで保存</button></span></div></div></div>';
+}
+function vseRead(){
+  var g=function(k){var e=$("#vse-"+k);return e?e.value.trim():""};
+  return {site:g("site"),room:g("room"),bldgCd:g("bldgCd"),roomCd:g("roomCd"),address:g("address"),date:g("date"),company:g("company"),person:g("person"),work:g("work"),share:g("share"),note:g("note")};
+}
+function vseWrap(ctx,text,w){
+  var out=[];String(text||"").split(/\r?\n/).forEach(function(p){
+    if(!p){out.push("");return}var line="";
+    for(var i=0;i<p.length;i++){var t=line+p[i];if(ctx.measureText(t).width>w&&line){out.push(line);line=p[i]}else line=t}
+    out.push(line)});
+  return out;
+}
+async function vseCanvas(v,photos){
+  var W=1240,H=1754,c=document.createElement("canvas");c.width=W;c.height=H;var x=c.getContext("2d"),F='"Noto Sans JP","Hiragino Sans","Meiryo",sans-serif',M=80;
+  x.fillStyle="#fff";x.fillRect(0,0,W,H);x.fillStyle="#222";x.strokeStyle="#444";x.lineWidth=2;x.textBaseline="middle";
+  x.font="700 46px "+F;x.textAlign="center";x.fillText("価値観共有シート",W/2,100);x.font="24px "+F;x.fillText("原状回復工事 完了報告",W/2,152);x.textAlign="left";
+  var y=200,lw=230,rh=64,cw=(W-2*M);
+  function cell(l,val,x0,w,y0){x.fillStyle="#f1eeec";x.fillRect(x0,y0,lw,rh);x.strokeRect(x0,y0,w,rh);x.beginPath();x.moveTo(x0+lw,y0);x.lineTo(x0+lw,y0+rh);x.stroke();
+    x.fillStyle="#222";x.font="22px "+F;x.fillText(l,x0+14,y0+rh/2);x.font="26px "+F;var s=String(val||""),mw=w-lw-24;while(s.length>1&&x.measureText(s).width>mw)s=s.slice(0,-1);x.fillText(s,x0+lw+12,y0+rh/2)}
+  var half=cw/2;
+  cell("建物名称",v.site,M,half,y);cell("号室",v.room,M+half,half,y);y+=rh;
+  cell("建物CD",v.bldgCd,M,half,y);cell("部屋CD",v.roomCd,M+half,half,y);y+=rh;
+  cell("所在地",v.address,M,cw,y);y+=rh;
+  var d=v.date?v.date.replace(/^(\d+)-(\d+)-(\d+)$/,function(a,b,c2,d2){return b+"年"+(+c2)+"月"+(+d2)+"日"}):"";
+  cell("作業完了日",d,M,half,y);cell("施工会社名",v.company,M+half,half,y);y+=rh;
+  cell("担当者",v.person,M,cw,y);y+=rh+30;
+  var ph=photos.length?260:0,bottom=H-M-(ph?ph+50:0),secs=[["作業内容",v.work],["お客様・管理会社へ共有した事項",v.share],["特記事項",v.note]],avail=bottom-y,per=Math.floor(avail/3)-18;
+  secs.forEach(function(s){
+    x.fillStyle="#f1eeec";x.fillRect(M,y,cw,44);x.strokeRect(M,y,cw,44);x.fillStyle="#222";x.font="700 24px "+F;x.fillText(s[0],M+14,y+22);
+    x.strokeRect(M,y+44,cw,per-44);x.font="25px "+F;var L=vseWrap(x,s[1],cw-28),mx=Math.max(1,Math.floor((per-44-16)/36));
+    if(L.length>mx){L=L.slice(0,mx);L[mx-1]=L[mx-1].replace(/.{0,1}$/,"…")}
+    L.forEach(function(t,i){x.fillText(t,M+14,y+44+26+i*36)});y+=per+18});
+  if(ph){var n=photos.length,gw=(cw-(n-1)*16)/n,px=M;
+    for(var i=0;i<photos.length;i++){var b=photos[i],iw=b.width,ih=b.height,sc=Math.min(gw/iw,ph/ih),dw=iw*sc,dh=ih*sc;x.drawImage(b,px+(gw-dw)/2,y+(ph-dh)/2,dw,dh);x.strokeRect(px,y,gw,ph);px+=gw+16}}
+  return new Promise(function(res){c.toBlob(function(b){res({blob:b,w:W,h:H})},"image/jpeg",0.85)});
+}
+async function vseDo(pdf){
+  if(VSE.busy)return;var j=S.jobs.find(function(x){return x.id===VSE.id});if(!j)return;
+  var v=vseRead(),msg=$("#vse-msg");j.vsheet=v;
+  if(!pdf){saveDoc("jobs",j,true);if(msg)msg.textContent="保存しました";toast("保存しました");return}
+  VSE.busy=true;if(msg)msg.textContent="PDFを作成中…";
+  try{
+    var r=await vseCanvas(v,VSE.photos),name="価値観共有シート_"+(v.site||"")+(v.room||"")+".pdf",pdfb=await wtfPdf(r.blob,r.w,r.h);
+    var want=$("#vse-chk"),ref=null;
+    if(window.dsFiles){try{ref=await docKeep(new File([pdfb],name,{type:"application/pdf"}),{blob0:r.blob,meta:{type:"value",typeName:"価値観共有シート",summary:(v.site||"")+" "+(v.room||"")}})}catch(e){ref=null}}
+    if(ref){var a=Array.isArray(j.docs)?j.docs:[];if(!a.some(function(z){return z.id===ref.id}))a.push(ref);j.docs=a}
+    if(want&&want.checked){if(!j.checks)j.checks={};j.checks.value=true}
+    saveDoc("jobs",j,true);
+    var d=await claude_use("downloads");
+    if(d){try{await d.save({filename:name,data:pdfb});toast("PDFを保存しました"+(ref?"(案件の書類にも保管)":""))}catch(e2){if(e2&&e2.code!=="declined")toast("PDFを保存できませんでした")}}
+    else toast(ref?"案件の書類に保管しました(この表示ではダウンロードできません)":"この表示ではPDFを保存できません");
+    $("#modal").innerHTML="";render();
+  }catch(e){if(msg)msg.textContent="PDFを作成できませんでした"}
+  finally{VSE.busy=false}
+}
+document.addEventListener("change",async function(e){
+  var t=e.target;if(!t||t.id!=="vse-ph")return;
+  var fs=[].slice.call(t.files||[]).slice(0,4),out=[];
+  for(var i=0;i<fs.length;i++){try{out.push(await createImageBitmap(fs[i]))}catch(er){}}
+  VSE.photos=out;var pv=$("#vse-pv");if(pv)pv.textContent=out.length?"写真 "+out.length+" 枚を選択中":"";
+});
+
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
@@ -3640,6 +3723,10 @@ function modClick(e,t,d){
   if(t.id==="nt-reload"){NT.state="idle";ntLoad();render();return true}
   if(t.id==="nt-all"){var dn=ntDone();NT.list.forEach(function(x){if(dn.indexOf(x.id)<0)dn.push(x.id)});if(dn.length>300)dn.splice(0,dn.length-300);saveSettings(true);render();return true}
   if(t.dataset&&t.dataset.nt){var dn2=ntDone();if(dn2.indexOf(t.dataset.nt)<0)dn2.push(t.dataset.nt);if(dn2.length>300)dn2.splice(0,dn2.length-300);saveSettings(true);render();return true}
+  if(d.vse){openVse(d.vse);return true}
+  if(t.id==="vse-x"){$("#modal").innerHTML="";return true}
+  if(t.id==="vse-save"){vseDo(false);return true}
+  if(t.id==="vse-pdf"){vseDo(true);return true}
   if(d.sb){openSb(d.sb);return true}
   if(t.id==="sb-x"){SB.cfg=null;$("#modal").innerHTML="";return true}
   if(t.id==="sb-ok"){sbApply();return true}
