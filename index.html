@@ -6,21 +6,21 @@
 <style>
 /* Layout: 左に緑のサイドメニュー(部門別)、上に通知とユーザーのバー、本文はカード中心。現場管理アプリの構成に合わせる */
 :root{
-  --bg:#f6f7f6; --surface:#ffffff; --ink:#1c2a24; --muted:#62736b; --line:#e0e6e2;
-  --accent:#1b6847; --accent-ink:#ffffff; --accent-soft:#e1f1e8;
-  --side:#1b6847; --side-ink:#dcefe4; --side-mute:#9cc7b1; --side-active:#2e8a60;
+  --bg:#f7f5f4; --surface:#ffffff; --ink:#231815; --muted:#6d625e; --line:#e7e1de;
+  --accent:#c8102e; --accent-ink:#ffffff; --accent-soft:#fbe7ea;
+  --side:#231815; --side-ink:#efe8e5; --side-mute:#a89b96; --side-active:#c8102e;
   --warn:#b45309; --warn-soft:#fdf0d9; --bad:#b42318; --bad-soft:#fde8e6; --ok:#2f7d3b; --ok-soft:#e1f2e3;
   --f-head:"Zen Kaku Gothic New","Noto Sans JP",sans-serif; --f-body:"Noto Sans JP","Hiragino Sans","Meiryo",sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#101916; --surface:#17231f; --ink:#e3efe9; --muted:#97aba2; --line:#2a3a33;
-  --accent:#5ccb95; --accent-ink:#06231a; --accent-soft:#18392b;
-  --side:#0e3524; --side-ink:#cfe6da; --side-mute:#7fb199; --side-active:#1e6a48;
+  --bg:#161211; --surface:#211b1a; --ink:#f0e9e6; --muted:#b3a6a1; --line:#392f2c;
+  --accent:#ff6b7d; --accent-ink:#2a0508; --accent-soft:#3e1b20;
+  --side:#100c0b; --side-ink:#e6dcd8; --side-mute:#9a8d88; --side-active:#b3122a;
   --warn:#f0b35a; --warn-soft:#3b2d12; --bad:#ff8f84; --bad-soft:#40201c; --ok:#7fd48b; --ok-soft:#1b3a20; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#101916; --surface:#17231f; --ink:#e3efe9; --muted:#97aba2; --line:#2a3a33;
-  --accent:#5ccb95; --accent-ink:#06231a; --accent-soft:#18392b;
-  --side:#0e3524; --side-ink:#cfe6da; --side-mute:#7fb199; --side-active:#1e6a48;
+  --bg:#161211; --surface:#211b1a; --ink:#f0e9e6; --muted:#b3a6a1; --line:#392f2c;
+  --accent:#ff6b7d; --accent-ink:#2a0508; --accent-soft:#3e1b20;
+  --side:#100c0b; --side-ink:#e6dcd8; --side-mute:#9a8d88; --side-active:#b3122a;
   --warn:#f0b35a; --warn-soft:#3b2d12; --bad:#ff8f84; --bad-soft:#40201c; --ok:#7fd48b; --ok-soft:#1b3a20; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55;margin:0}
@@ -29,7 +29,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .app{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100vh}
 .side{background:var(--side);color:var(--side-ink);padding:14px 12px 16px max(14px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:2px;position:sticky;top:env(safe-area-inset-top,0px);align-self:start;height:100vh;overflow-y:auto;z-index:60}
 .brand{display:flex;align-items:center;gap:10px;padding:2px 6px 14px;font-family:var(--f-head);font-weight:700;font-size:17px;color:#fff;letter-spacing:.02em}
-.brand i{flex:none;width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.16);display:grid;place-items:center}
+.brand i{flex:none;width:36px;height:36px;border-radius:10px;background:#c8102e;display:grid;place-items:center}
 .nv-g{font-size:11px;letter-spacing:.1em;color:var(--side-mute);padding:16px 12px 4px}
 .nv{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:var(--side-ink);padding:10px 12px;border-radius:10px;cursor:pointer;text-align:left;font-weight:500}
 .nv:hover{background:rgba(255,255,255,.09)}
@@ -2732,6 +2732,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"画面の配色を大東建託パートナーズのロゴの色に",d:"メニューの色をチャコールブラック、アクセント(ボタン・選択中の項目)を赤に変更しました。ダークモードも同じ色合いです。"},
  {v:"2026-10-22",t:"右上のアカウント表示を1つにまとめました",d:"名前のマークと「アカウント」ボタンが並んでいたのを、名前の表示を押すとアカウント画面(パスワード変更・ログアウト)が開く1つのボタンにしました。"},
  {v:"2026-10-22",t:"大東建託からのお知らせをホームに移動",d:"大東建託からのメールはホームの「📩 大東建託からのお知らせ」に表示します。「お知らせ」タブは廃止しました。アプリの更新や対応が必要な項目は、これまでどおり右上のベルから確認できます。"},
  {v:"2026-10-22",t:"お知らせと更新履歴を見やすく",d:"右上のベルから「お知らせ」ウィンドウが開き、アプリの更新・対応が必要な案件・大東建託のメールをまとめて確認できます。アプリが新しくなったときは「アプリが新しくなりました」と案内し、内容を読むと既読になります。「更新の履歴」で過去の更新を日付ごとに見返せます。"},
