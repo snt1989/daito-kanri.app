@@ -427,6 +427,7 @@ function pageHead(){
   else if(S.tab==="aclist")act='<button class="btn out" id="ac-imp">📄 書類から取り込む</button><input type="file" id="ac-file" accept="application/pdf,image/*" style="display:none"><button class="btn pri" id="add">＋ エアコン案件を追加</button>';
   else if(S.tab==="water")act='<button class="btn out" id="w-job">案件から作成</button><button class="btn pri" id="add">＋ 届出を追加</button>';
   else if(S.tab!=="set"&&S.tab!=="mscope")act='<button class="btn pri" id="add">'+({genkyo:"＋ 案件を登録",emerg:"＋ 緊急出動を記録",maint:S.tab==="mplan"?"＋ 年間計画を追加":"＋ 維持管理を追加"}[S.div]||"＋ 追加")+"</button>";
+  if(S.tab==="jobs")act='<button class="btn out" id="vs-open">📎 価値観共有シートを取り込む</button>'+act;
   return '<div class="pghead"><h2 class="pt">'+n.label+'</h2><div class="pgact">'+act+"</div></div>";
 }
 function vHome(){
@@ -2257,9 +2258,9 @@ var bkDelTm=0;
 
 /* ---------- eFax取込 ---------- */
 var FX={rows:[],busy:false,ctl:null,err:""};
-var FX_TYPES={koji:"工事予定書",request:"出動要請書",notice:"金額確定通知書",order:"注文書・作業依頼書",annual:"年間発注予定一覧表",ac:"エアコン設置の見積り依頼書",daito:"大東建託(その他の書類)",other:"対象外"};
+var FX_TYPES={koji:"工事予定書",request:"出動要請書",notice:"金額確定通知書",order:"注文書・作業依頼書",annual:"年間発注予定一覧表",ac:"エアコン設置の見積り依頼書",value:"価値観共有シート",daito:"大東建託(その他の書類)",other:"対象外"};
 var FX_PROMPT='添付の画像は、受信したFAXの1ページ目です。大東建託パートナーズ関連の書類かどうかを判別し、次のJSONだけを出力してください。\n'+
- 'docType は次のいずれか1つ:\n- koji = 原状回復工事 工事予定書\n- request = 緊急対応の出動要請書\n- notice = 金額確定通知書\n- order = 維持管理作業注文書 または 作業依頼書\n- annual = 年間発注予定一覧表\n- ac = 営業エアコン設置のみ 見積り依頼書(協力業者様専用。エアコン設置の見積もり依頼)\n- daito = 上記以外の、大東建託・大東建託パートナーズ(営業所・各部署)が発信元または宛先に関わる書類(お知らせ、見積依頼、請書、会議案内など)\n- other = 大東建託と関係のない書類(他社・官公庁の入札や見積依頼、営業・広告・請求など)\n'+
+ 'docType は次のいずれか1つ:\n- koji = 原状回復工事 工事予定書\n- request = 緊急対応の出動要請書\n- notice = 金額確定通知書\n- order = 維持管理作業注文書 または 作業依頼書\n- annual = 年間発注予定一覧表\n- value = 価値観共有シート(原状回復工事の完了時に提出する、チェック項目と押印欄のあるシート)\n- ac = 営業エアコン設置のみ 見積り依頼書(協力業者様専用。エアコン設置の見積もり依頼)\n- daito = 上記以外の、大東建託・大東建託パートナーズ(営業所・各部署)が発信元または宛先に関わる書類(お知らせ、見積依頼、請書、会議案内など)\n- other = 大東建託と関係のない書類(他社・官公庁の入札や見積依頼、営業・広告・請求など)\n'+
  '大東建託に関わるかどうかを必ず判断する。少しでも大東建託に関係しそうなら daito にし、明らかに無関係な場合だけ other にする。\n{"docType":"other","sender":"発信元の会社名・部署(読めなければ空文字)","summary":"書類の内容を30字以内で"}';
 function fxSet(){var s=S.settings;if(!Array.isArray(s.fxDone))s.fxDone=[];return s.fxDone}
 function fxMark(id){var a=fxSet();if(a.indexOf(id)<0){a.push(id);if(a.length>400)a.splice(0,a.length-400);saveSettings(true)}}
@@ -2393,6 +2394,7 @@ function fxGo(i){
   else if(t==="order"){openMtImport();mtiRun([f])}
   else if(t==="annual"){openMpImport();mpiRun([f])}
   else if(t==="ac"){acImport(f)}
+  else if(t==="value"){openVs();vsRun([f])}
   else if(/^c_/.test(t)){openFxc(f,t,undefined,r.fid)}
 }
 
@@ -2593,6 +2595,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"価値観共有シートを案件に自動で紐づけ",d:"案件の画面の「📎 価値観共有シートを取り込む」で、完了時のシート(PDF・写真)を選ぶと、物件名・号室から案件を探して自動で紐づけ、「価値観共有シート」のチェックも完了にします(Web版は書類も保管されプレビューできます)。FAX取込でも価値観共有シートを判別します。"},
  {v:"2026-10-22",t:"水道届の様式にWord(.docx)も使える",d:"設定「水道事業者」の様式アップロードで、PDF・画像に加えてWord(.docx)も登録できます。文書の各行に氏名・住所・日付などの項目を割り当て(AIの自動割り当てもあります)、水道届から記入済みのWordファイルとして保存できます。"},
  {v:"2026-10-22",t:"品質会議のメールをホームの予定に",d:"Gmailに届いた「災害防止協議会・品質会議」のメールから開催日時を読み取り、ホームの「会議・予定」に表示します(Teams参加リンク付き)。ホームを開いたときに自動で確認し、「📧 メールを確認」からも更新できます。"},
  {v:"2026-10-22",t:"読み込んだ書類を案件に紐づけて保存・プレビュー(Web版)",d:"工事予定書・出動要請書・金額確定通知書・維持管理の注文書・年間発注予定一覧表・エアコンの見積り依頼書を読み取って登録すると、元の書類(PDF・画像)がサーバーに保管され、その案件に紐づきます。案件の画面の「📎 元の書類」から、👁でその場でプレビューできます。書類を後から添付することもできます。"},
@@ -3116,6 +3119,7 @@ function mtgCard(){
      (x.url?'<a href="'+esc(x.url)+'" target="_blank" rel="noopener" class="btn sm" style="margin-top:4px">Teamsで参加</a>':'<a href="https://mail.google.com/mail/#all/'+esc(x.mail)+'" target="_blank" rel="noopener" class="btn sm" style="margin-top:4px">メールを開く</a>')+"</span></div>"}).join(""):'<div class="empty">予定されている会議はありません。</div>')+
    (MTG.msg?'<div class="sub" style="padding:4px 0">'+esc(MTG.msg)+"</div>":"")+"</div>";
 }
+document.addEventListener("click",function(e){var vt=e.target.closest&&e.target.closest("#vs-open");if(vt){e.preventDefault();openVs()}});
 document.addEventListener("click",function(e){var t=e.target.closest&&e.target.closest("#mtg-sync");if(t){e.preventDefault();mtgSync(true)}});
 
 
@@ -3289,6 +3293,104 @@ document.addEventListener("change",function(e){
   dxEdDraw();
 },true);
 
+
+/* ---------- 価値観共有シートを案件へ自動で紐づけ ---------- */
+var VS={rows:[],busy:false,ctl:null,open:false};
+var VS_PROMPT='添付の画像は、大東建託パートナーズの「価値観共有シート」(原状回復工事の完了時に提出するシート)の1ページです。記載内容を読み取り、次のJSONだけを出力してください。説明文やコードフェンスは付けないでください。\n- 読み取れない項目は空文字("")にする。見えない文字を推測で埋めない。\n- 日付は西暦のYYYY-MM-DD形式。\n- room は号室(例: 201)。部屋CDが5桁なら先頭4桁の数字で先頭の0を除く。\n{"isSheet":true,"site":"建物名称(物件名)","room":"号室","bldgCd":"建物CD","roomCd":"部屋CD","address":"所在地","date":"作業完了日または報告日","company":"施工会社名"}\n価値観共有シートではない書類(別の帳票や写真だけのページ)のときは isSheet を false にする。';
+function vsNz(s){return String(s==null?"":s).normalize("NFKC").replace(/[\s・\-ー]/g,"").toLowerCase()}
+function vsRoom(s){return String(s==null?"":s).normalize("NFKC").replace(/\s|号室|号/g,"").replace(/^0+(?=\d)/,"").toLowerCase()}
+function vsCands(r){
+  var rm=vsRoom(r.room),bc=vsNz(r.bldgCd),st=vsNz(r.site);
+  if(!rm&&!bc&&!st)return [];
+  return S.jobs.filter(function(j){
+    if(rm&&vsRoom(j.room)!==rm)return false;
+    if(bc&&vsNz(j.bldgCd)===bc)return true;
+    var js=vsNz(j.site);return !!(st&&js&&(js===st||(st.length>=3&&js.indexOf(st)>=0)||(js.length>=3&&st.indexOf(js)>=0)))
+  }).sort(function(a,b){return (a.checks&&a.checks.value?1:0)-(b.checks&&b.checks.value?1:0)||String(b.workDate||b.dueDate||b.receivedDate||"").localeCompare(String(a.workDate||a.dueDate||a.receivedDate||""))});
+}
+function openVs(){
+  VS.open=true;VS.rows=[];VS.busy=false;
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg lg"><h2>📎 価値観共有シートの取り込み</h2><div class="sub">完了時に記入した価値観共有シート(PDF・写真・スキャン)を選ぶと、物件名・号室から案件を探して<b>自動で紐づけ</b>、案件の「価値観共有シート」チェックも完了にします。複数枚(複数ページ)をまとめて選べます。見つからない・複数ある場合だけ、案件を選んでもらいます。</div>'+
+   '<label class="drop2" id="vs-drop"><input type="file" id="vs-file" accept="application/pdf,image/*" multiple><span>ここにPDF・画像をドロップ、またはクリックして選択</span></label><div id="vs-prog" class="sub"></div><div id="vs-list"></div>'+
+   '<div class="acts"><span></span><button type="button" class="btn" id="vs-close">閉じる</button></div></div></div>';
+  var dz=$("#vs-drop"),fi=$("#vs-file");
+  fi.onchange=function(){var fs=[].slice.call(fi.files);fi.value="";if(fs.length)vsRun(fs)};
+  ["dragover","dragenter"].forEach(function(n){dz.addEventListener(n,function(e){e.preventDefault();dz.classList.add("on")})});
+  dz.addEventListener("dragleave",function(){dz.classList.remove("on")});
+  dz.addEventListener("drop",function(e){e.preventDefault();dz.classList.remove("on");var fs=[].slice.call(e.dataTransfer.files);if(fs.length)vsRun(fs)});
+}
+function vsProg(m,busy){var p=$("#vs-prog");if(p)p.innerHTML=esc(m||"")+(busy?' <button type="button" class="btn sm" id="vs-stop">中止</button>':"")}
+function vsJobLabel(j){return j.site+" "+j.room+(j.dueDate?"(完了予定 "+md(j.dueDate)+")":"")}
+function vsRowHtml(r,i){
+  var info=r.status==="run"?"読み取り中…":r.status==="err"?'<span class="late">'+esc(r.err||"読み取れませんでした")+"</span>":
+    "読み取り: <b>"+esc((r.site||"(物件名なし)")+" "+(r.room||""))+"</b>"+(r.date?" / "+esc(r.date):""),st="";
+  if(r.status==="ok"){
+    if(r.linked){var j=S.jobs.find(function(x){return x.id===r.linked});st='<div style="color:var(--ok);font-weight:700">✓ '+esc(j?vsJobLabel(j):"案件")+' に紐づけました'+(r.stored===false?'<span class="sub">(書類は保管できませんでした)</span>':"")+'</div> <button type="button" class="btn sm" data-vsundo="'+i+'">取り消し</button>'}
+    else{
+      var all=(r.cands&&r.cands.length)?r.cands:S.jobs.filter(function(j){return j.status<5}).sort(function(a,b){return String(b.receivedDate||"").localeCompare(String(a.receivedDate||""))}).slice(0,200);
+      st='<div class="sub" style="color:var(--warn)">'+(r.cands&&r.cands.length>1?"候補が複数あります。どの案件か選んでください。":"一致する案件が見つかりません。案件を選んでください。")+'</div><select data-vssel="'+i+'" style="max-width:100%"><option value="">案件を選ぶ…</option>'+all.map(function(j){return '<option value="'+esc(j.id)+'">'+esc(vsJobLabel(j))+"</option>"}).join("")+'</select> <button type="button" class="btn sm pri" data-vslink="'+i+'">紐づける</button>';
+    }
+  }
+  return '<div class="panel fxrow" id="vs-r'+i+'" style="display:flex;gap:12px;align-items:center;padding:8px 12px;margin:6px 0">'+
+   (r.thumb?'<img src="'+r.thumb+'" alt="" style="width:56px;height:74px;object-fit:cover;border-radius:4px;background:#fff">':'<div style="width:56px;height:74px"></div>')+
+   '<div style="flex:1;min-width:0"><div class="sub">'+esc(r.label||"")+"</div><div>"+info+"</div>"+st+"</div></div>";
+}
+function vsDraw(i){var el=$("#vs-r"+i);if(el)el.outerHTML=vsRowHtml(VS.rows[i],i)}
+async function vsLinkTo(r,j){
+  var ref=null;
+  if(window.dsFiles&&r.file){ref=await docKeep(r.file,{meta:{type:"value",typeName:"価値観共有シート",summary:(r.site||"")+" "+(r.room||"")}})}
+  r.stored=window.dsFiles?!!ref:true;
+  if(ref){var a=Array.isArray(j.docs)?j.docs:[];if(!a.some(function(x){return x.id===ref.id}))a.push(ref);j.docs=a;r.ref=ref.id}
+  if(!j.checks)j.checks={};r.had=!!j.checks.value;j.checks.value=true;
+  saveDoc("jobs",j,true);r.linked=j.id;
+}
+async function vsRun(files){
+  var sample=await claude_use("sample"),lim=null;
+  if(sample){try{lim=await sample.limits()}catch(e){}}
+  if(!sample||!lim||!lim.images){vsProg("この表示では自動読み取りを使えません。");return}
+  if(VS.busy)return;VS.busy=true;VS.ctl=new AbortController();IM.ctl=VS.ctl;var stop=false;vsProg("読み取り中…",true);
+  try{
+    for(var fi=0;fi<files.length&&!stop;fi++){
+      var file=files[fi],pages=[];
+      files[fi]._dk={type:"value",typeName:"価値観共有シート"};
+      try{await eachPage(file,async function(blob,label){pages.push({blob:blob,label:label})},12,1800)}
+      catch(e){var ec={status:"err",label:file.name,err:(e&&e.message)||"ファイルを読み込めませんでした"};VS.rows.push(ec);$("#vs-list").insertAdjacentHTML("beforeend",vsRowHtml(ec,VS.rows.length-1));continue}
+      for(var pi=0;pi<pages.length&&!stop;pi++){
+        if(VS.ctl.signal.aborted){stop=true;break}
+        var pg=pages[pi],row={status:"run",label:pg.label,thumb:URL.createObjectURL(pg.blob)};
+        var i=VS.rows.push(row)-1;$("#vs-list").insertAdjacentHTML("beforeend",vsRowHtml(row,i));vsProg((pi+1)+"/"+pages.length+"ページ "+file.name+" を処理中…",true);
+        try{
+          var a=await sample.json(VS_PROMPT,{images:[pg.blob],signal:VS.ctl.signal,modelTier:"default"});
+          if(!a||typeof a!=="object"||Array.isArray(a))throw {code:"bad_answer"};
+          if(a.isSheet===false){row.status="err";row.err="価値観共有シートではないページです"}
+          else{
+            var T=function(v){return String(v==null?"":v).trim()};
+            row.site=T(a.site);row.room=T(a.room);row.bldgCd=T(a.bldgCd);row.date=T(a.date);row.status="ok";
+            row.file=pages.length===1?file:new File([await fitBlob(pg.blob,650*1024)],file.name.replace(/\.[^.]+$/,"")+"_"+(pi+1)+"ページ.jpg",{type:"image/jpeg"});
+            row.file._dk={type:"value",typeName:"価値観共有シート"};
+            row.cands=vsCands(row);
+            var free=row.cands.filter(function(j){return !(j.checks&&j.checks.value)});
+            if(free.length===1||(row.cands.length===1))await vsLinkTo(row,free.length===1?free[0]:row.cands[0]);
+          }
+        }catch(e){row.status="err";row.err=imErr(e)||(e&&e.message)||"読み取れませんでした";if(e&&(e.code==="not_granted"||e.code==="cancelled"))stop=true}
+        vsDraw(i);
+      }
+    }
+  }finally{
+    VS.busy=false;VS.ctl=null;var n=VS.rows.filter(function(r){return r.linked}).length,m=VS.rows.filter(function(r){return r.status==="ok"&&!r.linked}).length;
+    vsProg(VS.rows.length?(n+"件を案件に紐づけました"+(m?"。あと"+m+"件は案件を選んでください":"")):"");render();
+  }
+}
+document.addEventListener("click",function(e){
+  if(!VS.open)return;var t=e.target.closest&&e.target.closest("button");if(!t)return;var d=t.dataset||{};
+  if(t.id==="vs-close"){if(VS.ctl)try{VS.ctl.abort()}catch(x){}VS.open=false;$("#modal").innerHTML="";render();return}
+  if(t.id==="vs-stop"){if(VS.ctl)try{VS.ctl.abort()}catch(x){}return}
+  if(d.vslink!==undefined){var i=+d.vslink,r=VS.rows[i],sel=$('[data-vssel="'+i+'"]'),j=sel&&S.jobs.find(function(x){return x.id===sel.value});if(!j){toast("案件を選んでください");return}
+    t.disabled=true;vsLinkTo(r,j).then(function(){vsDraw(i);render()});return}
+  if(d.vsundo!==undefined){var i2=+d.vsundo,r2=VS.rows[i2],j2=r2&&S.jobs.find(function(x){return x.id===r2.linked});
+    if(j2){if(r2.ref&&Array.isArray(j2.docs))j2.docs=j2.docs.filter(function(x){return x.id!==r2.ref});if(!r2.had&&j2.checks)j2.checks.value=false;saveDoc("jobs",j2,true)}
+    r2.linked=null;r2.ref=null;vsDraw(i2);render();return}
+});
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
