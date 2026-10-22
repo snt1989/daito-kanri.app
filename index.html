@@ -438,7 +438,7 @@ function vHome(){
   var rows=T.slice(0,12).map(function(t){var d=daysTo(t.date),lab=d>0?"あと"+d+"日":d===0?"今日":(-d)+"日超過";
     return '<button class="todo" data-todo="'+t.kind+":"+esc(t.id)+'"><span class="dt'+(d<0?" late":"")+'">'+t.date.replace(/-/g,"/")+"<br>"+lab+'</span><span class="tt"><span class="tag" style="margin:0 6px 0 0">'+t.tag+"</span>"+esc(t.title)+"<small>"+esc(t.note)+'</small></span><span class="go sub">開く ›</span></button>'}).join("");
   var h='<div class="home"><div class="col">'+infoBanner()+'<div class="card2"><h3>対応が必要な案件(TODO)'+(T.length?' <span class="sub">'+T.length+"件</span>":"")+"</h3>"+(rows||'<div class="empty">いま対応が必要な項目はありません。</div>')+(T.length>12?'<div class="sub" style="padding-top:8px">ほか '+(T.length-12)+" 件は各画面で確認できます。</div>":"")+"</div></div>"+
-   '<div class="col"><div class="card2"><h3>本日の稼働状況</h3>'+
+   '<div class="col">'+mtgCard()+'<div class="card2"><h3>本日の稼働状況</h3>'+
    '<div class="stat"><span>施工予定の現場</span><b>'+S.jobs.filter(function(j){return j.status===3}).length+"</b></div>"+
    '<div class="stat"><span>本日の施工</span><b>'+S.jobs.filter(function(j){return j.workDate===today&&j.status<4}).length+"</b></div>"+
    '<div class="stat"><span>対応中の緊急出動</span><b>'+S.emerg.filter(function(e){return e.status<2}).length+"</b></div>"+
@@ -2592,6 +2592,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"品質会議のメールをホームの予定に",d:"Gmailに届いた「災害防止協議会・品質会議」のメールから開催日時を読み取り、ホームの「会議・予定」に表示します(Teams参加リンク付き)。ホームを開いたときに自動で確認し、「📧 メールを確認」からも更新できます。"},
  {v:"2026-10-22",t:"読み込んだ書類を案件に紐づけて保存・プレビュー(Web版)",d:"工事予定書・出動要請書・金額確定通知書・維持管理の注文書・年間発注予定一覧表・エアコンの見積り依頼書を読み取って登録すると、元の書類(PDF・画像)がサーバーに保管され、その案件に紐づきます。案件の画面の「📎 元の書類」から、👁でその場でプレビューできます。書類を後から添付することもできます。"},
  {v:"2026-10-22",t:"エアコン設置のページを追加",d:"大東建託パートナーズの「営業エアコン設置のみ 見積り依頼書」に沿った案件管理です。書類(PDF・FAX画像)から読み取って登録でき、工事項目と単価は設定の「エアコン工事の単価」で変更できます。FAX取込でもこの書類を判別します。"},
  {v:"2026-10-22",t:"水道届の様式に記入して出力",d:"設定「水道事業者」に自治体の公式様式(PDF・画像)をアップロードし、記入位置を設定すると、水道届の「申込内容シート」から様式に氏名・住所・日付などを書き込んでPDF・画像で出力できます。"},
@@ -3061,6 +3062,56 @@ document.addEventListener("change",function(e){
     var a=Array.isArray(d.docs)?d.docs:[];if(!a.some(function(x){return x.id===ref.id}))a.push(ref);d.docs=a;dkRefresh();toast("添付しました。保存すると案件に紐づきます");
   });
 },true);
+
+
+/* ---------- 品質会議のメール → ホームの予定 ---------- */
+var MTG={busy:false,msg:"",auto:false};
+function mtgList(){var s=S.settings;if(!Array.isArray(s.meetings))s.meetings=[];return s.meetings}
+function mtgParse(m){
+  var raw=(m.subject||"")+" "+(m.snippet||""),t=raw.normalize("NFKC").replace(/\s+/g," ");
+  if(!/品質会議/.test(t))return null;
+  var r=t.match(/開催日時\s*:?\s*(?:(\d{4})\s*年)?\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日\s*(?:\([^)]*\))?\s*(\d{1,2}):(\d{2})\s*(?:[~\-ー–]\s*(\d{1,2}):(\d{2}))?/);
+  if(!r)return null;
+  var md0=new Date(m.date||Date.now()),y=+r[1]||md0.getFullYear(),mo=+r[2],d=+r[3];
+  if(!r[1]&&mo+6<md0.getMonth()+1)y++;
+  var date=y+"-"+pad(mo)+"-"+pad(d),st=pad(+r[4])+":"+r[5],en=r[6]?pad(+r[6])+":"+r[7]:"";
+  var of=(t.match(/パートナーズ\s*[・･]?\s*([^\s】\]\[]{2,4}?)(?:営業所|】|\])/)||[])[1]||"";
+  var url=(t.match(/https:\/\/teams\.microsoft\.com\/[^\s"<>)]+/)||[""])[0];
+  return {id:date+"_"+st+"_"+of,mail:m.id,date:date,start:st,end:en,office:of,title:/災害防止協議会/.test(t)?"災害防止協議会・品質会議":"品質会議",url:url,at:m.date||""};
+}
+async function mtgSync(manual){
+  if(MTG.busy)return;MTG.busy=true;MTG.msg=manual?"メールを確認中…":"";if(S.tab==="home")render();
+  try{
+    var mcp=await claude_use("mcp");
+    if(!mcp){MTG.msg=manual?"この表示ではGmailに接続できません。":"";return}
+    var r=await mcp.callTool("Gmail","search_threads",{query:"品質会議 newer_than:60d",pageSize:20});
+    var pl=r&&r.payload;if(typeof pl==="string"){try{pl=JSON.parse(pl)}catch(e){pl=null}}
+    var list=mtgList(),add=0,upd=0;
+    ((pl&&pl.threads)||[]).forEach(function(t){(t.messages||[]).forEach(function(m){
+      var p=mtgParse(m);if(!p)return;
+      var ex=list.find(function(x){return x.id===p.id});
+      if(!ex){list.push(p);add++}
+      else if(p.url&&!ex.url){ex.url=p.url;ex.mail=p.mail;upd++}
+    })});
+    var lim=ymd(new Date(Date.now()-30*86400000));
+    S.settings.meetings=list.filter(function(x){return x.date>=lim}).sort(function(a,b){return (a.date+a.start).localeCompare(b.date+b.start)});
+    if(add||upd){try{saveSettings(true)}catch(e){}}
+    MTG.msg=manual?(add?add+"件の予定を追加しました":"新しい会議のメールはありません"):"";
+    if(add&&!manual)toast("品質会議の予定をホームに追加しました");
+  }catch(e){MTG.msg=manual?(fxErrMsg(e)||"確認できませんでした"):""}
+  finally{MTG.busy=false;if(S.tab==="home")render()}
+}
+function mtgCard(){
+  var today=TODAY(),L=mtgList().filter(function(x){return x.date>=today}).slice(0,4);
+  if(!MTG.auto){MTG.auto=true;setTimeout(function(){mtgSync(false)},600)}
+  var WD="日月火水木金土";
+  return '<div class="card2"><h3>会議・予定 <button type="button" class="btn sm" id="mtg-sync" style="float:right"'+(MTG.busy?" disabled":"")+'>'+(MTG.busy?"確認中…":"📧 メールを確認")+'</button></h3>'+
+   (L.length?L.map(function(x){var d=new Date(x.date+"T00:00:00"),dd=daysTo(x.date),lab=dd===0?"今日":dd===1?"明日":"あと"+dd+"日";
+     return '<div class="up" style="align-items:flex-start"><span class="d">'+md(x.date)+"("+WD[d.getDay()]+")<br>"+lab+'</span><span style="flex:1;min-width:0"><b>'+esc(x.title)+(x.office?"("+esc(x.office)+")":"")+'</b><div class="sub">'+esc(x.start)+(x.end?"〜"+esc(x.end):"")+(/災害防止/.test(x.title)?"(品質会議は協議会の終了後)":"")+'</div>'+
+     (x.url?'<a href="'+esc(x.url)+'" target="_blank" rel="noopener" class="btn sm" style="margin-top:4px">Teamsで参加</a>':'<a href="https://mail.google.com/mail/#all/'+esc(x.mail)+'" target="_blank" rel="noopener" class="btn sm" style="margin-top:4px">メールを開く</a>')+"</span></div>"}).join(""):'<div class="empty">予定されている会議はありません。</div>')+
+   (MTG.msg?'<div class="sub" style="padding:4px 0">'+esc(MTG.msg)+"</div>":"")+"</div>";
+}
+document.addEventListener("click",function(e){var t=e.target.closest&&e.target.closest("#mtg-sync");if(t){e.preventDefault();mtgSync(true)}});
 
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
