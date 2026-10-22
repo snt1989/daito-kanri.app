@@ -2764,7 +2764,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
- {v:"2026-10-22",t:"価値観共有シートを読み込んだシートへ直接入力",d:"完了報告の「📝 価値観共有シート」で、取り込んだ(または選んだ)価値観共有チェックシートの画像の上に、○/×の欄をタップして記入できます。確認日・業者様・ワランティ・間取り・理由・確認事項は入力欄から書き込めます。ずれるときは「位置合わせ」で調整できます。記入済みのシートはPDFで保存でき、案件の書類にも保管されます(Web版)。完了報告のチェック項目から「作業報告書」「完了報告シート提出」を外し、価値観共有シートに統一しました。"},
+ {v:"2026-10-22",t:"価値観共有シートを読み込んだシートへ直接入力",d:"完了報告の「📝 価値観共有シート」で、取り込んだ(または選んだ)価値観共有チェックシートの画像の上に、○/×の欄をタップして記入できます。業者様・ワランティ・間取り・理由・確認事項は入力欄から書き込めます。ずれるときは「位置合わせ」で調整できます。記入済みのシートはPDFで保存でき、案件の書類にも保管されます(Web版)。完了報告のチェック項目から「作業報告書」「完了報告シート提出」を外し、価値観共有シートに統一しました。"},
  {v:"2026-10-22",t:"スマホ表示のはみ出しを修正",d:"長いメール本文でホームが横に広がる問題、日付と題名が重なる問題、案件一覧のボタンや状況タブが画面外に切れる問題を直しました。"},
  {v:"2026-10-22",t:"画面の配色を大東建託パートナーズのロゴの色に",d:"メニューの色をチャコールブラック、アクセント(ボタン・選択中の項目)を赤に変更しました。ダークモードも同じ色合いです。"},
  {v:"2026-10-22",t:"右上のアカウント表示を1つにまとめました",d:"名前のマークと「アカウント」ボタンが並んでいたのを、名前の表示を押すとアカウント画面(パスワード変更・ログアウト)が開く1つのボタンにしました。"},
@@ -3653,7 +3653,7 @@ function vseItems(){
   function circ(X,Y,w,h){it.push({t:"c",x:X,y:Y,w:w,h:h})}
   for(var k=0;k<35;k++){var cur=VSE.chk[k]||"...";for(var c=0;c<3;c++){if(VSM[k][c]==="-")continue;var ch=cur[c];if(ch==="o")circ(VSR.cx[c][0],VSR.row0+k*VSR.pitch,46,30);else if(ch==="x")circ(VSR.cx[c][1],VSR.row0+k*VSR.pitch,46,30)}}
   for(var i=0;i<4;i++){var a=VSE.aft[i];if(a==="o")circ(VSR.ax[0],VSR.ay[i],42,28);else if(a==="x")circ(VSR.ax[1],VSR.ay[i],42,28)}
-  [f.date,f.orderDate,f.doneDate].forEach(function(d,n){var m=vseMd(d);if(m[0])it.push({t:"s",x:VSR.dx[n][0],y:VSR.dy,s:m[0],fs:26,al:"c"});if(m[1])it.push({t:"s",x:VSR.dx[n][1],y:VSR.dy,s:m[1],fs:26,al:"c"})});
+  [null,f.orderDate,f.doneDate].forEach(function(d,n){if(n===0)return;var m=vseMd(d);if(m[0])it.push({t:"s",x:VSR.dx[n][0],y:VSR.dy,s:m[0],fs:26,al:"c"});if(m[1])it.push({t:"s",x:VSR.dx[n][1],y:VSR.dy,s:m[1],fs:26,al:"c"})});
   if(f.company)it.push({t:"s",x:VSR.co[0],y:VSR.co[1],s:f.company,fs:34,al:"c",w:470});
   if(f.warranty)circ(VSR.wx[f.warranty],VSR.wy,64,40);
   if(f.layout)circ(VSR.lx[f.layout],VSR.wy,VSR.lw[f.layout],40);
@@ -3683,7 +3683,7 @@ function openVse(id){
       R=function(k,l,opts){return '<label>'+l+'<select id="vse-'+k+'"><option value=""></option>'+opts.map(function(o){return "<option"+(f[k]===o?" selected":"")+">"+o+"</option>"}).join("")+"</select></label>"};
   $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(1000px,100%)"><h2>📝 価値観共有チェックシート</h2><div class="sub">'+esc(j.site+" "+j.room)+' ／ 読み込んだシートの上で、○や×の欄をタップして記入します(もう一度タップで消去)。</div>'+
    '<div class="vsf"><span id="vse-src" class="sub">シートを探しています…</span> <label class="btn sm" style="cursor:pointer">📎 シートを選ぶ<input type="file" id="vse-file" accept="application/pdf,image/*" style="display:none"></label></div>'+
-   '<div class="fields">'+T("date","確認日","date")+T("orderDate","e注文確認日","date")+T("doneDate","完了日","date")+T("company","業者様")+R("warranty","①ワランティ加入",["有","無"])+R("layout","②間取りの確認",["シングル","カップル","ファミリー"])+
+   '<div class="fields">'+T("orderDate","e注文確認日","date")+T("doneDate","完了日","date")+T("company","業者様")+R("warranty","①ワランティ加入",["有","無"])+R("layout","②間取りの確認",["シングル","カップル","ファミリー"])+
    '<label class="wide">立会終了後の確認で「×」の場合の理由<textarea id="vse-afterWhy" rows="2">'+esc(f.afterWhy)+'</textarea></label><label class="wide">確認事項<textarea id="vse-memo" rows="2">'+esc(f.memo)+'</textarea></label></div>'+
    '<div class="vstool"><span class="sub">拡大</span><button type="button" class="btn sm" data-vsal="z-">－</button><button type="button" class="btn sm" data-vsal="z+">＋</button>'+
    '<span class="sub">全て○</span>'+[0,1,2].map(function(c){return '<button type="button" class="btn sm" data-vscol="'+c+'">'+["管理担当者","業者様","完成確認者"][c]+"</button>"}).join("")+
