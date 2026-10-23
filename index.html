@@ -2540,7 +2540,7 @@ function fxProg(m,busy){var p=$("#fx-prog");if(p)p.innerHTML=esc(m||"")+(FX.conn
 function fxTypeGuide(){
   var D=[["koji","工事予定書","工事一覧"],["request","出動要請書","緊急出動"],["notice","金額確定通知書","緊急出動(確定金額)"],["order","注文書・作業依頼書","建物維持管理 作業一覧"],["annual","年間発注予定一覧表","建物維持管理 年間予定"],["ac","エアコン見積り依頼書","エアコン 案件一覧"],["value","価値観共有チェックシート","工事に自動で紐づけ"]];
   return '<details class="fxguide" open style="margin:8px 0"><summary class="sub" style="cursor:pointer">読み取れる書類(7種類)と登録先</summary><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px;margin-top:6px">'+
-   D.map(function(d){return '<div class="panel" style="padding:6px 10px"><b>'+esc(d[1])+'</b><div class="sub">→ '+esc(d[2])+'</div></div>'}).join("")+'</div><div class="sub" style="margin-top:4px">上記以外の書類・大東建託以外の書類は、一覧に表示されません。</div></details>'}
+   D.map(function(d){return '<div class="panel" style="padding:6px 10px"><b>'+esc(d[1])+'</b><div class="sub">→ '+esc(d[2])+'</div></div>'}).join("")+'</div><div class="sub" style="margin-top:4px">1通のFAXに複数の書類が入っているときは、ページごとに判別して書類ごとに分けて表示します。上記以外の書類・大東建託以外の書類は、一覧に表示されません。</div></details>'}
 function openFax(){
   FX.rows=[];FX.busy=false;FX.connect="";
   $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg lg"><h2>📠 FAX取込</h2><div class="sub">Gmailの「eFax」ラベルのFAX(添付PDF)を読み込み、書類の種類を自動で判別します。「そのまま登録」で確認画面を省いて直接登録、「確認して登録」で内容を見てから登録できます。登録後は工事一覧などで内容を確認してください。</div>'+
@@ -2548,6 +2548,15 @@ function openFax(){
    '<div class="acts"><span></span><span><button type="button" class="btn" id="fx-reload">再読み込み</button> <button type="button" class="btn" id="fx-close">閉じる</button></span></div></div></div>';
   fxRun();
 }
+async function fxClassifyPage(sample,blob,x){
+  var a=await sample.json(fxPrompt()+"\n(参考: メール件名「"+x.subject.trim().slice(0,80)+"」 差出人 "+x.sender+")",{images:[blob],signal:FX.ctl.signal,modelTier:"quick"});
+  var t=fxAll()[a&&a.docType]?a.docType:"other";
+  return {type:t,summary:String((a&&a.summary)||"").slice(0,60),sender:String((a&&a.sender)||"").slice(0,60)}}
+function fxPageGroups(cls){var G=[];cls.forEach(function(c,k){var g=G[G.length-1];if(g&&g.type===c.type){g.idx.push(k);if(!g.summary&&c.summary)g.summary=c.summary}else G.push({type:c.type,summary:c.summary,sender:c.sender,idx:[k]})});return G}
+function fxPageLabel(idx){return idx.length===1?"p"+(idx[0]+1):"p"+(idx[0]+1)+"-"+(idx[idx.length-1]+1)}
+async function fxPagesFile(file,pgs,idx){
+  var P=[];for(var k=0;k<idx.length;k++){var b=pgs[idx[k]],bm=await createImageBitmap(b);P.push({jpg:b,w:bm.width,h:bm.height})}
+  var pdf=await wtfPdfMulti(P);return new File([pdf],file.name.replace(/\.[^.]+$/,"")+"_"+fxPageLabel(idx)+".pdf",{type:"application/pdf"})}
 async function fxRun(){
   if(FX.busy)return;
   var mcp=await claude_use("mcp"),sample=await claude_use("sample"),lim=null;
@@ -2590,10 +2599,26 @@ async function fxRun(){
         var row={id:x.id,fid:x.id+"-"+fi,isoDate:x.date||"",date:ds,caller:head+(files.length>1?" ("+file.name.slice(0,30)+")":""),status:"run",file:file};
         var i=FX.rows.push(row)-1;$("#fx-list").insertAdjacentHTML("beforeend",fxRowHtml(row,i));
         try{
-          var blob0=null;
-          await eachPage(file,async function(b){if(!blob0)blob0=b},1,1400);
+          var pgs=[];
+          await eachPage(file,async function(b){pgs.push(b)},12,1400);
+          var blob0=pgs[0]||null;
           if(blob0)row.thumb=URL.createObjectURL(blob0);
-          var a=await sample.json(fxPrompt()+"\n(参考: メール件名「"+x.subject.trim().slice(0,80)+"」 差出人 "+x.sender+")",{images:[blob0],signal:FX.ctl.signal,modelTier:"quick"});
+          var a=null;
+          if(pgs.length>1){
+            var cls=[];
+            for(var pi=0;pi<pgs.length;pi++){fxProg((k+1)+" / "+list.length+" 通 "+(pi+1)+"/"+pgs.length+"ページを判別中…",true);cls.push(await fxClassifyPage(sample,pgs[pi],x))}
+            var real=fxPageGroups(cls).filter(function(g){return g.type!=="other"});
+            if(real.length===1)a={docType:real[0].type,summary:real[0].summary,sender:real[0].sender};
+            else if(!real.length)a={docType:"other"};
+            else{
+              row.type="other";row.hidden=true;row.status="ok";var elp=$("#fx-r"+i);if(elp)elp.remove();
+              for(var gi=0;gi<real.length;gi++){
+                var g=real[gi],gf=g.idx.length===pgs.length?file:await fxPagesFile(file,pgs,g.idx);
+                var r2={id:x.id,fid:x.id+"-"+fi+"g"+gi,isoDate:x.date||"",date:ds,caller:head+" ("+fxPageLabel(g.idx)+")",status:"ok",file:gf,type:g.type,summary:g.summary,sender:g.sender,thumb:URL.createObjectURL(pgs[g.idx[0]])};
+                var i2=FX.rows.push(r2)-1;$("#fx-list").insertAdjacentHTML("beforeend",fxRowHtml(r2,i2));fxStore(r2,gf,pgs[g.idx[0]])}
+              continue}
+          }
+          if(!a)a=await sample.json(fxPrompt()+"\n(参考: メール件名「"+x.subject.trim().slice(0,80)+"」 差出人 "+x.sender+")",{images:[blob0],signal:FX.ctl.signal,modelTier:"quick"});
           row.type=fxAll()[a&&a.docType]?a.docType:"other";if(/^c_/.test(row.type)&&fxBuiltinOf(fxAll()[row.type]))row.type=fxBuiltinOf(fxAll()[row.type]);row.summary=String((a&&a.summary)||"").slice(0,60);row.sender=String((a&&a.sender)||"").slice(0,60);row.status="ok";
           if(row.type==="other"){row.hidden=true;FX.skipped=(FX.skipped||0)+1;fxMark(x.id);var el0=$("#fx-r"+i);if(el0)el0.remove();continue}
           fxStore(row,file,blob0);
