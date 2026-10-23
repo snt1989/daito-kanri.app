@@ -404,6 +404,7 @@ a.btn{color:inherit;text-decoration:none}
 .repcfg label,.repfree{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--sub)}
 .repfree{margin-top:8px}.repfree textarea,.repfree select,.repcfg input{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg,#fff);color:var(--fg,inherit);min-width:0;width:100%;box-sizing:border-box}
 .repg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.mnybadge{display:inline-block;margin-right:3px;font-size:11px;opacity:.75;vertical-align:baseline}
 .mnylock{display:inline-block;color:var(--sub,#888);font-size:12px;font-weight:600;white-space:nowrap}
 .mnylock.blk{white-space:normal}
 .mnydis{opacity:.55;cursor:not-allowed}
@@ -651,7 +652,7 @@ function render0(){
   h+=pageHead();
   h+=({home:vHome,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,mrep:vMrep,water:vWater}[S.tab]||vJobs)();
   m.innerHTML=h;
-  moneyScrub(document);
+  moneyScrub(document);moneyBadge(document);
   decorate();mobTables();
   if(fk){var fe=$(fk,m);if(fe){fe.focus();try{if(ss&&ss[0]!=null)fe.setSelectionRange(ss[0],ss[1])}catch(e){}}}
   if(S.tab==="sched")bindCal();
@@ -4064,6 +4065,16 @@ var MNY_SET=["prices","emfee","acprices","basic"];
 function canMoney(){var m=ME();return !m||m.role==="admin"}
 function mnyRm(n){if(n&&n.parentNode)n.parentNode.removeChild(n)}
 function mnyMark(e,txt,cls){if(!e||e.getAttribute("data-mny"))return;e.setAttribute("data-mny","1");e.innerHTML='<span class="mnylock '+(cls||"")+'" title="管理者のみ表示">🔒'+(txt?" "+txt:"")+'</span>'}
+function moneyBadge(root){
+  if(!canMoney())return;root=root||document;
+  function b(e,pre){if(!e||e.getAttribute("data-mnyb"))return;e.setAttribute("data-mnyb","1");e.insertAdjacentHTML("afterbegin",'<span class="mnybadge" title="管理者のみ表示">🔒</span>'+(pre||""))}
+  [].slice.call(root.querySelectorAll('[data-tab="bill"],[data-tab="esum"],[data-stab="prices"],[data-stab="emfee"],[data-stab="acprices"],[data-stab="basic"]')).forEach(function(e){b(e," ")});
+  [].slice.call(root.querySelectorAll("table thead th")).forEach(function(th){if(MNY_RE.test(th.textContent))b(th)});
+  [].slice.call(root.querySelectorAll(".kv>div,.stat,.card2")).forEach(function(e){if(MNY_RE.test(e.textContent)){var f=e.querySelector("span,h3")||e;b(f)}});
+  [].slice.call(root.querySelectorAll(".sum")).forEach(function(e){b(e)});
+  [].slice.call(root.querySelectorAll(".fields>label,.fields .wide,.fields>div")).forEach(function(l){var f=l.childNodes[0];var t=f?String(f.textContent||""):"";if(/金額|単価|部材代|料金|税/.test(t))b(l)});
+  [].slice.call(root.querySelectorAll("#ff-prev .panel")).forEach(function(p){if(MNY_RE.test(p.textContent))b(p)});
+}
 function moneyScrub(root){
   if(canMoney())return;root=root||document;
   [].slice.call(root.querySelectorAll('[data-tab="bill"],[data-tab="esum"],[data-stab="prices"],[data-stab="emfee"],[data-stab="acprices"],[data-stab="basic"]')).forEach(function(e){
@@ -4082,7 +4093,7 @@ function moneyScrub(root){
   [].slice.call(root.querySelectorAll("option")).forEach(function(o){if(/[¥円]/.test(o.textContent)){o.textContent=o.textContent.replace(/[\s　]*[(（]?[¥]?[\d,]+円?[)）]?/g,"").replace(/[¥][\d,]+/g,"")}});
   [].slice.call(root.querySelectorAll(".todo .tt small,.todo .sub,.sub,.pill")).forEach(function(e){if(/[¥]\d|\d円/.test(e.textContent)&&e.children.length===0)e.textContent=e.textContent.replace(/[¥]\s?[\d,]+|[\d,]+円/g,"🔒")});
 }
-try{new MutationObserver(function(){moneyScrub($("#modal"))}).observe(document.getElementById("modal"),{childList:true,subtree:true})}catch(e){}
+try{new MutationObserver(function(){moneyScrub($("#modal"));moneyBadge($("#modal"))}).observe(document.getElementById("modal"),{childList:true,subtree:true})}catch(e){}
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
