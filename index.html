@@ -2651,6 +2651,54 @@ async function fxAuto(i){
 function fxBuiltinOf(name){name=String(name||"");
   if(/エアコン/.test(name))return "ac";if(/価値観/.test(name))return "value";if(/工事予定|指示書/.test(name))return "koji";if(/出動要請/.test(name))return "request";if(/金額確定/.test(name))return "notice";
   if(/年間発注|年間予定/.test(name))return "annual";if(/注文書|作業依頼/.test(name))return "order";return ""}
+var DFS={m:null,file:null,pages:[],groups:[],busy:false,del:true};
+async function dfSplitOpen(id){
+  var m=DF.list.find(function(x){return x.id===id});if(!m||!window.dsFiles||DFS.busy)return;
+  var sample=await claude_use("sample"),lim=null;
+  if(sample){try{lim=await sample.limits()}catch(e){}}
+  if(!sample||!lim||!lim.images){toast("この表示では自動読み取りを使えません");return}
+  DFS={m:m,file:null,pages:[],groups:[],busy:true,del:!dfUsed()[m.id]};
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg lg"><h2>書類を分ける</h2><div class="sub" id="dfs-prog">書類を読み込み中…</div><div id="dfs-list"></div><div class="acts"><span></span><span><button type="button" class="btn" data-dfsx="x">閉じる</button></span></div></div></div>';
+  var ctl=new AbortController();IM.ctl=ctl;FX.ctl=ctl;
+  try{
+    var res=await window.dsFiles.blob(id);if(!res||!res.ok||!res.blob)throw new Error("書類を読み込めませんでした");
+    var f=new File([res.blob],m.name||"書類.pdf",{type:res.blob.type||m.mime||"application/pdf"});DFS.file=f;
+    var pgs=[];await eachPage(f,async function(b){pgs.push(b)},12,1400);
+    if(pgs.length<2){$("#dfs-prog").textContent="この書類は1ページのため、分けられません。(PDFが大きいときは、書類ボックスには1ページ目の画像だけが保管されています)";DFS.busy=false;return}
+    DFS.pages=pgs;var cls=[];
+    for(var i=0;i<pgs.length;i++){$("#dfs-prog").textContent=(i+1)+"/"+pgs.length+"ページを判別中…";cls.push(await fxClassifyPage(sample,pgs[i],{subject:"",sender:""}))}
+    DFS.groups=fxPageGroups(cls).map(function(g){g.on=g.type!=="other";return g});
+    DFS.busy=false;dfsDraw();
+  }catch(e){DFS.busy=false;var pg=$("#dfs-prog");if(pg)pg.textContent=imErr(e)||((e&&e.message)||"読み込めませんでした")}
+}
+function dfsDraw(){
+  var el=$("#dfs-list");if(!el)return;var all=fxAll(),G=DFS.groups;
+  $("#dfs-prog").textContent=DFS.pages.length+"ページを "+G.length+" つの書類に分けました。種類が違うときは変更し、不要なものはチェックを外してください。";
+  if(!DFS.urls)DFS.urls=DFS.pages.map(function(b){return URL.createObjectURL(b)});
+  el.innerHTML=G.map(function(g,i){return '<div class="panel" style="display:flex;gap:12px;align-items:center;padding:8px 12px;margin:6px 0"><input type="checkbox" data-dfsg="on:'+i+'"'+(g.on?" checked":"")+' aria-label="保管する">'+
+    '<img src="'+DFS.urls[g.idx[0]]+'" alt="" style="width:56px;height:74px;object-fit:cover;border-radius:4px;background:#fff"><div style="flex:1;min-width:0"><div class="sub">'+fxPageLabel(g.idx)+'</div>'+
+    '<select data-dfsg="t:'+i+'">'+Object.keys(all).map(function(k){return '<option value="'+k+'"'+(g.type===k?" selected":"")+">"+esc(all[k])+"</option>"}).join("")+'</select> <b>'+esc(g.summary||"")+'</b></div></div>'}).join("")+
+   '<label class="sub" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" id="dfs-del"'+(DFS.del?" checked":"")+'>元のファイルを書類ボックスから削除する'+(dfUsed()[DFS.m.id]?'(登録済みの書類です。削除すると登録先から元の書類を開けなくなります)':"")+'</label>'+
+   '<div class="acts"><span></span><span><button type="button" class="btn pri" data-dfsx="save">分けて保管</button></span></div>';
+}
+document.addEventListener("change",function(e){var t=e.target;if(!t)return;
+  if(t.dataset&&t.dataset.dfsg){var q=t.dataset.dfsg.split(":"),g=DFS.groups[+q[1]];if(!g)return;if(q[0]==="on")g.on=t.checked;else{g.type=t.value;if(t.value==="other")g.on=false;else if(!g.on&&t.value!=="other")g.on=true;dfsDraw()}}
+  else if(t.id==="dfs-del")DFS.del=t.checked});
+async function dfSplitSave(){
+  if(DFS.busy||!DFS.groups.length)return;
+  var sel=DFS.groups.filter(function(g){return g.on&&g.type!=="other"});
+  if(!sel.length){toast("保管する書類を選んでください");return}
+  DFS.busy=true;$("#dfs-prog").textContent="保管中…";var ok=0;
+  try{
+    for(var i=0;i<sel.length;i++){
+      var g=sel[i],f=sel.length===1&&g.idx.length===DFS.pages.length?DFS.file:await fxPagesFile(DFS.file,DFS.pages,g.idx);
+      var ref=await docKeep(f,{blob0:DFS.pages[g.idx[0]],meta:{type:g.type,typeName:fxAll()[g.type]||"",summary:g.summary,sender:g.sender,date:DFS.m.date||DFS.m.at||""}});
+      if(ref)ok++}
+    if(ok&&DFS.del&&!(sel.length===1&&sel[0].idx.length===DFS.pages.length)){try{await window.dsFiles.del(DFS.m.id)}catch(e){}}
+    toast(ok+"件に分けて保管しました");
+  }catch(e){toast("保管できませんでした")}
+  DFS.busy=false;$("#modal").innerHTML="";DF.state="idle";render();
+}
 var DFR={id:null,m:null,type:""};
 function dfRegOpen(id){
   var m=DF.list.find(function(x){return x.id===id});if(!m)return;
@@ -3024,7 +3072,7 @@ function vDocs(){
    '<select id="df-reg" aria-label="登録状況"><option value="">登録:すべて</option><option value="no"'+(DF.reg==="no"?" selected":"")+'>未登録のみ</option><option value="yes"'+(DF.reg==="yes"?" selected":"")+'>登録済みのみ</option></select><label class="btn pri" style="cursor:pointer">＋ ファイルを保管<input type="file" id="df-file" accept="application/pdf,image/*" style="display:none"></label><button type="button" class="btn" id="df-reload">更新</button></div>';
   if(DF.msg)h+='<div class="banner">'+esc(DF.msg)+"</div>";
   h+='<div class="panel scroll"><table><thead><tr><th>日付</th><th>種類</th><th>内容</th><th>発信元</th><th>ファイル</th><th class=num>サイズ</th><th></th></tr></thead><tbody>'+
-   (DF.state==="load"&&!DF.list.length?'<tr><td colspan="7" class="empty">読み込み中…</td></tr>':L.length?L.map(function(m){return "<tr><td>"+esc(dfDate(m))+'</td><td><span class="tag">'+esc(m.typeName||"書類")+"</span></td><td>"+(used[m.id]?'<span class="pill s4" title="登録先">登録済</span> <span class="sub">'+esc(used[m.id])+"</span><br>":"")+esc(m.summary||"")+'</td><td class="sub">'+esc(m.sender||"")+'</td><td class="sub">'+esc(m.name||"")+'</td><td class="num">'+dfSize(m.size)+'</td><td style="white-space:nowrap"><button type="button" class="btn sm" data-dfopen="'+esc(m.id)+'">開く</button> <button type="button" class="btn sm'+(used[m.id]?"":" pri")+'" data-dfreg="'+esc(m.id)+'">'+(used[m.id]?"再登録":"登録")+'</button> <button type="button" class="btn sm danger" data-dfdel="'+esc(m.id)+'">削除</button></td></tr>'}).join(""):'<tr><td colspan="7" class="empty">保管した書類はまだありません。FAX取込で読み取った書類は、ここに自動で保管されます。</td></tr>')+"</tbody></table></div>";
+   (DF.state==="load"&&!DF.list.length?'<tr><td colspan="7" class="empty">読み込み中…</td></tr>':L.length?L.map(function(m){return "<tr><td>"+esc(dfDate(m))+'</td><td><span class="tag">'+esc(m.typeName||"書類")+"</span></td><td>"+(used[m.id]?'<span class="pill s4" title="登録先">登録済</span> <span class="sub">'+esc(used[m.id])+"</span><br>":"")+esc(m.summary||"")+'</td><td class="sub">'+esc(m.sender||"")+'</td><td class="sub">'+esc(m.name||"")+'</td><td class="num">'+dfSize(m.size)+'</td><td style="white-space:nowrap"><button type="button" class="btn sm" data-dfopen="'+esc(m.id)+'">開く</button> <button type="button" class="btn sm'+(used[m.id]?"":" pri")+'" data-dfreg="'+esc(m.id)+'">'+(used[m.id]?"再登録":"登録")+'</button> <button type="button" class="btn sm" data-dfsplit="'+esc(m.id)+'" title="1つのFAXに複数の書類が入っているとき、書類ごとに分けます">分ける</button> <button type="button" class="btn sm danger" data-dfdel="'+esc(m.id)+'">削除</button></td></tr>'}).join(""):'<tr><td colspan="7" class="empty">保管した書類はまだありません。FAX取込で読み取った書類は、ここに自動で保管されます。</td></tr>')+"</tbody></table></div>";
   h+='<div class="sub" style="padding:8px 2px">1ファイル約700KBまで。PDFが大きいときは1ページ目の画像を保管します。</div>';
   return h;
 }
@@ -4274,6 +4322,8 @@ function modClick(e,t,d){
   if(t.id==="mi-sync"){var n0=mItemsSync();saveSettings();toast(n0+"件の項目を追加しました");return true}
   if(t.id==="miadd"){S.settings.mItems.push("新しい項目");saveSettings();return true}
   if(d.fcsmp!==undefined){if(FCS.busy)return true;FCS.idx=+d.fcsmp;FCS.msg="";var fi=$("#fct-file");if(fi)fi.click();return true}
+  if(d.dfsplit){dfSplitOpen(d.dfsplit);return true}
+  if(d.dfsx){if(d.dfsx==="x")$("#modal").innerHTML="";else dfSplitSave();return true}
   if(d.dfreg){dfRegOpen(d.dfreg);return true}
   if(d.dfrg){if(d.dfrg==="x")$("#modal").innerHTML="";else dfRegGo(d.dfrg==="auto");return true}
   if(d.dfopen){window.dsFiles.open(d.dfopen).then(function(j){if(j&&!j.ok)toast(j.error||"開けませんでした")});return true}
