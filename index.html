@@ -1403,7 +1403,6 @@ var SETGROUPS=[
  ["全体共通",[
   ["basic","基本設定","消費税率・支払日・期限が近いと扱う日数です。",[P("bill","請求・入金"),P("elog","出動一覧"),P("mmonth","作業一覧"),P("home","ホーム")]],
   ["staff","担当・作業員","担当に割り当てるチーム・作業員の名前です。",[P("jobs","工事一覧"),P("sched","施工予定"),P("elog","出動一覧")]],
-  ["fxtype","FAX書類の種類","FAX取込で読み取る書類の種類を追加します。読み取った内容の保存先も、ここで確認できます。",[P("home","ホーム")]],
   ["backup","バックアップ","データのコピーを自動・手動でサーバーに保存し、必要なときに戻せます(Web版・管理者のみ)。",[P("home","ホーム")]],
   ["company","自社情報","水道の届出などで、届出者として使う会社の情報です。",[P("water","水道開始・中止届")]]]]];
 var SETTABS=[];SETGROUPS.forEach(function(g){g[1].forEach(function(t){SETTABS.push(t)})});
@@ -2660,8 +2659,8 @@ function fxGo(i){
 }
 
 /* ---------- FAX書類の種類(自分で追加) ---------- */
-function fxCustom(){var s=S.settings;if(!Array.isArray(s.fxTypes))s.fxTypes=[];return s.fxTypes}
-function fxDocs(){var s=S.settings;if(!Array.isArray(s.fxDocs))s.fxDocs=[];return s.fxDocs}
+function fxCustom(){return []}
+function fxDocs(){return []}
 function fxAll(){var o={};Object.keys(FX_TYPES).forEach(function(k){if(k!=="other"&&k!=="daito")o[k]=FX_TYPES[k]});fxCustom().forEach(function(c){if(c.name)o[c.id]=c.name});o.daito=FX_TYPES.daito;o.other=FX_TYPES.other;return o}
 function fxPrompt(){var L=fxCustom().filter(function(c){return c.name}).map(function(c){return "- "+c.id+" = "+c.name+(c.hint?"("+c.hint+")":"")+"\n"}).join("");return L?FX_PROMPT.replace("- daito = ",function(){return L+"- daito = "}):FX_PROMPT}
 function fxcType(id){return fxCustom().find(function(c){return c.id===id})}
