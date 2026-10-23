@@ -641,12 +641,14 @@ function render0(){
   if(S.composing){S.pending=true;return}
   S.pending=false;
   var fk=focusKey(),ss=null;if(fk){try{ss=[document.activeElement.selectionStart,document.activeElement.selectionEnd]}catch(e){}}
+  if(!canMoney()){if(S.tab==="bill"||S.tab==="esum")S.tab="home";if(S.tab==="set"&&MNY_SET.indexOf(S.setTab||"prices")>=0)S.setTab="staff"}
   renderTabs();
   var m=$("#main"),h="";
   if(!S.persist)h+='<div class="banner">共有保存が使えない表示です。入力内容はこのブラウザにだけ保存されます。</div>';
   h+=pageHead();
   h+=({home:vHome,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,mrep:vMrep,water:vWater}[S.tab]||vJobs)();
   m.innerHTML=h;
+  moneyScrub(document);
   decorate();mobTables();
   if(fk){var fe=$(fk,m);if(fe){fe.focus();try{if(ss&&ss[0]!=null)fe.setSelectionRange(ss[0],ss[1])}catch(e){}}}
   if(S.tab==="sched")bindCal();
@@ -989,6 +991,7 @@ function delDoc(col,id){
   render();
 }
 function saveCsv(name,rows){
+  if(!canMoney()){toast("金額を含むため、管理者のみ出力できます");return}
   var text="﻿"+rows.map(function(r){return r.map(function(v){v=String(v==null?"":v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(",")}).join("\r\n");
   claude_use("downloads").then(function(d){
     if(!d){toast("この表示では保存できません");return}
@@ -1328,19 +1331,19 @@ function vMplan(){
   var colT={},grand=0;
   var items=S.settings.mItems.slice();L.forEach(function(j){if(items.indexOf(j.item)<0)items.push(j.item)});
   var h='<div class="bar"><div class="mon"><button class="btn sm" data-mfy="-1">◀</button><h2 class="sec">'+fy+'年度</h2><button class="btn sm" data-mfy="1">▶</button><span class="sub">'+fy+"年4月〜"+(fy+1)+'年3月</span></div><div class="tools"><select id="mitem"><option value="">項目:すべて</option>'+items.map(function(x){return "<option"+(S.mItem===x?" selected":"")+">"+esc(x)+"</option>"}).join("")+"</select></div></div>";
-  h+='<div class="sub">金額は税別。マスをクリックすると、その月の案件を開く・追加できます。色:灰=予定 / 黄=注文受領〜作業中 / 緑=完了報告以降。</div>';
-  h+='<div class="panel scroll"><table style="min-width:1040px"><thead><tr><th style="min-width:220px">建物・項目</th>'+months.map(function(m){return '<th class="num">'+(+m.slice(5))+"月</th>"}).join("")+'<th class="num">年間</th></tr></thead><tbody>';
+  h+='<div class="sub">'+(canMoney()?"金額は税別。":"")+'マスをクリックすると、その月の案件を開く・追加できます。色:灰=予定 / 黄=注文受領〜作業中 / 緑=完了報告以降。</div>';
+  h+='<div class="panel scroll"><table style="min-width:1040px"><thead><tr><th style="min-width:220px">建物・項目</th>'+months.map(function(m){return '<th class="num">'+(+m.slice(5))+"月</th>"}).join("")+''+(canMoney()?'<th class="num">年間</th>':"")+'</tr></thead><tbody>';
   planRows.forEach(function(r,idx){
     var tot=0;
     h+='<tr><td><div class="site">'+esc(r.name)+'</div><div class="sub">'+esc(r.item)+(r.cd?" ・"+esc(r.cd):"")+"</div></td>"+months.map(function(m){
       var c=r.cells[m];if(!c)return '<td class="num"><button class="btn sm" style="opacity:.45;border-style:dashed" data-mcell="'+idx+"@"+m+'" aria-label="追加">＋</button></td>';
       var s=0,mn=9;c.forEach(function(j){s+=mtCalc(j).sub;if(j.status<mn)mn=j.status});tot+=s;colT[m]=(colT[m]||0)+s;
       var bg=mn<=0?"var(--line)":mn<4?"var(--warn-soft)":"var(--ok-soft)";
-      return '<td class="num"><button class="btn sm" style="background:'+bg+'" data-mcell="'+idx+"@"+m+'">'+Math.round(s).toLocaleString("ja-JP")+"</button></td>";
-    }).join("")+'<td class="num"><b>'+Math.round(tot).toLocaleString("ja-JP")+"</b></td></tr>";grand+=tot;
+      return '<td class="num"><button class="btn sm" style="background:'+bg+'" data-mcell="'+idx+"@"+m+'">'+(canMoney()?Math.round(s).toLocaleString("ja-JP"):"●")+"</button></td>";
+    }).join("")+(canMoney()?'<td class="num"><b>'+Math.round(tot).toLocaleString("ja-JP")+"</b></td>":"")+"</tr>";grand+=tot;
   });
   if(!planRows.length)h+='<tr><td colspan="14" class="empty">この年度の登録がありません。作業一覧から追加するか、「翌月分を予定として作成」で毎月の定期作業を作成してください。</td></tr>';
-  else h+='<tr><td><b>合計(税別)</b></td>'+months.map(function(m){return '<td class="num"><b>'+(colT[m]?Math.round(colT[m]).toLocaleString("ja-JP"):"—")+"</b></td>"}).join("")+'<td class="num"><b>'+Math.round(grand).toLocaleString("ja-JP")+"</b></td></tr>";
+  else if(canMoney())h+='<tr><td><b>合計(税別)</b></td>'+months.map(function(m){return '<td class="num"><b>'+(colT[m]?Math.round(colT[m]).toLocaleString("ja-JP"):"—")+"</b></td>"}).join("")+'<td class="num"><b>'+Math.round(grand).toLocaleString("ja-JP")+"</b></td></tr>";
   return h+"</tbody></table></div>";
 }
 function defFields(){
@@ -4051,6 +4054,27 @@ function repClick(e,t,d){
   if(d.rep==="rm"){var i=+d.i;if(REPB[REP.id])REPB[REP.id][i]=null;REP.nw[i]=false;REP.del[i]=true;repModal();return true}
   return false}
 
+/* ---------- 金額は管理者のみ ---------- */
+var MNY_RE=/金額|税別|税込|単価|見積|売上|請求|入金|概算|料金|部材代|消費税|支払|費用|合計|¥|円/;
+var MNY_SET=["prices","emfee","acprices","basic"];
+function canMoney(){var m=ME();return !m||m.role==="admin"}
+function mnyRm(n){if(n&&n.parentNode)n.parentNode.removeChild(n)}
+function moneyScrub(root){
+  if(canMoney())return;root=root||document;
+  [].slice.call(root.querySelectorAll('[data-tab="bill"],[data-tab="esum"],[data-stab="prices"],[data-stab="emfee"],[data-stab="acprices"],[data-stab="basic"],#bk-pexp,#bk-pimp,#billall,[data-mnyx]')).forEach(mnyRm);
+  [].slice.call(root.querySelectorAll("table")).forEach(function(tb){
+    var hr=tb.querySelector("thead tr");if(!hr)return;var idx=[];
+    [].slice.call(hr.children).forEach(function(th,i){if(MNY_RE.test(th.textContent))idx.push(i)});
+    if(!idx.length)return;
+    [].slice.call(tb.querySelectorAll("tr")).forEach(function(tr){for(var k=idx.length-1;k>=0;k--){var c=tr.children[idx[k]];if(c)mnyRm(c)}})});
+  [].slice.call(root.querySelectorAll(".kv>div,.stat,.sum,.card2,.sumrow")).forEach(function(e){if(e.classList.contains("sum")||MNY_RE.test(e.textContent))mnyRm(e)});
+  [].slice.call(root.querySelectorAll(".fields>label,.fields .wide,.fields>div")).forEach(function(l){var f=l.childNodes[0];var t=f?String(f.textContent||""):"";if(/金額|単価|部材代|料金|税/.test(t))mnyRm(l)});
+  [].slice.call(root.querySelectorAll("label")).forEach(function(l){if(/金額を固定|金額確定|確定金額/.test(l.textContent)&&l.textContent.length<60)mnyRm(l)});
+  [].slice.call(root.querySelectorAll("#ff-prev .panel,.note-money")).forEach(function(p){if(MNY_RE.test(p.textContent))mnyRm(p)});
+  [].slice.call(root.querySelectorAll("option")).forEach(function(o){if(/[¥円]/.test(o.textContent)){o.textContent=o.textContent.replace(/[\s　]*[(（]?[¥]?[\d,]+円?[)）]?/g,"").replace(/[¥][\d,]+/g,"")}});
+  [].slice.call(root.querySelectorAll(".todo .tt small,.todo .sub,.sub,.pill")).forEach(function(e){if(/[¥]\d|\d円/.test(e.textContent)&&e.children.length===0)e.textContent=e.textContent.replace(/[¥]\s?[\d,]+|[\d,]+円/g,"")});
+}
+try{new MutationObserver(function(){moneyScrub($("#modal"))}).observe(document.getElementById("modal"),{childList:true,subtree:true})}catch(e){}
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
@@ -4120,6 +4144,7 @@ function modClick(e,t,d){
   if(t.id==="wk-clr"){S.wk={st:"all",item:"",kind:"",month:"",sort:S.wk.sort,all:S.wk.all};S.q="";S.mAlert="";render();return true}
   if(t.id==="wk-all"){S.wk.all=!S.wk.all;S.wk.month="";render();return true}
   if(t.id==="wk-csv"){var r3=[["作業月","建物コード","建物名","項目","区分","注文No","数量","税別","税込","完了日","状況"]].concat(mwList().map(function(x){var c=mtCalc(x);return [x.month,x.bldgCd,x.bldgName,x.item,x.kind,x.docNo,x.qty,c.sub,c.total,x.doneDate,MT_STAT[x.status].n]}));
+    if(!canMoney()){toast("金額を含むため、管理者のみ出力できます");return}
     claude_use("downloads").then(function(dl){if(!dl){toast("この表示では保存できません");return}return dl.save({filename:"作業一覧.csv",data:new Blob(["\ufeff"+r3.map(function(r){return r.map(function(v){return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'}).join(",")}).join("\r\n")],{type:"text/csv"})}).then(function(){toast("保存しました")},function(e2){if(e2&&e2.code!=="declined")toast("保存できませんでした")})});return true}
   if(t.id==="ch-pocr"){openMpImport();return true}
   if(t.id==="mclr"){S.mAlert="";S.mFilter="all";S.q="";render();return true}
