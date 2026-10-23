@@ -3849,10 +3849,12 @@ async function repBlob(m,i){
   return null;
 }
 async function repShrink(f){
-  var bm=await createImageBitmap(f),k=Math.min(1,1600/Math.max(bm.width,bm.height)),c=document.createElement("canvas");
+  var bm=await createImageBitmap(f),k=Math.min(1,1280/Math.max(bm.width,bm.height)),c=document.createElement("canvas");
   c.width=Math.max(1,Math.round(bm.width*k));c.height=Math.max(1,Math.round(bm.height*k));
   var x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(bm,0,0,c.width,c.height);
-  return await new Promise(function(r){c.toBlob(r,"image/jpeg",0.85)});
+  var q=0.8,out=null;
+  for(var i=0;i<4;i++){out=await new Promise(function(r){c.toBlob(r,"image/jpeg",q)});if(out&&out.size<=300*1024)break;q-=0.1}
+  return out;
 }
 function repUrl(m,i){var key=m.id+":"+i,b=REPB[m.id]&&REPB[m.id][i];if(!b)return RPV[key]||"";
   if(!RPV[key]||RPV[key].b!==b){RPV[key]={b:b,u:URL.createObjectURL(b)}}return RPV[key].u}
@@ -4015,7 +4017,7 @@ async function repPdfAll(){
 document.addEventListener("change",async function(e){
   var t=e.target;if(!t||!t.dataset)return;
   if(t.dataset.repph!==undefined&&REP.id){var i=+t.dataset.repph,f=t.files&&t.files[0];t.value="";if(!f)return;
-    try{var b=await repShrink(f);(REPB[REP.id]=REPB[REP.id]||[])[i]=b;REP.nw[i]=true;REP.del[i]=false;repModal()}catch(er){var mg=$("#rep-msg");if(mg)mg.textContent="写真を読み込めませんでした"}
+    try{var b=await repShrink(f);(REPB[REP.id]=REPB[REP.id]||[])[i]=b;REP.nw[i]=true;REP.del[i]=false;repModal();if(window.dsFiles){REP.msg="サーバーに保存中…";var mg2=$("#rep-msg");if(mg2)mg2.textContent=REP.msg;await repSave()}}catch(er){var mg=$("#rep-msg");if(mg)mg.textContent="写真を読み込めませんでした"}
     return}
   if(t.dataset.repf&&REP.id){REP.d[t.dataset.repf]=t.value;return}
   if(t.dataset.repcfg){repSet()[t.dataset.repcfg]=t.value;saveSettings(true)}
