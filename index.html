@@ -2588,7 +2588,7 @@ async function fxRun(){
           await eachPage(file,async function(b){if(!blob0)blob0=b},1,1400);
           if(blob0)row.thumb=URL.createObjectURL(blob0);
           var a=await sample.json(fxPrompt()+"\n(参考: メール件名「"+x.subject.trim().slice(0,80)+"」 差出人 "+x.sender+")",{images:[blob0],signal:FX.ctl.signal,modelTier:"quick"});
-          row.type=fxAll()[a&&a.docType]?a.docType:"other";row.summary=String((a&&a.summary)||"").slice(0,60);row.sender=String((a&&a.sender)||"").slice(0,60);row.status="ok";
+          row.type=fxAll()[a&&a.docType]?a.docType:"other";if(/^c_/.test(row.type)&&fxBuiltinOf(fxAll()[row.type]))row.type=fxBuiltinOf(fxAll()[row.type]);row.summary=String((a&&a.summary)||"").slice(0,60);row.sender=String((a&&a.sender)||"").slice(0,60);row.status="ok";
           if(row.type==="other"){row.hidden=true;FX.skipped=(FX.skipped||0)+1;fxMark(x.id);var el0=$("#fx-r"+i);if(el0)el0.remove();continue}
           fxStore(row,file,blob0);
         }catch(e){
@@ -2617,10 +2617,13 @@ async function fxAuto(i){
     else if(/^c_/.test(t)){openFxc(f,t,undefined,r.fid);for(var k=0;k<240&&(FXC.busy||k<3);k++)await new Promise(function(z){setTimeout(z,500)});if(FXC.rec)fxcSave()}
   }catch(e){toast("登録できませんでした。FAX取込から「読み取って登録」で内容を確認してください")}
 }
+function fxBuiltinOf(name){name=String(name||"");
+  if(/エアコン/.test(name))return "ac";if(/価値観/.test(name))return "";if(/工事予定|指示書/.test(name))return "koji";if(/出動要請/.test(name))return "request";if(/金額確定/.test(name))return "notice";
+  if(/年間発注|年間予定/.test(name))return "annual";if(/注文書|作業依頼/.test(name))return "order";return ""}
 var DFR={id:null,m:null,type:""};
 function dfRegOpen(id){
   var m=DF.list.find(function(x){return x.id===id});if(!m)return;
-  var all=fxAll(),keys=Object.keys(all).filter(function(k){return k!=="other"&&k!=="daito"&&k!=="value"}),t=m.type==="fix"?"notice":m.type;if(keys.indexOf(t)<0)t=keys[0];
+  var all=fxAll(),keys=Object.keys(all).filter(function(k){return k!=="other"&&k!=="daito"&&k!=="value"}),t=fxBuiltinOf(m.typeName)||(m.type==="fix"?"notice":m.type);if(keys.indexOf(t)<0)t=keys[0];
   DFR={id:id,m:m,type:t};
   $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(520px,100%)"><h2>書類から登録</h2><div class="sub">'+esc(m.typeName||"書類")+" / "+esc(m.summary||m.name||"")+'</div>'+
    '<label class="wide" style="display:block;margin-top:10px">書類の種類(登録先が決まります)<select id="dfr-type" style="width:100%">'+keys.map(function(k){return '<option value="'+k+'"'+(k===t?" selected":"")+">"+esc(all[k])+"</option>"}).join("")+'</select></label>'+
