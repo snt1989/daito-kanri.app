@@ -761,16 +761,19 @@ async function vrThumbs(){
 }
 function vReport(){
   var L=S.jobs.filter(function(j){return j.status===3}).sort(function(a,b){return (a.workDate||"9999").localeCompare(b.workDate||"9999")});
+  var LO=S.jobs.filter(function(j){return j.status!==3&&(vrDoc(j)||(j.checks&&j.checks.value))}).sort(function(a,b){return String(b.workDate||b.dueDate||"").localeCompare(String(a.workDate||a.dueDate||""))}).slice(0,40);
   var h='<div><div class="sub">施工が終わったら各案件のシートをタップして記入します。記入(保存)すると「記入済」になり、「完了報告済にする」を押せます。</div></div>';
-  if(!L.length)return h+'<div class="panel empty">施工予定の案件はありません。工事一覧で「施工日を確定」まで進めるとここに表示されます。</div>';
   setTimeout(vrThumbs,0);
-  return h+'<div class="grid cards vcards">'+L.map(function(j){
+  var cards=function(L){return '<div class="grid cards vcards">'+L.map(function(j){
     var ok=reportReady(j),has=!!vrDoc(j)||!!VPV["j:"+j.id];
     return '<div class="panel card vcard"><button type="button" class="vth" data-vse="'+j.id+'" title="シートを開いて記入"><span data-vth="'+j.id+'"><span class="vsph">'+(has?"読み込み中…":"シート未取込")+'</span></span></button>'+
      '<div class="vbody"><div class="site">'+esc(j.site)+" "+esc(j.room)+(j.sample?'<span class="tag ex">例</span>':"")+'</div><div class="sub">施工 '+md(j.workDate)+' ／ 完了予定 <span class="'+(overdue(j)?"late":"")+'">'+md(j.dueDate)+'</span><br>'+esc((j.staff||[]).join("・")||"担当未設定")+'</div>'+
      '<div><span class="pill '+(ok?"s4":"s0")+'">'+(ok?"記入済":"未記入")+'</span></div>'+
-     '<div class="vbtn"><button class="btn sm" data-vse="'+j.id+'">📝 記入する</button> <button class="btn sm" data-open="'+j.id+'">詳細</button> <button class="btn sm pri" data-next="'+j.id+'"'+(ok?"":" disabled")+">完了報告済にする</button></div></div></div>";
-  }).join("")+"</div>";
+     '<div class="vbtn"><button class="btn sm" data-vse="'+j.id+'">📝 記入する</button> <button class="btn sm" data-open="'+j.id+'">詳細</button> '+(j.status===3?'<button class="btn sm pri" data-next="'+j.id+'"'+(ok?"":" disabled")+">完了報告済にする</button>":"")+"</div></div></div>";
+  }).join("")+"</div>"};
+  h+=L.length?cards(L):'<div class="panel empty">施工予定の案件はありません。工事一覧で「施工日を確定」まで進めるとここに表示されます。</div>';
+  if(LO.length)h+='<h3 style="margin:18px 2px 6px">そのほかの案件(シート取込済み)</h3><div class="sub" style="margin-bottom:6px">施工予定以外で、価値観共有シートを取り込んだ案件です。</div>'+cards(LO);
+  return h;
 }
 
 /* ----- billing ----- */
