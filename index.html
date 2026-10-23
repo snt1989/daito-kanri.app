@@ -404,6 +404,7 @@ a.btn{color:inherit;text-decoration:none}
 .repcfg label,.repfree{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--sub)}
 .repfree{margin-top:8px}.repfree textarea,.repfree select,.repcfg input{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg,#fff);color:var(--fg,inherit);min-width:0;width:100%;box-sizing:border-box}
 .repg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.reppv{display:flex;flex-direction:column;gap:10px;margin-top:8px}.reppv img{width:100%;height:auto;border:1px solid var(--line);background:#fff;display:block}
 .repslot{display:flex;flex-direction:column;gap:4px}.repslot .rl{font-size:12px;font-weight:700}
 .repslot .rimg{display:grid;place-items:center;min-height:110px;border:1px dashed var(--line);border-radius:8px;background:#f3f1ef;cursor:pointer;overflow:hidden;font-size:12px;color:var(--sub);text-align:center;padding:4px}
 .repslot .rimg img{display:block;width:100%;height:auto}
@@ -3868,7 +3869,7 @@ function vMrep(){
   else h+='<div class="vcards">'+M.map(function(m){var n=repCnt(m),ok=n===7,it=(m.rep&&m.rep.item)||repItemFor(m);
     return '<div class="vcard"><button type="button" class="vth" data-repth="'+m.id+'" data-rep="open" data-id="'+m.id+'" aria-label="写真シートを開く"><span class="vsph">'+(n?"":"写真なし")+'</span></button><div class="vbody"><b>'+esc(m.bldgName||"(建物名なし)")+'</b><div class="sub">'+esc(m.bldgCd||"")+' '+esc(it?it.split(":")[1]:m.item||"")+'</div><div class="sub">作業日 '+esc(m.doneDate||"未入力")+'</div><div class="sub" style="color:'+(ok?"var(--ok,#1a7f37)":"var(--sub)")+'">写真 '+n+' / 7枚'+(ok?" ✔":"")+'</div><button type="button" class="btn sm pri vbtn" data-rep="open" data-id="'+m.id+'">📷 写真シートを作成</button></div></div>'}).join("")+'</div>';
   h+='<div class="panel" style="padding:12px 14px;margin-top:12px"><b>報告書PDF(表紙＋写真シート)</b><div class="sub">写真が1枚以上ある建物 '+ready.length+'件 が対象です。写真シート '+ready.length+'枚＋表紙1枚のPDFになります。</div>'+
-   '<div style="margin-top:8px"><button type="button" class="btn pri" data-rep="pdfall"'+(ready.length&&!REP.busy?"":" disabled")+'>'+(REP.busy?"作成中…":"📄 報告書PDFを作成")+'</button> <span class="sub">'+esc(REP.msg||"")+'</span></div></div>';
+   '<div style="margin-top:8px"><button type="button" class="btn" data-rep="prevall"'+(ready.length&&!REP.busy?"":" disabled")+'>👁 プレビュー</button> <button type="button" class="btn pri" data-rep="pdfall"'+(ready.length&&!REP.busy?"":" disabled")+'>'+(REP.busy?"作成中…":"📄 報告書PDFを作成")+'</button> <span class="sub">'+esc(REP.msg||"")+'</span></div></div>';
   setTimeout(repThumbs,0);
   return h;
 }
@@ -3898,7 +3899,7 @@ function repModal(){
    '<div class="sub" style="margin:8px 0">写真撮影の際はホワイトボードや黒板に作業日・建物名称等を記入したものを同時に撮影してください。</div>'+
    '<div class="repg">'+rows+'</div>'+
    '<div class="sub" id="rep-msg" style="min-height:18px">'+esc(REP.msg)+'</div>'+
-   '<div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn" data-rep="close">閉じる</button><button type="button" class="btn" data-rep="pdf1"'+(REP.busy?" disabled":"")+'>PDFで保存</button><button type="button" class="btn pri" data-rep="save"'+(REP.busy?" disabled":"")+'>保存</button></div></div></div>';
+   '<div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn" data-rep="close">閉じる</button><button type="button" class="btn" data-rep="prev1"'+(REP.busy?" disabled":"")+'>プレビュー</button><button type="button" class="btn" data-rep="pdf1"'+(REP.busy?" disabled":"")+'>PDFで保存</button><button type="button" class="btn pri" data-rep="save"'+(REP.busy?" disabled":"")+'>保存</button></div></div></div>';
   $("#mask").addEventListener("mousedown",function(e){if(e.target.id==="mask"){$("#modal").innerHTML="";REP.id=null}});
 }
 async function repSave(){
@@ -4020,7 +4021,26 @@ document.addEventListener("change",async function(e){
   if(t.dataset.repcfg){repSet()[t.dataset.repcfg]=t.value;saveSettings(true)}
 });
 document.addEventListener("input",function(e){var t=e.target;if(t&&t.dataset&&t.dataset.repf&&REP.id)REP.d[t.dataset.repf]=t.value});
+async function repPreview(pages,back){
+  var urls=[];for(var i=0;i<pages.length;i++){var b=await repJpeg(pages[i]);urls.push(URL.createObjectURL(b))}
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg lg"><h2>プレビュー</h2><div class="sub">'+urls.length+'ページ(1ページ目が表紙、以降が写真シートです)</div><div class="reppv">'+urls.map(function(u,i){return '<img src="'+u+'" alt="'+(i+1)+'ページ">'}).join("")+'</div><div style="display:flex;justify-content:flex-end;margin-top:8px"><button type="button" class="btn pri" data-rep="'+(back?"pvback":"close")+'">閉じる</button></div></div></div>';
+}
+async function repPrev1(){
+  var m=S.maint.find(function(x){return x.id===REP.id});if(!m)return;
+  REP.msg="プレビューを作成中…";var mg=$("#rep-msg");if(mg)mg.textContent=REP.msg;
+  try{var c=await repSheet(REP.d,await repBlobs(m));REP.msg="";await repPreview([c],true)}catch(e){REP.msg="プレビューを作成できませんでした";repModal()}
+}
+async function repPrevAll(){
+  var M=S.maint.filter(function(j){return j.month===S.mMonth&&repCnt(j)>0});if(!M.length)return;
+  REP.msg="プレビューを作成中…";render();
+  try{var pg=[repCover(M.length)];
+    for(var i=0;i<M.length;i++){var m=M[i];pg.push(await repSheet({off:repSet().off,cd:m.bldgCd,name:m.bldgName,done:m.doneDate,item:(m.rep&&m.rep.item)||repItemFor(m)},await repBlobs(m)))}
+    REP.msg="";await repPreview(pg,false);render()}catch(e){REP.msg="プレビューを作成できませんでした";render()}
+}
 function repClick(e,t,d){
+  if(d.rep==="prev1"){repPrev1();return true}
+  if(d.rep==="prevall"){repPrevAll();return true}
+  if(d.rep==="pvback"){repModal();return true}
   if(d.rep==="open"){openRep(d.id);return true}
   if(d.rep==="close"){$("#modal").innerHTML="";REP.id=null;render();return true}
   if(d.rep==="save"){repSave();return true}
