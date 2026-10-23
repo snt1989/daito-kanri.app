@@ -3065,14 +3065,38 @@ function dfUsed(){
   fxDocs().forEach(function(d){if(d.fileId&&!u[d.fileId])u[d.fileId]="保存した書類"});
   return u}
 document.addEventListener("change",function(e){var t=e.target;if(t&&t.id==="df-reg"){DF.reg=t.value;render()}});
+var DFP=lsGet("dfp")||{},DFPB=false;
+function dfPgTxt(m){var n=m.pages||DFP[m.id];return n?n+"ページ":"…"}
+async function dfPgScan(){
+  if(DFPB||!window.dsFiles)return;DFPB=true;
+  try{
+    var els=[].slice.call(document.querySelectorAll("[data-dfpg]")),dirty=false;
+    for(var i=0;i<els.length;i++){
+      var el=els[i],id=el.getAttribute("data-dfpg"),m=DF.list.find(function(x){return x.id===id});if(!m||m.pages||DFP[id])continue;
+      var n=0;
+      try{
+        var res=await window.dsFiles.blob(id);if(!res||!res.ok||!res.blob)continue;
+        var b=res.blob,isPdf=/pdf/i.test(b.type||m.mime||"")||/\.pdf$/i.test(m.name||"");
+        if(!isPdf)n=1;
+        else{
+          try{await loadPdfjs();if(typeof pdfjsLib!=="undefined"){var doc=await pdfjsLib.getDocument({data:new Uint8Array(await b.arrayBuffer())}).promise;n=doc.numPages}}catch(e){n=0}
+          if(!n){var t=await b.text(),mm=t.match(/\/Type\s*\/Page(?![a-zA-Z])/g);n=mm?mm.length:0}
+        }
+      }catch(e){n=0}
+      if(n){DFP[id]=n;dirty=true;if(document.body.contains(el))el.textContent=n+"ページ"}
+    }
+    if(dirty)lsSet("dfp",DFP);
+  }finally{DFPB=false}
+}
 function vDocs(){
   dfKick();
   var used=dfUsed(),q=(DF.q||"").trim(),L=DF.list.filter(function(m){if(DF.reg==="no"&&used[m.id])return false;if(DF.reg==="yes"&&!used[m.id])return false;return !q||(m.name+m.typeName+m.summary+m.sender).indexOf(q)>=0});
   var h='<div class="panel" style="padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="search" id="df-q" value="'+esc(DF.q)+'" placeholder="種類・内容・発信元で検索" style="flex:1;min-width:180px">'+
    '<select id="df-reg" aria-label="登録状況"><option value="">登録:すべて</option><option value="no"'+(DF.reg==="no"?" selected":"")+'>未登録のみ</option><option value="yes"'+(DF.reg==="yes"?" selected":"")+'>登録済みのみ</option></select><label class="btn pri" style="cursor:pointer">＋ ファイルを保管<input type="file" id="df-file" accept="application/pdf,image/*" style="display:none"></label><button type="button" class="btn" id="df-reload">更新</button></div>';
   if(DF.msg)h+='<div class="banner">'+esc(DF.msg)+"</div>";
-  h+='<div class="panel scroll"><table><thead><tr><th>日付</th><th>種類</th><th>内容</th><th>発信元</th><th>ファイル</th><th class=num>サイズ</th><th></th></tr></thead><tbody>'+
-   (DF.state==="load"&&!DF.list.length?'<tr><td colspan="7" class="empty">読み込み中…</td></tr>':L.length?L.map(function(m){return "<tr><td>"+esc(dfDate(m))+'</td><td><span class="tag">'+esc(m.typeName||"書類")+"</span></td><td>"+(used[m.id]?'<span class="pill s4" title="登録先">登録済</span> <span class="sub">'+esc(used[m.id])+"</span><br>":"")+esc(m.summary||"")+'</td><td class="sub">'+esc(m.sender||"")+'</td><td class="sub">'+esc(m.name||"")+'</td><td class="num">'+dfSize(m.size)+'</td><td style="white-space:nowrap"><button type="button" class="btn sm" data-dfopen="'+esc(m.id)+'">開く</button> <button type="button" class="btn sm'+(used[m.id]?"":" pri")+'" data-dfreg="'+esc(m.id)+'">'+(used[m.id]?"再登録":"登録")+'</button> <button type="button" class="btn sm" data-dfsplit="'+esc(m.id)+'" title="1つのFAXに複数の書類が入っているとき、書類ごとに分けます">分ける</button> <button type="button" class="btn sm danger" data-dfdel="'+esc(m.id)+'">削除</button></td></tr>'}).join(""):'<tr><td colspan="7" class="empty">保管した書類はまだありません。FAX取込で読み取った書類は、ここに自動で保管されます。</td></tr>')+"</tbody></table></div>";
+  h+='<div class="panel scroll"><table><thead><tr><th>日付</th><th>種類</th><th>内容</th><th>発信元</th><th>ファイル</th><th class=num>ページ</th><th class=num>サイズ</th><th></th></tr></thead><tbody>'+
+   (DF.state==="load"&&!DF.list.length?'<tr><td colspan="8" class="empty">読み込み中…</td></tr>':L.length?L.map(function(m){return "<tr><td>"+esc(dfDate(m))+'</td><td><span class="tag">'+esc(m.typeName||"書類")+"</span></td><td>"+(used[m.id]?'<span class="pill s4" title="登録先">登録済</span> <span class="sub">'+esc(used[m.id])+"</span><br>":"")+esc(m.summary||"")+'</td><td class="sub">'+esc(m.sender||"")+'</td><td class="sub">'+esc(m.name||"")+'</td><td class="num"><span data-dfpg="'+esc(m.id)+'">'+dfPgTxt(m)+'</span></td><td class="num">'+dfSize(m.size)+'</td><td style="white-space:nowrap"><button type="button" class="btn sm" data-dfopen="'+esc(m.id)+'">開く</button> <button type="button" class="btn sm'+(used[m.id]?"":" pri")+'" data-dfreg="'+esc(m.id)+'">'+(used[m.id]?"再登録":"登録")+'</button> <button type="button" class="btn sm" data-dfsplit="'+esc(m.id)+'" title="1つのFAXに複数の書類が入っているとき、書類ごとに分けます">分ける</button> <button type="button" class="btn sm danger" data-dfdel="'+esc(m.id)+'">削除</button></td></tr>'}).join(""):'<tr><td colspan="8" class="empty">保管した書類はまだありません。FAX取込で読み取った書類は、ここに自動で保管されます。</td></tr>')+"</tbody></table></div>";
+  setTimeout(dfPgScan,200);
   h+='<div class="sub" style="padding:8px 2px">1ファイル約700KBまで。PDFが大きいときは1ページ目の画像を保管します。</div>';
   return h;
 }
