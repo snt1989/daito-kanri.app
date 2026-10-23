@@ -3808,7 +3808,7 @@ async function vseSetBlob(blob,name,mime){
 async function vseLoad(j){
   var s=$("#vse-src");
   try{
-    var ref=null;(j.docs||[]).slice().reverse().some(function(r){if(r.typeName==="価値観共有シート"&&!/記入済/.test(r.name||"")){ref=r;return true}});
+    var ref=null;(j.docs||[]).slice().reverse().some(function(r){if(/価値観共有/.test(String(r.typeName||"")+(r.name||""))&&!/記入済/.test(String(r.typeName||"")+(r.name||""))){ref=r;return true}});
     if(ref&&window.dsFiles){var r=await window.dsFiles.blob(ref.id);if(r&&r.ok&&r.blob){VSE.baseRef=ref;await vseSetBlob(r.blob,ref.name,ref.mime);return}}
   }catch(e){}
   var e2=$("#vse-empty");if(e2)e2.innerHTML="読み込んだ価値観共有シートがありません。<br>上の「📎 シートを選ぶ」でシート(PDF・写真)を選んでください。";
