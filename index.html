@@ -400,6 +400,13 @@ a.btn{color:inherit;text-decoration:none}
 .vcard{flex-direction:row;gap:12px;align-items:stretch}
 .vth{flex:none;width:130px;min-height:172px;border:1px solid var(--line);border-radius:8px;background:#f3f1ef;padding:0;cursor:pointer;overflow:hidden;display:grid;place-items:center}
 .vth img{display:block;width:100%;height:auto}
+.repcfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px}
+.repcfg label,.repfree{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--sub)}
+.repfree{margin-top:8px}.repfree textarea,.repfree select,.repcfg input{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg,#fff);color:var(--fg,inherit);min-width:0;width:100%;box-sizing:border-box}
+.repg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.repslot{display:flex;flex-direction:column;gap:4px}.repslot .rl{font-size:12px;font-weight:700}
+.repslot .rimg{display:grid;place-items:center;min-height:110px;border:1px dashed var(--line);border-radius:8px;background:#f3f1ef;cursor:pointer;overflow:hidden;font-size:12px;color:var(--sub);text-align:center;padding:4px}
+.repslot .rimg img{display:block;width:100%;height:auto}
 .vsph{font-size:11.5px;color:var(--muted);padding:6px;text-align:center}
 .vbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
 .vbtn{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
@@ -527,7 +534,7 @@ function ic(n,sz){sz=sz||20;return '<svg width="'+sz+'" height="'+sz+'" viewBox=
 var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"docs",label:"書類ボックス",ic:"book"},{tab:"qa",label:"Q&A",ic:"help"},
  {g:"原状回復工事"},{tab:"jobs",label:"案件一覧",ic:"list",d:"genkyo"},{tab:"sched",label:"施工予定",ic:"calendar",d:"genkyo"},{tab:"report",label:"価値観共有シート",ic:"check",d:"genkyo"},{tab:"bill",label:"請求・入金",ic:"yen",d:"genkyo"},{tab:"water",label:"水道開始・中止届",ic:"drop",d:"genkyo"},
  {g:"緊急対応"},{tab:"elog",label:"出動一覧",ic:"alert",d:"emerg"},{tab:"eguide",label:"対応区分ガイド",ic:"book",d:"emerg"},{tab:"esum",label:"月次集計",ic:"chart",d:"emerg"},
- {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mscope",label:"業務内容",ic:"book",d:"maint"},
+ {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mscope",label:"業務内容",ic:"book",d:"maint"},{tab:"mrep",label:"報告書作成",ic:"list",d:"maint"},
  {g:"エアコン設置"},{tab:"aclist",label:"エアコン案件",ic:"tool",d:"ac"},
  {g:" "},{tab:"set",label:"設定",ic:"sliders"}];
 function daysTo(dstr){var a=new Date(TODAY()+"T00:00:00"),b=new Date(dstr+"T00:00:00");return Math.round((b-a)/86400000)}
@@ -637,7 +644,7 @@ function render0(){
   var m=$("#main"),h="";
   if(!S.persist)h+='<div class="banner">共有保存が使えない表示です。入力内容はこのブラウザにだけ保存されます。</div>';
   h+=pageHead();
-  h+=({home:vHome,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,water:vWater}[S.tab]||vJobs)();
+  h+=({home:vHome,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,mrep:vMrep,water:vWater}[S.tab]||vJobs)();
   m.innerHTML=h;
   decorate();mobTables();
   if(fk){var fe=$(fk,m);if(fe){fe.focus();try{if(ss&&ss[0]!=null)fe.setSelectionRange(ss[0],ss[1])}catch(e){}}}
@@ -947,7 +954,7 @@ var DIVS=[["genkyo","原状回復工事"],["emerg","緊急対応"],["maint","建
 var TABSET={
  genkyo:[["jobs","案件一覧"],["sched","施工予定"],["report","価値観共有シート"],["bill","請求・入金"],["set","設定"]],
  emerg:[["elog","出動一覧"],["eguide","対応区分ガイド"],["esum","月次集計"],["set","設定"]],
- maint:[["mmonth","作業一覧"],["mplan","年間予定"],["mscope","業務内容"],["set","設定"]]};
+ maint:[["mmonth","作業一覧"],["mplan","年間予定"],["mscope","業務内容"],["mrep","報告書作成"],["set","設定"]]};
 var DEF_EMFEE={day:5000,night:7000,over:1000};
 var DEF_MITEMS=["07 排水管清掃費","08 建物・敷地清掃","48 共用灯保守管理","植栽メンテナンス","消防設備点検","浄化槽管理","受水槽清掃","ゴミ置場清掃"];
 function normSettings(){
@@ -2797,6 +2804,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-22",t:"建物維持管理に「報告書作成」を追加",d:"建物維持管理に「報告書作成」のページを追加しました。各建物の写真シート(営業所・建物CD・建物名称・作業完了日・作業実施項目と、①建物 ②〜④作業前 ⑤〜⑦作業後の写真7枚)を作り、1か月分を表紙つきの1つのPDFにまとめて保存できます。表紙の営業所・会社名・フリースペースも設定できます。"},
  {v:"2026-10-22",t:"価値観共有シートの画面を一覧プレビューに",d:"価値観共有シートの画面から、チェック項目を無くしました。各案件のシート(記入済みがあればそれ、なければ取り込んだシート)の縮小プレビューが並び、タップして記入できます。記入(保存)すると「記入済」になり、「完了報告済にする」を押せます。設定の「完了報告チェック」も無くしました。"},
  {v:"2026-10-22",t:"「完了報告」の画面を「価値観共有シート」に変更",d:"メニューと画面の名前を「価値観共有シート」に変えました。各案件の「📝 価値観共有シート」でシートに記入し、チェックが揃ったら「完了報告済」にできます。"},
  {v:"2026-10-22",t:"価値観共有シートを読み込んだシートへ直接入力",d:"完了報告の「📝 価値観共有シート」で、取り込んだ(または選んだ)価値観共有チェックシートの画像の上に、○/×の欄をタップして記入できます。業者様・ワランティ・間取り・理由・確認事項は入力欄から書き込めます。ずれるときは「位置合わせ」で調整できます。記入済みのシートはPDFで保存でき、案件の書類にも保管されます(Web版)。完了報告のチェック項目から「作業報告書」「完了報告シート提出」を外し、価値観共有シートに統一しました。"},
@@ -3823,6 +3831,204 @@ async function vseDo(pdf){
   finally{VSE.busy=false}
 }
 
+/* ---------- 報告書作成(建物維持管理) ---------- */
+var REP_ITEMS=["3:浄化槽保守管理", "4:浄化槽法定検査", "5:浄化槽清掃", "6:受水槽保守・清掃", "7:排水管清掃・修理費", "8:建物・敷地清掃", "9:植栽維持管理", "10:消火器点検等", "11:一般共用灯保守", "12:ＣＫ定期清掃", "13:井戸水水質検査・滅菌", "15:その他維持管理", "16:オートロック点検", "17:自動ドア点検", "18:点検・警備", "19:ゴミ置き場清掃", "20:グリーストラップ清掃", "21:ＣＡＴＶ使用料", "22:ＴＶ設備維持費", "23:ゴミ特別収集", "24:ＥＶ保守・点検", "25:警備設備維持", "26:多雪設備維持", "27:共用部除排雪", "28:給水設備維持", "29:立駐保守・点検", "30:雨樋清掃・点検", "31:建物内部清掃", "32:建物消毒", "33:排水設備維持", "34:リース用品維持", "35:ＴＶ共同受信料", "36:雑排処理槽汲取", "37:側溝清掃", "38:インターネット使用料", "39:共用ガス使用料", "40:放流水水質検査", "41:特殊設備維持", "42:排水管清掃・修理費", "43:排水設備使用料", "44:ビル総合管理", "45:共架使用料", "46:オール電化機器", "48:LED保守管理", "49:共用灯保守管理", "50:消防自火報あり", "51:建物日常清掃", "52:太陽光共用電気", "77:ゴミ定期回収", "78:再防蟻処理", "79:ＣＫ作業手数料", "80:災害対策費", "81:迷惑駐車対策費", "82:防虫フィルム購入費", "83:放置自転車処分費用", "84:ゴミ袋サンプル設置費用", "85:除草剤購入費", "86:共用部緊急修理", "87:ＣＫ備品購入費", "88:共用設備消耗品交換", "89:駐車場経年補修", "90:アンテナ・ブースター調整", "91:掲示板・看板交換", "92:病害虫駆除用薬剤費用", "93:共用設備緊急対応", "94:側溝清掃", "95:ゴミ処理費用", "96:雨樋清掃点検", "97:その他維持管理", "98:臨時維持管理費用"];
+var REPB={},RPV={},REP={id:null,d:null,nw:[],del:[],busy:false,msg:""};
+var REP_FONT='"Hiragino Sans","Yu Gothic","Meiryo","Noto Sans CJK JP",sans-serif';
+var REP_LBL=["① 建物が特定できる写真","② 作業実施前","③ 作業実施前","④ 作業実施前","⑤ 作業実施後","⑥ 作業実施後","⑦ 作業実施後"];
+function repSet(){var s=S.settings;if(!s.rep)s.rep={off:"盛岡",co:"株式会社三桜",free:""};return s.rep}
+function repItemFor(m){var n=String(m.item||"").replace(/^[\s\d]+/,"").replace(/[\s　]/g,"");if(!n)return"";
+  var f=REP_ITEMS.find(function(x){return x.split(":")[1].replace(/[\s　]/g,"")===n})||REP_ITEMS.find(function(x){var y=x.split(":")[1];return y.indexOf(n)>=0||n.indexOf(y)>=0});return f||""}
+function repHas(m,i){var b=REPB[m.id];return !!((b&&b[i])||(m.rep&&m.rep.ph&&m.rep.ph[i]))}
+function repCnt(m){var n=0;for(var i=0;i<7;i++)if(repHas(m,i))n++;return n}
+async function repBlob(m,i){
+  var b=REPB[m.id];if(b&&b[i])return b[i];
+  var r=m.rep&&m.rep.ph&&m.rep.ph[i];if(!r||!window.dsFiles)return null;
+  try{var res=await window.dsFiles.blob(r.id);if(res&&res.ok&&res.blob){(REPB[m.id]=REPB[m.id]||[])[i]=res.blob;return res.blob}}catch(e){}
+  return null;
+}
+async function repShrink(f){
+  var bm=await createImageBitmap(f),k=Math.min(1,1600/Math.max(bm.width,bm.height)),c=document.createElement("canvas");
+  c.width=Math.max(1,Math.round(bm.width*k));c.height=Math.max(1,Math.round(bm.height*k));
+  var x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(bm,0,0,c.width,c.height);
+  return await new Promise(function(r){c.toBlob(r,"image/jpeg",0.85)});
+}
+function repUrl(m,i){var key=m.id+":"+i,b=REPB[m.id]&&REPB[m.id][i];if(!b)return RPV[key]||"";
+  if(!RPV[key]||RPV[key].b!==b){RPV[key]={b:b,u:URL.createObjectURL(b)}}return RPV[key].u}
+function repUrlOf(key){var v=RPV[key];return v&&v.u?v.u:""}
+/* ---- 画面 ---- */
+function vMrep(){
+  var M=S.maint.filter(function(j){return j.month===S.mMonth}),cfg=repSet(),ready=M.filter(function(m){return repCnt(m)>0});
+  var h='<div class="bar"><div class="mon"><button class="btn sm" data-mmon="-1">◀</button><h2 class="sec">'+S.mMonth.replace("-","年")+'月の報告書</h2><button class="btn sm" data-mmon="1">▶</button><button class="btn sm" data-mmon="0">今月</button></div></div>';
+  h+='<div class="panel" style="padding:12px 14px"><b>表紙の設定</b><div class="sub">「作業完了報告書【写真版(表紙)】」に入る内容です。表紙は1か月につき1枚です。</div>'+
+   '<div class="repcfg"><label>営業所<input type="text" data-repcfg="off" value="'+esc(cfg.off)+'"></label><label>施工業者(会社名)<input type="text" data-repcfg="co" value="'+esc(cfg.co)+'"></label></div>'+
+   '<label class="repfree">フリースペース<textarea data-repcfg="free" rows="2" placeholder="連絡事項など(空欄でもかまいません)">'+esc(cfg.free)+'</textarea></label></div>';
+  h+='<div class="sub" style="margin:10px 2px">各建物の「写真シート」に7枚の写真(①建物 ②〜④作業前 ⑤〜⑦作業後)を入れると、表紙つきの1つのPDFにまとめられます。</div>';
+  if(!M.length)h+='<div class="empty">この月の維持管理がありません。「作業一覧」で登録してください。</div>';
+  else h+='<div class="vcards">'+M.map(function(m){var n=repCnt(m),ok=n===7,it=(m.rep&&m.rep.item)||repItemFor(m);
+    return '<div class="vcard"><button type="button" class="vth" data-repth="'+m.id+'" data-rep="open" data-id="'+m.id+'" aria-label="写真シートを開く"><span class="vsph">'+(n?"":"写真なし")+'</span></button><div class="vbody"><b>'+esc(m.bldgName||"(建物名なし)")+'</b><div class="sub">'+esc(m.bldgCd||"")+' '+esc(it?it.split(":")[1]:m.item||"")+'</div><div class="sub">作業日 '+esc(m.doneDate||"未入力")+'</div><div class="sub" style="color:'+(ok?"var(--ok,#1a7f37)":"var(--sub)")+'">写真 '+n+' / 7枚'+(ok?" ✔":"")+'</div><button type="button" class="btn sm pri vbtn" data-rep="open" data-id="'+m.id+'">📷 写真シートを作成</button></div></div>'}).join("")+'</div>';
+  h+='<div class="panel" style="padding:12px 14px;margin-top:12px"><b>報告書PDF(表紙＋写真シート)</b><div class="sub">写真が1枚以上ある建物 '+ready.length+'件 が対象です。写真シート '+ready.length+'枚＋表紙1枚のPDFになります。</div>'+
+   '<div style="margin-top:8px"><button type="button" class="btn pri" data-rep="pdfall"'+(ready.length&&!REP.busy?"":" disabled")+'>'+(REP.busy?"作成中…":"📄 報告書PDFを作成")+'</button> <span class="sub">'+esc(REP.msg||"")+'</span></div></div>';
+  setTimeout(repThumbs,0);
+  return h;
+}
+async function repThumbs(){
+  var els=[].slice.call(document.querySelectorAll("[data-repth]"));
+  for(var k=0;k<els.length;k++){var el=els[k],m=S.maint.find(function(x){return x.id===el.getAttribute("data-repth")});if(!m)continue;
+    var first=-1;for(var i=0;i<7;i++)if(repHas(m,i)){first=i;break}
+    if(first<0)continue;var b=await repBlob(m,first);if(!b)continue;
+    if(document.body.contains(el))el.innerHTML='<img src="'+repUrl(m,first)+'" alt="">'}
+}
+/* ---- 写真シートの編集 ---- */
+function openRep(id){
+  var m=S.maint.find(function(x){return x.id===id});if(!m)return;var cfg=repSet();
+  REP={id:id,d:{off:cfg.off,cd:m.bldgCd||"",name:m.bldgName||"",done:m.doneDate||"",item:(m.rep&&m.rep.item)||repItemFor(m),ph:((m.rep&&m.rep.ph)||[]).slice(0,7)},nw:[],del:[],busy:false,msg:""};
+  while(REP.d.ph.length<7)REP.d.ph.push(null);
+  repLoadAll(m).then(repModal);repModal();
+}
+async function repLoadAll(m){for(var i=0;i<7;i++)await repBlob(m,i)}
+function repModal(){
+  if(!REP.id)return;var m=S.maint.find(function(x){return x.id===REP.id});if(!m)return;var d=REP.d;
+  var rows=[0,1,2,3,4,5,6].map(function(i){var u=(REPB[m.id]&&REPB[m.id][i])?repUrl(m,i):"";
+    return '<div class="repslot"><div class="rl">'+REP_LBL[i]+'</div><label class="rimg">'+(u?'<img src="'+u+'" alt="">':'<span>タップして撮影・選択</span>')+'<input type="file" accept="image/*" data-repph="'+i+'" style="display:none"></label>'+(u?'<button type="button" class="btn sm" data-rep="rm" data-i="'+i+'">削除</button>':'')+'</div>'}).join("");
+  var opts='<option value="">(選択してください)</option>'+REP_ITEMS.map(function(x){return '<option'+(d.item===x?" selected":"")+'>'+esc(x)+'</option>'}).join("");
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg lg"><h2>写真シート(作業完了報告用)</h2>'+
+   '<div class="repcfg"><label>営業所<input type="text" data-repf="off" value="'+esc(d.off)+'"></label><label>建物CD<input type="text" data-repf="cd" value="'+esc(d.cd)+'"></label><label>建物名称<input type="text" data-repf="name" value="'+esc(d.name)+'"></label><label>作業完了日<input type="date" data-repf="done" value="'+esc(d.done)+'"></label></div>'+
+   '<label class="repfree">作業実施項目<select data-repf="item">'+opts+'</select></label>'+
+   '<div class="sub" style="margin:8px 0">写真撮影の際はホワイトボードや黒板に作業日・建物名称等を記入したものを同時に撮影してください。</div>'+
+   '<div class="repg">'+rows+'</div>'+
+   '<div class="sub" id="rep-msg" style="min-height:18px">'+esc(REP.msg)+'</div>'+
+   '<div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn" data-rep="close">閉じる</button><button type="button" class="btn" data-rep="pdf1"'+(REP.busy?" disabled":"")+'>PDFで保存</button><button type="button" class="btn pri" data-rep="save"'+(REP.busy?" disabled":"")+'>保存</button></div></div></div>';
+  $("#mask").addEventListener("mousedown",function(e){if(e.target.id==="mask"){$("#modal").innerHTML="";REP.id=null}});
+}
+async function repSave(){
+  var m=S.maint.find(function(x){return x.id===REP.id});if(!m||REP.busy)return false;
+  REP.busy=true;REP.msg="保存中…";repModal();
+  try{
+    var d=REP.d,ph=d.ph.slice(),bl=REPB[m.id]||[];
+    for(var i=0;i<7;i++){
+      if(REP.nw[i]&&bl[i]&&window.dsFiles){
+        var old=ph[i],ref=await docKeep(new File([bl[i]],"報告書写真"+(i+1)+".jpg",{type:"image/jpeg"}),{meta:{type:"report",typeName:"報告書写真"+(i+1),summary:(d.name||"")+" "+REP_LBL[i]}});
+        if(ref){ph[i]=ref;if(old&&old.id&&old.id!==ref.id){try{window.dsFiles.del&&window.dsFiles.del(old.id)}catch(e){}}}
+      }
+      if(!bl[i]&&REP.del[i]){var o2=ph[i];ph[i]=null;if(o2&&o2.id){try{window.dsFiles&&window.dsFiles.del&&window.dsFiles.del(o2.id)}catch(e){}}}
+    }
+    var n=Object.assign({},m,{bldgCd:d.cd,bldgName:d.name,doneDate:d.done,rep:{item:d.item,ph:ph}});
+    saveDoc("maint",n,true);
+    var cfg=repSet();if(cfg.off!==d.off){cfg.off=d.off;saveSettings(true)}
+    REP.nw=[];REP.del=[];d.ph=ph;REP.msg="保存しました"+(window.dsFiles?"":"(この表示では写真は開いている間だけ保持されます)");
+    toast("保存しました");
+    return true;
+  }catch(e){REP.msg="保存できませんでした";return false}
+  finally{REP.busy=false;repModal();render()}
+}
+/* ---- 描画 ---- */
+function repWrap(x,txt,px,py,w,lh){
+  var y=py;String(txt).split("\n").forEach(function(par){
+    var line="";for(var i=0;i<par.length;i++){var t=line+par[i];if(x.measureText(t).width>w&&line){x.fillText(line,px,y);y+=lh;line=par[i]}else line=t}
+    x.fillText(line,px,y);y+=lh});return y}
+function repCanvas(){var c=document.createElement("canvas");c.width=1240;c.height=1754;var x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,1240,1754);x.fillStyle="#000";x.strokeStyle="#000";x.textBaseline="middle";return [c,x]}
+function repDate(s){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s||"");return m?[m[1],String(+m[2]),String(+m[3])]:["","",""]}
+async function repSheet(d,blobs){
+  var cv=repCanvas(),c=cv[0],x=cv[1],F=REP_FONT;
+  x.font="bold 40px "+F;x.textAlign="center";x.fillText("写真シート(作業完了報告用)",620,90);
+  x.font="24px "+F;x.textAlign="right";x.fillText("大東建託パートナーズ",1170,130);x.textAlign="left";
+  var X0=70,W=1100,Y0=150,rh=42,lw=200;x.lineWidth=2;
+  var dt=repDate(d.done),rows=[["営業所　行",(d.off||"")+"　営業所　行"],["建物ＣＤ",d.cd||""],["建物名称",d.name||""],["作業完了日",(dt[0]||"　　")+" 年 "+(dt[1]||"　")+" 月 "+(dt[2]||"　")+" 日"],["作業実施項目",d.item||""]];
+  rows.forEach(function(r,i){var y=Y0+i*rh;x.fillStyle="#eee";x.fillRect(X0,y,lw,rh);x.fillStyle="#000";x.strokeRect(X0,y,lw,rh);x.strokeRect(X0+lw,y,W-lw,rh);
+    x.font="22px "+F;x.fillText(r[0],X0+12,y+rh/2);x.font="bold 24px "+F;x.fillText(r[1],X0+lw+14,y+rh/2)});
+  var by=Y0+rows.length*rh+20,pw=535,ph=298,lh=32;
+  function frame(i,fx,fy){
+    x.fillStyle="#eee";x.fillRect(fx,fy,pw,lh);x.fillStyle="#000";x.strokeRect(fx,fy,pw,lh);x.strokeRect(fx,fy+lh,pw,ph);
+    x.font="bold 22px "+F;x.textAlign="left";x.fillText(REP_LBL[i],fx+10,fy+lh/2);
+    var b=blobs[i];if(b)return createImageBitmap(b).then(function(bm){var k=Math.min((pw-4)/bm.width,(ph-4)/bm.height),w=bm.width*k,h=bm.height*k;x.drawImage(bm,fx+(pw-w)/2,fy+lh+(ph-h)/2,w,h)});
+    x.fillStyle="#aaa";x.font="22px "+F;x.textAlign="center";x.fillText("写真",fx+pw/2,fy+lh+ph/2);x.fillStyle="#000";x.textAlign="left";return null}
+  var jobs=[];jobs.push(frame(0,X0,by));
+  x.strokeRect(X0+pw+30,by,W-pw-30,lh+ph);x.font="20px "+F;x.fillStyle="#000";x.textAlign="left";
+  repWrap(x,"【 写真掲載及び提出の基本ルール 】＊７枚の写真をご提出ください\n１．写真撮影の際はホワイトボードや黒板に作業日、建物名称等を記入したものを同時に撮影してください。\n２．報告期限は作業完了日の月末までとさせていただきます。\n３．提出方法は原則としてＤＶＤやE-mail等を使用しデータ形式でのご提出ください。上記方法が難しい場合は印刷出力後に持参又は郵送にてご対応ください。\n（今後プリント写真等の紙ベースでの報告は廃止を予定しています。）",X0+pw+42,by+22,W-pw-54,26);
+  var ry=by+lh+ph+22;
+  for(var r=0;r<3;r++){var fy=ry+r*(lh+ph+4);jobs.push(frame(1+r,X0,fy));jobs.push(frame(4+r,X0+pw+30,fy));
+    x.fillStyle="#d1121f";var ay=fy+lh+ph/2,ax=X0+pw+4;x.beginPath();x.moveTo(ax,ay-7);x.lineTo(ax+14,ay-7);x.lineTo(ax+14,ay-18);x.lineTo(ax+28,ay);x.lineTo(ax+14,ay+18);x.lineTo(ax+14,ay+7);x.lineTo(ax,ay+7);x.closePath();x.fill();x.fillStyle="#000"}
+  for(var q=0;q<jobs.length;q++)if(jobs[q])await jobs[q];
+  return c;
+}
+function repCover(n){
+  var cv=repCanvas(),c=cv[0],x=cv[1],F=REP_FONT,cfg=repSet(),t=repDate(TODAY());
+  x.textAlign="center";x.font="bold 46px "+F;x.fillText("作 業 完 了 報告 書　【写真版（表紙）】",620,150);x.lineWidth=3;x.beginPath();x.moveTo(150,185);x.lineTo(1090,185);x.stroke();
+  x.textAlign="right";x.font="28px "+F;x.fillText(t[0]+" 年 "+t[1]+" 月 "+t[2]+" 日",1170,260);
+  x.textAlign="left";x.font="bold 30px "+F;x.fillText("大東建託パートナーズ株式会社",90,340);x.fillText((cfg.off||"")+" 営業所　行",90,392);
+  x.font="24px "+F;x.fillText("【施工業者　様】※社名押印の上、ご送付ください。",90,460);
+  x.lineWidth=2;x.strokeRect(90,490,1060,110);x.font="bold 36px "+F;x.fillText(cfg.co||"",120,545);
+  x.strokeRect(1010,500,90,90);x.font="30px "+F;x.textAlign="center";x.fillText("印",1055,545);x.textAlign="left";
+  x.font="26px "+F;x.fillText("大東建託パートナーズが定める作業仕様に基づき、",120,660);x.fillText("下記のとおり作業を実施いたしましたので写真を貼付の上、報告します。",120,704);
+  x.strokeRect(90,750,1060,80);x.font="bold 30px "+F;x.fillText("「写真シート」枚数",120,790);x.textAlign="right";x.font="bold 38px "+F;x.fillText(n+" 枚",1110,790);x.textAlign="left";
+  x.strokeRect(90,860,1060,250);x.font="bold 24px "+F;x.fillText("【 フリースペース 】",110,890);x.font="24px "+F;repWrap(x,cfg.free||"",120,934,1000,34);
+  x.strokeRect(90,1140,1060,300);x.font="bold 24px "+F;x.fillText("【 業者様へお願い 】",110,1170);x.font="21px "+F;
+  var yy=1208;["①　作業完了後、別紙写真シートの表紙として本書を使用し、上記営業所まで持参をお願いいたします。\n　　（※表紙は、各業者様『１ヶ月の作業／１枚』を作成願います。〔各建物毎には不要です。〕）","②　写真は「建物全景」を１枚、「作業前・作業後」の写真を３ヶ所撮影し、別紙写真シートへ貼付を行ってください。","③　写真はピントボケがないように撮影し、鮮明なものをご使用願います。\n　　（※不鮮明な場合は、再提出をお願いする場合もございます。予めご了承ください。）"].forEach(function(p){yy=repWrap(x,p,110,yy,1000,30)+8});
+  x.font="bold 22px "+F;x.fillText("以下、【 大東建託パートナーズ使用欄 】",90,1490);
+  [["管理職",640],["総合スタッフ",800],["確認",960]].forEach(function(b){x.strokeRect(b[1],1510,190,150);x.strokeRect(b[1],1510,190,40);x.font="22px "+F;x.textAlign="center";x.fillText(b[0],b[1]+95,1531);x.textAlign="left"});
+  x.font="22px "+F;x.fillText("★本書及び写真シートは、作業月の翌期末まで保管してください。",90,1710);
+  return c;
+}
+function repJpeg(c){return new Promise(function(r){c.toBlob(r,"image/jpeg",0.9)})}
+async function wtfPdfMulti(pages){
+  var enc=new TextEncoder(),parts=[],len=0,offs=[],N=pages.length,bufs=[];
+  for(var q=0;q<N;q++)bufs.push(new Uint8Array(await pages[q].jpg.arrayBuffer()));
+  function add(v){var u=typeof v==="string"?enc.encode(v):v;parts.push(u);len+=u.length}
+  function obj(n,b){offs[n]=len;add(n+" 0 obj\n"+b+"\nendobj\n")}
+  add("%PDF-1.4\n");obj(1,"<</Type/Catalog/Pages 2 0 R>>");
+  obj(2,"<</Type/Pages/Kids["+pages.map(function(_,k){return (3+3*k)+" 0 R"}).join(" ")+"]/Count "+N+">>");
+  for(var k=0;k<N;k++){var p=pages[k],pw=595,ph=Math.round(595*p.h/p.w),a=3+3*k;
+    obj(a,"<</Type/Page/Parent 2 0 R/MediaBox[0 0 "+pw+" "+ph+"]/Resources<</XObject<</Im0 "+(a+1)+" 0 R>>>>/Contents "+(a+2)+" 0 R>>");
+    offs[a+1]=len;add((a+1)+" 0 obj\n<</Type/XObject/Subtype/Image/Width "+p.w+"/Height "+p.h+"/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length "+bufs[k].length+">>\nstream\n");add(bufs[k]);add("\nendstream\nendobj\n");
+    var cs="q "+pw+" 0 0 "+ph+" 0 0 cm /Im0 Do Q";obj(a+2,"<</Length "+cs.length+">>\nstream\n"+cs+"\nendstream")}
+  var tot=3+3*N,xr=len;add("xref\n0 "+tot+"\n0000000000 65535 f \n");for(var i=1;i<tot;i++)add(String(offs[i]).padStart(10,"0")+" 00000 n \n");
+  add("trailer\n<</Size "+tot+"/Root 1 0 R>>\nstartxref\n"+xr+"\n%%EOF");
+  return new Blob(parts,{type:"application/pdf"});
+}
+async function repBlobs(m){var a=[];for(var i=0;i<7;i++)a.push(await repBlob(m,i));return a}
+async function repSavePdf(blob,name){
+  var dl=await claude_use("downloads");if(!dl){toast("この表示ではPDFを保存できません");return false}
+  try{await dl.save({filename:name,data:blob});toast("PDFを保存しました");return true}catch(e){if(!(e&&e.code==="declined"))toast("PDFを保存できませんでした");return false}
+}
+async function repPdf1(){
+  if(REP.busy)return;var m0=S.maint.find(function(x){return x.id===REP.id});if(!m0)return;
+  if(!(await repSave()))return;
+  REP.busy=true;REP.msg="PDFを作成中…";repModal();
+  try{var m=S.maint.find(function(x){return x.id===REP.id}),d=REP.d,c=await repSheet(d,await repBlobs(m)),j=await repJpeg(c);
+    var pdf=await wtfPdfMulti([{jpg:j,w:c.width,h:c.height}]);await repSavePdf(pdf,"写真シート_"+(d.name||"建物")+".pdf");REP.msg="PDFを作成しました"}
+  catch(e){REP.msg="PDFを作成できませんでした"}
+  finally{REP.busy=false;repModal()}
+}
+async function repPdfAll(){
+  if(REP.busy)return;var M=S.maint.filter(function(j){return j.month===S.mMonth&&repCnt(j)>0});if(!M.length)return;
+  REP.busy=true;REP.msg="作成中…(0/"+M.length+")";render();
+  try{
+    var cc=repCover(M.length),pages=[{jpg:await repJpeg(cc),w:cc.width,h:cc.height}];
+    for(var i=0;i<M.length;i++){var m=M[i],d={off:repSet().off,cd:m.bldgCd,name:m.bldgName,done:m.doneDate,item:(m.rep&&m.rep.item)||repItemFor(m)};
+      var c=await repSheet(d,await repBlobs(m));pages.push({jpg:await repJpeg(c),w:c.width,h:c.height});REP.msg="作成中…("+(i+1)+"/"+M.length+")";}
+    var pdf=await wtfPdfMulti(pages);await repSavePdf(pdf,"報告書_"+S.mMonth.replace("-","年")+"月.pdf");REP.msg="作成しました"
+  }catch(e){REP.msg="PDFを作成できませんでした"}
+  finally{REP.busy=false;render()}
+}
+document.addEventListener("change",async function(e){
+  var t=e.target;if(!t||!t.dataset)return;
+  if(t.dataset.repph!==undefined&&REP.id){var i=+t.dataset.repph,f=t.files&&t.files[0];t.value="";if(!f)return;
+    try{var b=await repShrink(f);(REPB[REP.id]=REPB[REP.id]||[])[i]=b;REP.nw[i]=true;REP.del[i]=false;repModal()}catch(er){var mg=$("#rep-msg");if(mg)mg.textContent="写真を読み込めませんでした"}
+    return}
+  if(t.dataset.repf&&REP.id){REP.d[t.dataset.repf]=t.value;return}
+  if(t.dataset.repcfg){repSet()[t.dataset.repcfg]=t.value;saveSettings(true)}
+});
+document.addEventListener("input",function(e){var t=e.target;if(t&&t.dataset&&t.dataset.repf&&REP.id)REP.d[t.dataset.repf]=t.value});
+function repClick(e,t,d){
+  if(d.rep==="open"){openRep(d.id);return true}
+  if(d.rep==="close"){$("#modal").innerHTML="";REP.id=null;render();return true}
+  if(d.rep==="save"){repSave();return true}
+  if(d.rep==="pdf1"){repPdf1();return true}
+  if(d.rep==="pdfall"){repPdfAll();return true}
+  if(d.rep==="rm"){var i=+d.i;if(REPB[REP.id])REPB[REP.id][i]=null;REP.nw[i]=false;REP.del[i]=true;repModal();return true}
+  return false}
+
 /* ---------- 追加イベント ---------- */
 function saveUi(){lsSet("ui",{div:S.div,tab:S.tab})}
 function resetFilters(){S.wFilter="all";S.wAlert="";S.wKind="";S.filter="all";S.alert="";S.kind="";S.q="";S.eFilter="all";S.eAlert="";S.mFilter="all";S.mAlert="";S.dFilter="all"}
@@ -3896,6 +4102,7 @@ function modClick(e,t,d){
   if(t.id==="ch-pocr"){openMpImport();return true}
   if(t.id==="mclr"){S.mAlert="";S.mFilter="all";S.q="";render();return true}
   if(d.emon){S.eMonth=shiftMonth(S.eMonth,+d.emon);render();return true}
+  if(d.rep!==undefined&&repClick(e,t,d))return true;
   if(d.mmon!==undefined){S.mMonth=d.mmon==="0"?ym(new Date()):shiftMonth(S.mMonth,+d.mmon);render();return true}
   if(d.mfy){S.mFy+=+d.mfy;render();return true}
   if(d.guide){openEmerg(null,{cat:d.guide});return true}
