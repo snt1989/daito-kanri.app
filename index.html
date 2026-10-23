@@ -2481,7 +2481,7 @@ var FX_PROMPT='添付の画像は、受信したFAXの1ページ目です。大�
  'docType は次のいずれか1つ:\n- koji = 原状回復工事 工事予定書\n- request = 緊急対応の出動要請書\n- notice = 金額確定通知書\n- order = 維持管理作業注文書 または 作業依頼書\n- annual = 年間発注予定一覧表\n- value = 価値観共有シート(原状回復工事の完了時に提出する、チェック項目と押印欄のあるシート)\n- ac = 営業エアコン設置のみ 見積り依頼書(協力業者様専用。エアコン設置の見積もり依頼)\n- daito = 上記以外の、大東建託・大東建託パートナーズ(営業所・各部署)が発信元または宛先に関わる書類(お知らせ、見積依頼、請書、会議案内など)\n- other = 大東建託と関係のない書類(他社・官公庁の入札や見積依頼、営業・広告・請求など)\n'+
  '大東建託に関わるかどうかを必ず判断する。少しでも大東建託に関係しそうなら daito にし、明らかに無関係な場合だけ other にする。\n{"docType":"other","sender":"発信元の会社名・部署(読めなければ空文字)","summary":"書類の内容を30字以内で"}';
 function fxSet(){var s=S.settings;if(!Array.isArray(s.fxDone))s.fxDone=[];return s.fxDone}
-function fxMark(id){var a=fxSet();if(a.indexOf(id)<0){a.push(id);if(a.length>400)a.splice(0,a.length-400);saveSettings(true)}}
+function fxMark(id){if(!id)return;var a=fxSet();if(a.indexOf(id)<0){a.push(id);if(a.length>400)a.splice(0,a.length-400);saveSettings(true)}}
 function b64bin(s){s=String(s||"").replace(/-/g,"+").replace(/_/g,"/").replace(/[^A-Za-z0-9+\/=]/g,"");while(s.length%4)s+="=";return atob(s)}
 function mimeParts(str,out){
   var m0=str.search(/\r?\n\r?\n/);if(m0<0)return;
@@ -2617,6 +2617,30 @@ async function fxAuto(i){
     else if(/^c_/.test(t)){openFxc(f,t,undefined,r.fid);for(var k=0;k<240&&(FXC.busy||k<3);k++)await new Promise(function(z){setTimeout(z,500)});if(FXC.rec)fxcSave()}
   }catch(e){toast("登録できませんでした。FAX取込から「読み取って登録」で内容を確認してください")}
 }
+var DFR={id:null,m:null,type:""};
+function dfRegOpen(id){
+  var m=DF.list.find(function(x){return x.id===id});if(!m)return;
+  var all=fxAll(),keys=Object.keys(all).filter(function(k){return k!=="other"&&k!=="daito"&&k!=="value"}),t=m.type==="fix"?"notice":m.type;if(keys.indexOf(t)<0)t=keys[0];
+  DFR={id:id,m:m,type:t};
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(520px,100%)"><h2>書類から登録</h2><div class="sub">'+esc(m.typeName||"書類")+" / "+esc(m.summary||m.name||"")+'</div>'+
+   '<label class="wide" style="display:block;margin-top:10px">書類の種類(登録先が決まります)<select id="dfr-type" style="width:100%">'+keys.map(function(k){return '<option value="'+k+'"'+(k===t?" selected":"")+">"+esc(all[k])+"</option>"}).join("")+'</select></label>'+
+   '<div class="sub" style="margin-top:6px">「確認して登録」は読み取り結果を見てから登録、「そのまま登録」は確認を省いて直接登録します。書類は書類ボックスに残ります。</div>'+
+   '<div class="acts"><span></span><span><button type="button" class="btn" data-dfrg="x">閉じる</button> <button type="button" class="btn" data-dfrg="check">確認して登録</button> <button type="button" class="btn pri" data-dfrg="auto">そのまま登録</button></span></div></div></div>';
+}
+async function dfRegGo(auto){
+  var m=DFR.m;if(!m||!window.dsFiles)return;
+  var sel=$("#dfr-type");if(sel)DFR.type=sel.value;
+  toast("書類を読み込み中…");
+  try{
+    var res=await window.dsFiles.blob(DFR.id);
+    if(!res||!res.ok||!res.blob){toast("書類を読み込めませんでした");return}
+    var f=new File([res.blob],m.name||"書類",{type:res.blob.type||m.mime||"application/octet-stream"});
+    DK.set(f,Promise.resolve({id:m.id,name:m.name||"書類",mime:f.type,typeName:m.typeName||"",at:new Date().toISOString()}));
+    FX.rows=[{id:"",file:f,type:DFR.type,fid:m.id,status:"ok"}];$("#modal").innerHTML="";
+    if(auto)fxAuto(0);else fxGo(0);
+  }catch(e){toast("書類を読み込めませんでした")}
+}
+document.addEventListener("change",function(e){var t=e.target;if(t&&t.id==="dfr-type")DFR.type=t.value});
 function fxGo(i){
   var r=FX.rows[i];if(!r||!r.file)return;var f=r.file,t=r.type;fxMark(r.id);
   $("#modal").innerHTML="";
@@ -2955,7 +2979,7 @@ function vDocs(){
    '<label class="btn pri" style="cursor:pointer">＋ ファイルを保管<input type="file" id="df-file" accept="application/pdf,image/*" style="display:none"></label><button type="button" class="btn" id="df-reload">更新</button></div>';
   if(DF.msg)h+='<div class="banner">'+esc(DF.msg)+"</div>";
   h+='<div class="panel scroll"><table><thead><tr><th>日付</th><th>種類</th><th>内容</th><th>発信元</th><th>ファイル</th><th class=num>サイズ</th><th></th></tr></thead><tbody>'+
-   (DF.state==="load"&&!DF.list.length?'<tr><td colspan="7" class="empty">読み込み中…</td></tr>':L.length?L.map(function(m){return "<tr><td>"+esc(dfDate(m))+'</td><td><span class="tag">'+esc(m.typeName||"書類")+"</span></td><td>"+esc(m.summary||"")+'</td><td class="sub">'+esc(m.sender||"")+'</td><td class="sub">'+esc(m.name||"")+'</td><td class="num">'+dfSize(m.size)+'</td><td style="white-space:nowrap"><button type="button" class="btn sm" data-dfopen="'+esc(m.id)+'">開く</button> <button type="button" class="btn sm danger" data-dfdel="'+esc(m.id)+'">削除</button></td></tr>'}).join(""):'<tr><td colspan="7" class="empty">保管した書類はまだありません。FAX取込で読み取った書類は、ここに自動で保管されます。</td></tr>')+"</tbody></table></div>";
+   (DF.state==="load"&&!DF.list.length?'<tr><td colspan="7" class="empty">読み込み中…</td></tr>':L.length?L.map(function(m){return "<tr><td>"+esc(dfDate(m))+'</td><td><span class="tag">'+esc(m.typeName||"書類")+"</span></td><td>"+esc(m.summary||"")+'</td><td class="sub">'+esc(m.sender||"")+'</td><td class="sub">'+esc(m.name||"")+'</td><td class="num">'+dfSize(m.size)+'</td><td style="white-space:nowrap"><button type="button" class="btn sm" data-dfopen="'+esc(m.id)+'">開く</button> <button type="button" class="btn sm pri" data-dfreg="'+esc(m.id)+'">登録</button> <button type="button" class="btn sm danger" data-dfdel="'+esc(m.id)+'">削除</button></td></tr>'}).join(""):'<tr><td colspan="7" class="empty">保管した書類はまだありません。FAX取込で読み取った書類は、ここに自動で保管されます。</td></tr>')+"</tbody></table></div>";
   h+='<div class="sub" style="padding:8px 2px">1ファイル約700KBまで。PDFが大きいときは1ページ目の画像を保管します。</div>';
   return h;
 }
@@ -4205,6 +4229,8 @@ function modClick(e,t,d){
   if(t.id==="mi-sync"){var n0=mItemsSync();saveSettings();toast(n0+"件の項目を追加しました");return true}
   if(t.id==="miadd"){S.settings.mItems.push("新しい項目");saveSettings();return true}
   if(d.fcsmp!==undefined){if(FCS.busy)return true;FCS.idx=+d.fcsmp;FCS.msg="";var fi=$("#fct-file");if(fi)fi.click();return true}
+  if(d.dfreg){dfRegOpen(d.dfreg);return true}
+  if(d.dfrg){if(d.dfrg==="x")$("#modal").innerHTML="";else dfRegGo(d.dfrg==="auto");return true}
   if(d.dfopen){window.dsFiles.open(d.dfopen).then(function(j){if(j&&!j.ok)toast(j.error||"開けませんでした")});return true}
   if(d.dfdel){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に削除";return true}window.dsFiles.del(d.dfdel).then(function(){DF.state="idle";render()});return true}
   if(t.id==="df-reload"){dfKick(true);render();return true}
