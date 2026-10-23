@@ -735,7 +735,7 @@ function bindCal(){
 /* ----- report ----- */
 function reportReady(j){return !!(j.checks&&j.checks.value)}
 var VPV={},VRT=false;
-function vrDoc(j){var a=Array.isArray(j.docs)?j.docs:[],an=null,bs=null;a.forEach(function(r){if(r.typeName==="価値観共有シート(記入済)")an=r;else if(r.typeName==="価値観共有シート")bs=r});return an||bs}
+function vrDoc(j){var a=Array.isArray(j.docs)?j.docs:[],an=null,bs=null;a.forEach(function(r){var tn=String(r.typeName||"");if(tn==="価値観共有シート(記入済)")an=r;else if(tn==="価値観共有シート"||(/価値観共有/.test(tn+(r.name||""))&&!/記入済/.test(tn)))bs=bs||r});return an||bs}
 function vrSetImg(el,u){el.innerHTML='<img src="'+u+'" alt="">'}
 async function vrThumbs(){
   if(VRT)return;VRT=true;
