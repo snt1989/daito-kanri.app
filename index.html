@@ -534,8 +534,8 @@ var ICONS={
 function ic(n,sz){sz=sz||20;return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[n]+"</svg>"}
 var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"docs",label:"書類ボックス",ic:"book"},{tab:"qa",label:"Q&A",ic:"help"},
  {g:"原状回復工事"},{tab:"jobs",label:"案件一覧",ic:"list",d:"genkyo"},{tab:"sched",label:"施工予定",ic:"calendar",d:"genkyo"},{tab:"report",label:"価値観共有シート",ic:"check",d:"genkyo"},{tab:"bill",label:"請求・入金",ic:"yen",d:"genkyo"},{tab:"water",label:"水道開始・中止届",ic:"drop",d:"genkyo"},
- {g:"緊急対応"},{tab:"elog",label:"出動一覧",ic:"alert",d:"emerg"},{tab:"eguide",label:"対応区分ガイド",ic:"book",d:"emerg"},{tab:"esum",label:"月次集計",ic:"chart",d:"emerg"},
- {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mscope",label:"業務内容",ic:"book",d:"maint"},{tab:"mrep",label:"報告書作成",ic:"list",d:"maint"},
+ {g:"緊急対応"},{tab:"elog",label:"出動一覧",ic:"alert",d:"emerg"},{tab:"esum",label:"月次集計",ic:"chart",d:"emerg"},
+ {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mrep",label:"報告書作成",ic:"list",d:"maint"},
  {g:"エアコン設置"},{tab:"aclist",label:"エアコン案件",ic:"tool",d:"ac"},
  {g:" "},{tab:"set",label:"設定",ic:"sliders"}];
 function daysTo(dstr){var a=new Date(TODAY()+"T00:00:00"),b=new Date(dstr+"T00:00:00");return Math.round((b-a)/86400000)}
@@ -954,8 +954,8 @@ function sampleJobs(){
 var DIVS=[["genkyo","原状回復工事"],["emerg","緊急対応"],["maint","建物維持管理"]];
 var TABSET={
  genkyo:[["jobs","案件一覧"],["sched","施工予定"],["report","価値観共有シート"],["bill","請求・入金"],["set","設定"]],
- emerg:[["elog","出動一覧"],["eguide","対応区分ガイド"],["esum","月次集計"],["set","設定"]],
- maint:[["mmonth","作業一覧"],["mplan","年間予定"],["mscope","業務内容"],["mrep","報告書作成"],["set","設定"]]};
+ emerg:[["elog","出動一覧"],["esum","月次集計"],["set","設定"]],
+ maint:[["mmonth","作業一覧"],["mplan","年間予定"],["mrep","報告書作成"],["set","設定"]]};
 var DEF_EMFEE={day:5000,night:7000,over:1000};
 var DEF_MITEMS=["07 排水管清掃費","08 建物・敷地清掃","48 共用灯保守管理","植栽メンテナンス","消防設備点検","浄化槽管理","受水槽清掃","ゴミ置場清掃"];
 function normSettings(){
@@ -1376,7 +1376,7 @@ var SETGROUPS=[
   ["genstat","案件の状況名","案件の進捗の段階の名前と、次へ進めるボタンの文言です。",[P("jobs","案件一覧"),P("sched","施工予定"),P("bill","請求・入金")]]]],
  ["緊急対応",[
   ["emfee","緊急出動費","基本料金(日中・夜間)と、2時間超の加算(税別)です。",[P("elog","出動一覧"),P("esum","月次集計")]],
-  ["emcat","対応区分","緊急出動対応表の区分です。出動一覧の選択肢とガイドに使われます。",[P("eguide","対応区分ガイド"),P("elog","出動一覧")]],
+  ["emcat","対応区分","緊急出動対応表の区分です。出動一覧の選択肢とガイドに使われます。",[P("elog","出動一覧")]],
   ["emopts","出動の選択肢","出動一覧の「連絡元」「結果」のプルダウンです。",[P("elog","出動一覧")]],
   ["emstat","出動の状況名","出動の進捗の段階の名前と、次へ進めるボタンの文言です。",[P("elog","出動一覧")]]]],
  ["建物維持管理",[
