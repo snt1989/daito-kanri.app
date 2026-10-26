@@ -12,6 +12,7 @@
 | 名前 | 内容 |
 |---|---|
 | `APP_PASSWORD` | アプリを開くときの共通パスワード(必須) |
+| `SSO_SECRET` | 現場管理アプリからの連携ログイン用(16文字以上。現場管理アプリと**同じ値**を登録)。連携ログインは、同じ担当名のアカウントがあるときだけ通る |
 | `SESSION_SECRET` | ランダムな長い文字列(任意・推奨) |
 | `ANTHROPIC_API_KEY` | 書類の自動読み取り用(Anthropic Console で発行) |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | データ保存。Vercel の Storage → Upstash Redis を追加すると自動で入る |

@@ -53,6 +53,16 @@
     if (authP) return authP;
     authP = (async function () {
       try {
+        // 現場管理アプリからの連携ログイン(?sso=チケット)。大東アプリにアカウントがない人は入れない
+        var tk = ""; try { tk = new URLSearchParams(location.search).get("sso") || ""; } catch (e) {}
+        if (tk) {
+          try { history.replaceState(null, "", location.pathname); } catch (e) {}
+          var sr = await post("/api/sso", { ticket: tk });
+          var sj = null; try { sj = await sr.json(); } catch (e) {}
+          if (sj && sj.ok) { setMe(sj); return true; }
+          if (sj && sj.error === "noaccount") return await denyUi((sj.name || "") );
+          // それ以外(期限切れ・未設定など)は、通常のログインに進む
+        }
         var r = await post("/api/auth", { op: "check" });
         if (!r.ok) return false;
         var j = await r.json();
@@ -67,6 +77,20 @@
     var d = document.createElement("div");
     d.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99999;background:#a33;color:#fff;padding:10px 16px;font:14px sans-serif";
     d.textContent = t; document.body.appendChild(d);
+  }
+  function denyUi(name) {
+    return new Promise(function (resolve) {
+      var w = document.createElement("div");
+      w.style.cssText = "position:fixed;inset:0;z-index:99998;background:#14201b;display:flex;align-items:center;justify-content:center;font-family:'Noto Sans JP',sans-serif";
+      var box = document.createElement("div");
+      box.style.cssText = "background:#fff;border-radius:12px;padding:28px 26px;width:min(360px,92vw);box-shadow:0 8px 30px #0006";
+      var t = document.createElement("div"); t.style.cssText = "font-weight:700;font-size:18px;color:#b33;margin-bottom:8px"; t.textContent = "アクセスできません";
+      var m = document.createElement("div"); m.style.cssText = "font-size:14px;color:#33443c;line-height:1.7;margin-bottom:16px";
+      m.textContent = (name ? "「" + name + "」さんの" : "あなたの") + "大東受注ナビのアカウントがありません。管理者に、担当の登録とパスワードの発行を依頼してください。";
+      var bt = document.createElement("button"); bt.textContent = "ログイン画面へ"; bt.style.cssText = "width:100%;padding:10px;border:0;border-radius:8px;background:#1b6847;color:#fff;font-size:15px;cursor:pointer";
+      bt.onclick = function () { w.remove(); resolve(loginUi()); };
+      box.appendChild(t); box.appendChild(m); box.appendChild(bt); w.appendChild(box); document.body.appendChild(w);
+    });
   }
   function loginUi() {
     return new Promise(function (resolve) {
