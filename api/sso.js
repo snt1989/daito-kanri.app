@@ -1,7 +1,7 @@
 // 現場管理アプリからの連携ログイン。
 // 現場管理アプリが発行した署名付きチケット(60秒・1回限り)を確認し、大東アプリに同じ担当名のアカウントがあるときだけログインさせる。
 // アカウントがない人は入れない(担当・作業員に登録し、パスワードを発行した人だけ)。
-// 環境変数: SSO_SECRET(現場管理アプリと同じ値。16文字以上)
+// 環境変数: DAITO_SSO_SECRET(現場管理アプリと同じ値。16文字以上。未設定なら SSO_SECRET)
 const crypto = require("crypto");
 const { makeToken, setCookie, body, redis } = require("./_lib");
 const USERS = "daito:users";
@@ -11,7 +11,7 @@ const b64u = (buf) => Buffer.from(buf).toString("base64url");
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") { res.setHeader("Allow", "POST"); return res.status(405).json({ ok: false }); }
-  const secret = process.env.SSO_SECRET;
+  const secret = process.env.DAITO_SSO_SECRET || process.env.SSO_SECRET;
   if (!secret || secret.length < 16) return res.status(200).json({ ok: false, error: "notconfigured" });
   try {
     const ticket = String(body(req).ticket || "");
