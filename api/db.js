@@ -2,7 +2,7 @@
 const { authed, pipeline, body } = require("./_lib");
 const { maybeDaily } = require("./_backup");
 const { notify } = require("./push");
-const COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform", "ac"];
+const COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform", "ac", "photo"];
 const key = (c) => "daito:" + c;
 const vkey = (c) => "daito:ver:" + c;
 

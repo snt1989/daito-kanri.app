@@ -366,6 +366,22 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .nt-tabs .tab{padding:9px 2px;font-size:13.5px;white-space:nowrap;text-align:center}
 .ntc{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:11px;line-height:18px;text-align:center}
 .nt-body{min-height:260px}
+.phmask{z-index:95}
+.phbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-2px 0 10px}
+.phtool{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 6px}
+.phtool .btn{cursor:pointer}.phq{display:flex;gap:6px;align-items:center;margin-left:auto;font-size:13px}
+.phchips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}.phchips .chip2{padding:4px 12px;font-size:13px}.phchips .chip2.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.phgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.phcell{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;padding:0;background:var(--surface);cursor:pointer;aspect-ratio:1/1;display:block;font:inherit;color:inherit}
+.phimg{position:absolute;inset:0;background:#eee center/cover no-repeat}
+.phtg{position:absolute;left:5px;top:5px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;border-radius:8px;padding:1px 7px}
+.phsz{position:absolute;right:5px;top:5px;background:rgba(255,255,255,.85);color:#333;font-size:10.5px;border-radius:8px;padding:1px 6px}
+.phcap{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff;font-size:11.5px;padding:14px 6px 4px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}.phfoot>.sub{flex:1;min-width:160px}
+.phbig{background:#111;border-radius:10px;min-height:200px;display:grid;place-items:center;overflow:hidden}.phbig img{max-width:100%;max-height:62vh;display:block}.phbig .sub{color:#ccc}
+.phmeta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 4px}
+@media(max-width:720px){.phgrid{grid-template-columns:repeat(3,1fr);gap:5px}.phq{margin-left:0}}
+
 .hbnr{display:flex;gap:10px;align-items:center;padding:12px 12px 12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card,#fff);margin:10px 0}
 .hbnr .hb-ic{flex:none;font-size:20px}
 .hbnr .hb-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.hbnr .hb-t small{color:var(--muted);font-size:12px;line-height:1.5}
@@ -818,7 +834,7 @@ function openJob(id){
   var el=$("#modal");
   function draw(){
     var c=calc(j);
-    el.innerHTML='<div class="mask" id="mask"><form class="dlg" id="jf" autocomplete="off"><h2>'+(isNew?"案件を登録":"案件の編集")+'</h2>'+
+    el.innerHTML='<div class="mask" id="mask"><form class="dlg" id="jf" autocomplete="off"><h2>'+(isNew?"案件を登録":"案件の編集")+'</h2>'+phBtnHtml("jobs",j.id)+
      '<div class="fields">'+
       '<div class="lab"><b>工事予定書(指示書)の記載事項</b></div>'+
       '<label>建物コード<input type="text" id="f-bldg" value="'+esc(j.bldgCd)+'" inputmode="numeric"></label>'+
@@ -1037,7 +1053,7 @@ function openForm(cfg){
   }
   function prev(){var p=$("#ff-prev",el);if(p&&cfg.preview)p.innerHTML=cfg.preview(d)}
   function draw(){
-    el.innerHTML='<div class="mask" id="mask"><form class="dlg" id="jf" autocomplete="off"><h2>'+cfg.title+'</h2><div class="fields">'+cfg.fields.map(fieldHtml).join("")+'</div><div id="ff-prev">'+(cfg.preview?cfg.preview(d):"")+'</div>'+
+    el.innerHTML='<div class="mask" id="mask"><form class="dlg" id="jf" autocomplete="off"><h2>'+cfg.title+'</h2>'+(cfg.photo?phBtnHtml(cfg.photo[0],cfg.photo[1]):"")+'<div class="fields">'+cfg.fields.map(fieldHtml).join("")+'</div><div id="ff-prev">'+(cfg.preview?cfg.preview(d):"")+'</div>'+
      dkBox(d)+'<div class="acts"><span>'+(cfg.onDel?'<button type="button" class="btn danger" id="f-del">削除</button>':"")+'</span><span><button type="button" class="btn" id="f-cancel">キャンセル</button> <button type="submit" class="btn pri">保存</button></span></div></form></div>';
     $("#mask",el).addEventListener("mousedown",function(e){if(e.target.id==="mask")el.innerHTML=""});
     $("#f-cancel",el).onclick=function(){el.innerHTML=""};
@@ -1135,7 +1151,7 @@ function openEmerg(id,pre){
   if(!isNew&&pre){Object.keys(pre).forEach(function(k){if(k!=="_thumb")d[k]=pre[k]})}
   if(!pre||!pre._thumb)EMTHUMB="";
   if(pre&&pre._thumb){EMTHUMB=pre._thumb;delete d._thumb}
-  openForm({title:EMTHUMB?(isNew?"書類から読み取った内容(確認して保存)":"金額確定通知書の内容を反映(確認して保存)"):isNew?"緊急出動を記録":"出動の編集",data:d,fields:emFields(),preview:function(x){return emPreview(x)+(!isNew?'<div class="panel" style="padding:10px 12px"><button type="button" class="btn sm" data-emfix="'+esc(d.id)+'">金額確定通知書を読み取る</button> <span class="sub">PDF・写真から確定金額を読み取って、この出動に反映します(編集中の内容は破棄されます)。</span></div>':"")+(EMTHUMB?'<div class="panel" style="padding:10px 12px"><div class="sub">読み取り元(出動要請書)。内容と見比べて修正してください。</div><a href="'+EMTHUMB+'" target="_blank" rel="noopener"><img src="'+EMTHUMB+'" alt="出動要請書" style="max-width:100%;max-height:360px;border:1px solid var(--line);border-radius:6px"></a></div>':"")},
+  openForm({photo:["emerg",d.id],title:EMTHUMB?(isNew?"書類から読み取った内容(確認して保存)":"金額確定通知書の内容を反映(確認して保存)"):isNew?"緊急出動を記録":"出動の編集",data:d,fields:emFields(),preview:function(x){return emPreview(x)+(!isNew?'<div class="panel" style="padding:10px 12px"><button type="button" class="btn sm" data-emfix="'+esc(d.id)+'">金額確定通知書を読み取る</button> <span class="sub">PDF・写真から確定金額を読み取って、この出動に反映します(編集中の内容は破棄されます)。</span></div>':"")+(EMTHUMB?'<div class="panel" style="padding:10px 12px"><div class="sub">読み取り元(出動要請書)。内容と見比べて修正してください。</div><a href="'+EMTHUMB+'" target="_blank" rel="noopener"><img src="'+EMTHUMB+'" alt="出動要請書" style="max-width:100%;max-height:360px;border:1px solid var(--line);border-radius:6px"></a></div>':"")},
    validate:function(d){return d.site.trim()?"":"物件名を入力してください"},
    onSave:function(d){d.status=+d.status;d.site=d.site.trim();saveDoc("emerg",d);toast("保存しました")},
    onDel:isNew?null:function(){delDoc("emerg",d.id)}});
@@ -1214,7 +1230,7 @@ function mtFields(d){
   {k:"memo",label:"メモ",type:"memo",wide:true}];}
 function openMaint(id,pre){
   var isNew=!id,d=isNew?Object.assign({id:nid("m"),month:S.mMonth,bldgCd:"",bldgName:"",address:"",item:S.settings.mItems[0],price:0,qty:1,kind:MT_KIND[0],docNo:"",mgr:"",doneDate:"",status:0,cPhoto:false,cSheet:false,cDefect:false,memo:""},pre||{}):JSON.parse(JSON.stringify(S.maint.find(function(x){return x.id===id})));
-  openForm({title:isNew?"維持管理を追加":"維持管理の編集",data:d,fields:mtFields(d),preview:mtPreview,
+  openForm({photo:["maint",d.id],title:isNew?"維持管理を追加":"維持管理の編集",data:d,fields:mtFields(d),preview:mtPreview,
    redraw:function(d,k){if(k==="bldgName"){var b=S.maint.find(function(x){return x.bldgName===d.bldgName});if(b){if(!d.bldgCd)d.bldgCd=b.bldgCd;if(!d.address)d.address=b.address;return true}}return false},
    validate:function(d){return !d.bldgName.trim()?"建物名を入力してください":!d.month?"作業月を入力してください":""},
    onSave:function(d){d.status=+d.status;d.bldgName=d.bldgName.trim();saveDoc("maint",d);toast("保存しました")},
@@ -2942,6 +2958,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-28",t:"案件ごとに写真を保存",d:"工事・緊急出動・維持管理・エアコンの各案件の編集画面に「📷 写真」を追加しました。写真は作業前・作業中・作業後・その他に分けて、メモ付きで保存できます。保存時に自動で縮小・圧縮し(画質は標準・軽量・最軽量・元のままから選択)、保存済みの写真も「まとめて軽量化」で容量を減らせます。"},
  {v:"2026-10-27",t:"ロゴ・アイコンを設定で変更",d:"設定→全体共通→「ロゴ・アイコン」で、画面左上のロゴ・アプリ名と、ホーム画面・インストール時のアイコンを変更できます(背景色・余白も調整できます)。"},
  {v:"2026-10-27",t:"アプリとしてインストール",d:"Web版を、スマホのホーム画面やPCのデスクトップにアプリとしてインストールできるようになりました。ホームの「インストール」ボタン、またはお知らせ→設定から行えます。iPhoneはSafariの共有→「ホーム画面に追加」です。"},
  {v:"2026-10-27",t:"お知らせを現場管理アプリのように",d:"お知らせに「通知の設定」「通知の履歴」「ご案内」を追加しました。Web版では、新しい案件・緊急出動・進捗の変更が、アプリを閉じていてもスマホに通知されます(通知の設定でオンにします。iPhoneはホーム画面に追加したアプリから)。"},
@@ -3220,7 +3237,7 @@ var DF={list:[],state:"idle",msg:"",q:""};
 function dfKick(force){
   if(!window.dsFiles||DF.state==="load"||(DF.state!=="idle"&&!force))return;
   DF.state="load";
-  window.dsFiles.list().then(function(j){DF.list=(j&&j.list)||[];DF.state=j&&j.ok?"ok":"err";DF.msg=j&&j.ok?"":((j&&j.error)||"読み込めませんでした");if(S.tab==="docs")render()}).catch(function(){DF.state="err";DF.msg="通信に失敗しました";if(S.tab==="docs")render()});
+  window.dsFiles.list().then(function(j){DF.list=((j&&j.list)||[]).filter(function(m){return m.type!=="photo"&&m.type!=="photot"});DF.state=j&&j.ok?"ok":"err";DF.msg=j&&j.ok?"":((j&&j.error)||"読み込めませんでした");if(S.tab==="docs")render()}).catch(function(){DF.state="err";DF.msg="通信に失敗しました";if(S.tab==="docs")render()});
 }
 function dfSize(n){n=+n||0;return n>=1048576?(n/1048576).toFixed(1)+"MB":Math.max(1,Math.round(n/1024))+"KB"}
 function dfDate(m){var d=m.date||m.at;d=d?new Date(d):null;return d&&!isNaN(d)?d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate():""}
@@ -3374,6 +3391,161 @@ document.addEventListener("change",function(e){
   if((k=t.getAttribute("data-brpad"))){var p=Number(t.value)||0;brSet(function(b){b[k]=Object.assign({},b[k],{pad:p})});return}
   if(t.id==="br-name"){var n=t.value.trim().slice(0,30);brSet(function(b){b.name=n});return}
   if(t.id==="br-same"){var sm=t.checked;brSet(function(b){b.same=sm});return}
+});
+/* ====================== 案件ごとの写真(軽量化して保存) ====================== */
+var PHD={},PHB={},PHU={},PHS={key:"",tag:"all",view:-1,busy:false,msg:"",sel:{}};
+var PH_TAGS=["作業前","作業中","作業後","その他"];
+var PH_Q={std:{n:"標準",max:1600,q:0.82,lim:480,d:"長辺1600px・約300〜500KB。拡大しても見やすい"},light:{n:"軽量",max:1280,q:0.75,lim:260,d:"長辺1280px・約150〜250KB。おすすめ"},min:{n:"最軽量",max:960,q:0.68,lim:130,d:"長辺960px・約60〜120KB。記録用・枚数が多いとき"},orig:{n:"元のまま",max:0,q:0.9,lim:680,d:"できるだけ縮小しない(保存できる上限 約680KBを超える場合は縮小)"}};
+function phQ(){var k=S.settings.photoQ;return PH_Q[k]?k:"light"}
+function phInit(){
+  if(!db){var v=lsGet("photo");PHD=v&&typeof v==="object"?v:{};return}
+  db.collection("photo").onSnapshot(function(snap){var o={};snap.docs.forEach(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}o[x.id]=d});PHD=o;if(PHS.key)phDraw()},function(){});
+}
+function phKey(col,id){return col+"_"+id}
+function phList(col,id){var d=PHD[phKey(col,id)];return d&&Array.isArray(d.list)?d.list:[]}
+function phCount(col,id){return phList(col,id).length}
+function phSaveList(key,list){
+  var p=key.split("_"),col=p[0],rid=p.slice(1).join("_"),d={col:col,rid:rid,list:list,at:new Date().toISOString()};PHD[key]=d;
+  if(!window.dsFiles)return;
+  if(db)db.doc("photo/"+key).set(d).catch(function(){toast("写真の一覧を保存できませんでした")});else lsSet("photo",PHD);
+}
+function phRec(col,id){var a={jobs:S.jobs,emerg:S.emerg,maint:S.maint,ac:S.ac}[col]||[];return a.find(function(x){return x.id===id})||null}
+function phTitle(col,id){var r=phRec(col,id)||{};return [r.site||r.bldgName||r.name||r.client||"",r.room||r.item||""].filter(Boolean).join(" ")||"(未保存の案件)"}
+function phBtnHtml(col,id){var n=phCount(col,id);return '<div class="phbar"><button type="button" class="btn sm" data-phopen="'+col+"|"+esc(id)+'">📷 写真'+(n?" <b>"+n+"</b>枚":"を追加")+'</button><span class="sub">現場写真を案件ごとに保存できます(軽量化して保存)</span></div>'}
+function phSize(n){n=Number(n)||0;return n>=1048576?(n/1048576).toFixed(1)+"MB":Math.max(1,Math.round(n/1024))+"KB"}
+async function phEncode(src,max,q,lim){
+  var bm=src.width?src:await createImageBitmap(src,{imageOrientation:"from-image"}).catch(function(){return createImageBitmap(src)});
+  var w=bm.width,h=bm.height,k=max?Math.min(1,max/Math.max(w,h)):1,out=null;
+  for(var t=0;t<6;t++){
+    var c=document.createElement("canvas");c.width=Math.max(1,Math.round(w*k));c.height=Math.max(1,Math.round(h*k));
+    var x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.imageSmoothingQuality="high";x.drawImage(bm,0,0,c.width,c.height);
+    var qq=q;for(var i=0;i<4;i++){out=await new Promise(function(r){c.toBlob(r,"image/jpeg",qq)});if(out&&out.size<=lim*1024)break;qq=Math.max(0.4,qq-0.1)}
+    if(out&&out.size<=Math.max(lim,680)*1024&&(out.size<=lim*1024||t>=1))return {blob:out,w:c.width,h:c.height};
+    k*=0.8;
+  }
+  return {blob:out,w:Math.round(w*k),h:Math.round(h*k)};
+}
+async function phShrink(file,qk){
+  var P=PH_Q[qk]||PH_Q.light,bm=await createImageBitmap(file,{imageOrientation:"from-image"}).catch(function(){return createImageBitmap(file)});
+  if(qk==="orig"&&/jpe?g/i.test(file.type)&&file.size<=680*1024)return {blob:file,w:bm.width,h:bm.height,thumb:(await phEncode(bm,320,0.7,40)).blob};
+  var r=await phEncode(bm,P.max,P.q,P.lim);r.thumb=(await phEncode(bm,320,0.7,40)).blob;return r;
+}
+async function phBlob(p,thumb){
+  var k=(thumb?"t:":"f:")+p.id;if(PHB[k])return PHB[k];
+  if(!thumb&&PHB["n:"+p.id])return PHB["n:"+p.id];
+  if(!window.dsFiles)return null;
+  try{var r=await window.dsFiles.blob(thumb?(p.tid||p.id):p.id);if(r&&r.ok&&r.blob){PHB[k]=r.blob;return r.blob}}catch(e){}
+  return null;
+}
+function phUrl(b){if(!b)return "";if(!PHU.m)PHU.m=new Map();var u=PHU.m.get(b);if(!u){u=URL.createObjectURL(b);PHU.m.set(b,u)}return u}
+function phOpen(col,id){PHS={key:phKey(col,id),col:col,rid:id,tag:"all",view:-1,busy:false,msg:"",sel:{}};phDraw()}
+function phClose(){PHS.key="";var o=$("#phl");if(o)o.innerHTML="";try{var f=document.querySelector("[data-phopen]");if(f){var p=f.getAttribute("data-phopen").split("|");f.outerHTML=phBtnHtml(p[0],p[1])}}catch(e){}if(!$("#modal").innerHTML)render()}
+function phDraw(){
+  var o=$("#phl");if(!o){o=document.createElement("div");o.id="phl";document.body.appendChild(o)}
+  if(!PHS.key){o.innerHTML="";return}
+  var L=phList(PHS.col,PHS.rid),qk=phQ(),tot=L.reduce(function(a,p){return a+(p.size||0)},0);
+  if(PHS.view>=0&&L[PHS.view])return phViewer(o,L);
+  var F=L.map(function(p,i){return [p,i]}).filter(function(x){return PHS.tag==="all"||(x[0].tag||"その他")===PHS.tag});
+  var cnt=function(t){return L.filter(function(p){return (p.tag||"その他")===t}).length};
+  var big=L.filter(function(p){return (p.size||0)>PH_Q.min.lim*1024*1.15}).length;
+  var h='<div class="mask phmask"><div class="dlg lg phdlg"><h2>📷 写真 <span class="sub" style="font-weight:400">'+esc(phTitle(PHS.col,PHS.rid))+'</span></h2>'+
+   '<div class="phtool"><label class="btn pri">＋ 写真を追加<input type="file" accept="image/*" multiple data-phadd="1" style="display:none"></label><label class="btn">📷 撮影<input type="file" accept="image/*" capture="environment" data-phadd="1" style="display:none"></label>'+
+   '<label class="phq">保存の画質 <select id="ph-q">'+Object.keys(PH_Q).map(function(k){return '<option value="'+k+'"'+(k===qk?" selected":"")+">"+PH_Q[k].n+"</option>"}).join("")+'</select></label></div>'+
+   '<div class="sub" style="margin:2px 0 8px">'+esc(PH_Q[qk].d)+'。写真は追加するときに自動で縮小・圧縮して保存します(位置情報などの撮影データは削除されます)。</div>'+
+   '<div class="phchips">'+[["all","すべて",L.length]].concat(PH_TAGS.map(function(t){return [t,t,cnt(t)]})).map(function(x){return '<button type="button" class="chip2'+(PHS.tag===x[0]?" on":"")+'" data-phtag="'+x[0]+'">'+x[1]+" "+x[2]+"</button>"}).join("")+'</div>'+
+   (PHS.msg?'<div class="banner" style="margin:8px 0">'+esc(PHS.msg)+"</div>":"")+
+   (F.length?'<div class="phgrid">'+F.map(function(x){var p=x[0],i=x[1];return '<button type="button" class="phcell" data-phview="'+i+'"><span class="phimg" data-phth="'+i+'"></span><span class="phtg">'+esc(p.tag||"その他")+'</span><span class="phsz">'+phSize(p.size)+"</span>"+(p.cap?'<span class="phcap">'+esc(p.cap)+"</span>":"")+"</button>"}).join("")+"</div>":'<div class="empty" style="padding:30px 6px;text-align:center">'+(L.length?"この分類の写真はありません":"まだ写真がありません。「＋ 写真を追加」または「📷 撮影」から追加してください。")+"</div>")+
+   '<div class="phfoot"><span class="sub">'+L.length+"枚・合計 "+phSize(tot)+(window.dsFiles?"":"<br>※この表示(Claude版)では写真は開いている間だけ保持されます。Web版ではサーバーに保存されます。")+'</span>'+
+   (L.length?'<button type="button" class="btn sm" id="ph-slim"'+(PHS.busy?" disabled":"")+' title="保存済みの写真を、選んだ画質まで縮小し直して容量を減らします">🗜 まとめて軽量化</button>':"")+
+   '<button type="button" class="btn primary" id="ph-x">閉じる</button></div></div></div>';
+  o.innerHTML=h;phThumbs();
+}
+async function phThumbs(){
+  var L=phList(PHS.col,PHS.rid),els=[].slice.call(document.querySelectorAll("#phl [data-phth]"));
+  for(var k=0;k<els.length;k++){var el=els[k],p=L[+el.getAttribute("data-phth")];if(!p)continue;var b=await phBlob(p,true);if(b&&document.body.contains(el))el.style.backgroundImage="url("+phUrl(b)+")"}
+}
+function phViewer(o,L){
+  var i=PHS.view,p=L[i],dt=p.at?new Date(p.at):null;
+  o.innerHTML='<div class="mask phmask"><div class="dlg lg phdlg"><h2>写真 '+(i+1)+" / "+L.length+'</h2><div class="phbig"><img id="ph-big" alt=""><span class="sub" id="ph-ld">読み込み中…</span></div>'+
+   '<div class="phmeta"><label>分類 <select id="ph-tag">'+PH_TAGS.map(function(t){return "<option"+((p.tag||"その他")===t?" selected":"")+">"+t+"</option>"}).join("")+'</select></label><label style="flex:1;min-width:180px">メモ <input type="text" id="ph-cap" value="'+esc(p.cap||"")+'" placeholder="例:洋室 クロスの汚れ" style="width:100%"></label></div>'+
+   '<div class="sub">'+(p.w?p.w+"×"+p.h+"px・":"")+phSize(p.size)+(p.orig?"(元 "+phSize(p.orig)+")":"")+(dt&&!isNaN(dt)?"・"+dt.toLocaleString("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}):"")+(p.by?"・"+esc(p.by):"")+'</div>'+
+   '<div class="phfoot"><button type="button" class="btn sm" id="ph-prev"'+(i>0?"":" disabled")+'>◀ 前</button><button type="button" class="btn sm" id="ph-next"'+(i<L.length-1?"":" disabled")+'>次 ▶</button><button type="button" class="btn sm" id="ph-dl">ダウンロード</button><button type="button" class="btn sm danger" id="ph-del">削除</button><span style="flex:1"></span><button type="button" class="btn primary" id="ph-back">一覧に戻る</button></div></div></div>';
+  phBlob(p,false).then(function(b){var im=$("#ph-big"),ld=$("#ph-ld");if(!im)return;if(b){im.src=phUrl(b);if(ld)ld.remove()}else if(ld)ld.textContent="写真を読み込めませんでした"});
+}
+async function phAdd(files){
+  if(!files.length||PHS.busy)return;var key=PHS.key,qk=phQ(),done=0,before=0,after=0,fail=0;
+  PHS.busy=true;
+  for(var i=0;i<files.length;i++){
+    var f=files[i];if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|heic|heif|webp|gif)$/i.test(f.name)){fail++;continue}
+    PHS.msg="保存中… "+(i+1)+" / "+files.length+"枚";phDraw();
+    try{
+      var r=await phShrink(f,qk),id="ph_"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),tid=id+"_t",nm=(f.name||"写真").replace(/\.[^.]+$/,"")+".jpg";
+      var p={id:id,tid:tid,name:nm,tag:PHS.tag!=="all"?PHS.tag:"その他",cap:"",size:r.blob.size,orig:f.size,w:r.w,h:r.h,at:new Date().toISOString(),by:(ME()&&ME().name)||""};
+      if(window.dsFiles){
+        var sm=phTitle(PHS.col,PHS.rid);
+        var j1=await window.dsFiles.put(id,r.blob,{name:nm,mime:"image/jpeg",type:"photo",typeName:"案件写真",summary:sm});
+        if(!j1||j1.ok===false||j1.error)throw new Error((j1&&j1.error&&(j1.error.message||j1.error))||"保存できませんでした");
+        await window.dsFiles.put(tid,r.thumb,{name:"thumb.jpg",mime:"image/jpeg",type:"photot",typeName:"写真サムネイル",summary:sm});
+      }
+      PHB["f:"+id]=r.blob;PHB["t:"+id]=r.thumb;
+      var L=phList(PHS.col,PHS.rid).slice();L.push(p);phSaveList(key,L);
+      done++;before+=f.size;after+=r.blob.size;
+    }catch(e){fail++}
+  }
+  PHS.busy=false;PHS.msg=done?done+"枚を保存しました("+phSize(before)+" → "+phSize(after)+(before>after?"、"+Math.round((1-after/before)*100)+"%軽量化":"")+")"+(fail?"。"+fail+"枚は保存できませんでした":""):"保存できませんでした";
+  phDraw();
+}
+async function phSlim(){
+  var qk=phQ(),P=PH_Q[qk];if(qk==="orig"){toast("「元のまま」では軽量化できません。画質を選んでください");return}
+  var L=phList(PHS.col,PHS.rid).slice(),key=PHS.key,before=0,after=0,n=0;
+  var target=L.filter(function(p){return (p.size||0)>P.lim*1024*1.1||(p.w&&Math.max(p.w,p.h)>P.max)});
+  if(!target.length){PHS.msg="すべての写真が「"+P.n+"」以下の容量です。軽量化の必要はありません";phDraw();return}
+  PHS.busy=true;
+  for(var i=0;i<L.length;i++){
+    var p=L[i];if(target.indexOf(p)<0)continue;
+    PHS.msg="軽量化中… "+(++n)+" / "+target.length+"枚";phDraw();
+    try{
+      var b=await phBlob(p,false);if(!b)continue;
+      var r=await phEncode(await createImageBitmap(b),P.max,P.q,P.lim);if(!r.blob||r.blob.size>=b.size)continue;
+      if(window.dsFiles){var j=await window.dsFiles.put(p.id,r.blob,{name:p.name,mime:"image/jpeg",type:"photo",typeName:"案件写真",summary:phTitle(PHS.col,PHS.rid)});if(!j||j.ok===false||j.error)continue}
+      before+=b.size;after+=r.blob.size;PHB["f:"+p.id]=r.blob;
+      L[i]=Object.assign({},p,{size:r.blob.size,w:r.w,h:r.h,orig:p.orig||b.size});
+    }catch(e){}
+  }
+  phSaveList(key,L);PHS.busy=false;
+  PHS.msg=before?"軽量化しました: "+phSize(before)+" → "+phSize(after)+"("+Math.round((1-after/before)*100)+"%削減)":"軽量化できる写真はありませんでした";
+  phDraw();
+}
+function phDel(i){
+  var L=phList(PHS.col,PHS.rid).slice(),p=L[i];if(!p)return;
+  L.splice(i,1);phSaveList(PHS.key,L);
+  if(window.dsFiles&&window.dsFiles.del){try{window.dsFiles.del(p.id);if(p.tid)window.dsFiles.del(p.tid)}catch(e){}}
+  PHS.view=L.length?Math.min(i,L.length-1):-1;if(!L.length)PHS.view=-1;PHS.msg="写真を削除しました";phDraw();
+}
+function phMeta(patch){var L=phList(PHS.col,PHS.rid).slice(),i=PHS.view;if(!L[i])return;L[i]=Object.assign({},L[i],patch);phSaveList(PHS.key,L)}
+document.addEventListener("click",function(e){
+  var t=e.target&&e.target.closest?e.target:null;if(!t)return;
+  var b=t.closest("[data-phopen]");if(b){e.preventDefault();e.stopPropagation();var q=b.getAttribute("data-phopen").split("|");phOpen(q[0],q.slice(1).join("|"));return}
+  if(!t.closest("#phl"))return;
+  var x;
+  if((x=t.closest("[data-phtag]"))){PHS.tag=x.getAttribute("data-phtag");PHS.msg="";phDraw();return}
+  if((x=t.closest("[data-phview]"))){PHS.view=+x.getAttribute("data-phview");phDraw();return}
+  var id=(t.closest("button")||{}).id||"";
+  if(id==="ph-x"){phClose();return}
+  if(id==="ph-back"){PHS.view=-1;phDraw();return}
+  if(id==="ph-prev"){PHS.view--;phDraw();return}
+  if(id==="ph-next"){PHS.view++;phDraw();return}
+  if(id==="ph-slim"){phSlim();return}
+  if(id==="ph-dl"){var p=phList(PHS.col,PHS.rid)[PHS.view];if(p)phBlob(p,false).then(function(bb){if(!bb){toast("読み込めませんでした");return}var a=document.createElement("a");a.href=phUrl(bb);a.download=(phTitle(PHS.col,PHS.rid)+"_"+(p.tag||"")+"_"+(PHS.view+1)).replace(/[\\\/:*?"<>|\s]+/g,"_")+".jpg";document.body.appendChild(a);a.click();a.remove()});return}
+  if(id==="ph-del"){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に削除";return}phDel(PHS.view);return}
+  if(t.classList&&t.classList.contains("phmask")){phClose();return}
+},true);
+document.addEventListener("change",function(e){
+  var t=e.target;if(!t||!t.closest||!t.closest("#phl"))return;
+  if(t.getAttribute("data-phadd")){var fs=[].slice.call(t.files||[]);t.value="";phAdd(fs);return}
+  if(t.id==="ph-q"){S.settings.photoQ=t.value;saveSettings(true);PHS.msg="";phDraw();return}
+  if(t.id==="ph-tag"){phMeta({tag:t.value});return}
+  if(t.id==="ph-cap"){phMeta({cap:t.value.trim().slice(0,80)});return}
 });
 /* ====================== 水道届の様式(アップロード)に記入して出力 ====================== */
 var WTF_KEYS=[["name","使用者氏名"],["kana","フリガナ"],["addr","使用場所の住所"],["tel","連絡先電話番号"],["custNo","お客様番号"],["pay","支払い方法"],["payer","支払者氏名"],["newAddr","転居先の住所"],["workplace","勤務先"],["occupants","世帯人数"],["sendTo","送付先"],
@@ -3603,7 +3775,7 @@ function openAc(id,pre,conf){
   function totalHtml(){var c=acCalc(d);return '見積金額 税別 <b>'+yen(c.sub)+'</b>　税込 <b>'+yen(c.total)+"</b>"+(d.docTotal?(d.docTotal===c.sub?' <span style="color:var(--ok);font-weight:700">✓ 書面の見積金額 '+yen(d.docTotal)+' と一致</span>':' <span class="late">書面の見積金額 '+yen(d.docTotal)+" と合いません。工事項目を書面と見比べてください</span>"):"")}
   function draw(){
     var P=acPrices(),qtyOf=function(pid){var it=d.items.find(function(x){return x.id===pid});return it?it.qty:""};
-    var h='<div class="mask" id="mask"><div class="dlg lg"><h2>'+(isNew?"エアコン案件を登録":"エアコン案件の編集")+'</h2>'+
+    var h='<div class="mask" id="mask"><div class="dlg lg"><h2>'+(isNew?"エアコン案件を登録":"エアコン案件の編集")+'</h2>'+phBtnHtml("ac",d.id)+
      (conf?'<div class="sub" style="color:var(--warn)">読み取りに自信のない項目: '+esc(conf)+'。書面と見比べて確認してください。</div>':"")+
      '<div class="fields">'+inp("reqDate","ご依頼日","date")+inp("reqNo","ご依頼No")+inp("office","営業所")+inp("contact","営業所の担当(携帯)")+inp("officeTel","営業所 TEL")+inp("officeFax","営業所 FAX")+
      inp("site","アパート名",0,1)+inp("room","部屋番号")+inp("bldgCd","建物CD")+inp("address","建物住所",0,1)+"</div>"+
@@ -4707,11 +4879,11 @@ function boot(){
   render();
   claude_use("db").then(function(d){
     if(!d){
-      S.persist=false;wtfInit();acInit();
+      S.persist=false;wtfInit();acInit();phInit();
       COLN.forEach(function(c){var v=lsGet(c);S[c]=(Array.isArray(v)?v:(c==="jobs"?sampleJobs():[])).map(function(o){return normDoc(c,String((o&&o.id)||nid("x")),o)});loaded[c]=true});
       var st=lsGet("settings");if(st&&st.prices)S.settings=st;normSettings();loaded.settings=true;ready();return;
     }
-    db=d;wtfInit();acInit();
+    db=d;wtfInit();acInit();phInit();
     COLN.forEach(function(c){
       db.collection(c).onSnapshot(function(snap){PEND[c]=snap;if(!PTM[c])PTM[c]=setTimeout(function(){PTM[c]=0;var sn=PEND[c];PEND[c]=null;if(!sn)return;S[c]=sn.docs.map(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}return normDoc(c,x.id,d)});S.persist=true;loaded[c]=true;ready()},80)},function(){S.persist=false;loaded[c]=true;ready()});
     });
