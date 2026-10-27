@@ -1429,6 +1429,7 @@ var SETGROUPS=[
   ["basic","基本設定","消費税率・支払日・期限が近いと扱う日数です。",[P("bill","請求・入金"),P("elog","出動一覧"),P("mmonth","作業一覧"),P("home","ホーム")]],
   ["staff","担当・作業員","担当に割り当てるチーム・作業員の名前です。",[P("jobs","工事一覧"),P("sched","施工予定"),P("elog","出動一覧")]],
   ["backup","バックアップ","データのコピーを自動・手動でサーバーに保存し、必要なときに戻せます(Web版・管理者のみ)。",[P("home","ホーム")]],
+  ["photo","写真の画質","案件の写真・報告書の写真を保存するときの画質(軽量化の度合い)を、全体で一括管理します。",[P("mrep","報告書作成")]],
   ["brand","ロゴ・アイコン","画面左上のロゴ・アプリ名と、ホーム画面・インストール時のアプリのアイコンです。",[P("home","ホーム")]],
   ["company","自社情報","水道の届出などで、届出者として使う会社の情報です。",[P("water","水道開始・中止届")]]]]];
 var SETTABS=[];SETGROUPS.forEach(function(g){g[1].forEach(function(t){SETTABS.push(t)})});
@@ -1439,7 +1440,7 @@ function vSet(){
   var body={prices:b.prices,staff:b.staff,layout:vLayoutTab(),basic:vBasicTab(),
    genopts:vListsTab(["kind","area"]),emopts:vListsTab(["emFrom","emRes"]),mtopts:vListsTab(["mtKind"]),wtopts:vListsTab(["wtMethod","wtOffice"]),
    genstat:vStatTab(["job"]),emstat:vStatTab(["em"]),mtstat:vStatTab(["mt"]),wtstat:vStatTab(["wt"]),
-   chk:vChkTab(),fxtype:vFxType(),acprices:vAcPrices(),backup:vBackup(),brand:vBrandTab(),emcat:vEmcatTab(),orgs:vOrgTab()+vWform(),
+   chk:vChkTab(),fxtype:vFxType(),acprices:vAcPrices(),backup:vBackup(),brand:vBrandTab(),photo:vPhotoTab(),emcat:vEmcatTab(),orgs:vOrgTab()+vWform(),
    mitems:'<div class="panel"><h3>維持管理の作業項目</h3>'+mi.map(function(m,i){return '<div class="set-row"><input type="text" data-mi="'+i+'" value="'+esc(m)+'" aria-label="作業項目"><button class="btn sm danger" data-midel="'+i+'">削除</button></div>'}).join("")+'<div class="set-row"><button class="btn sm" id="miadd">＋ 項目を追加</button><button class="btn sm" data-sb="mitems">一括編集</button><button class="btn sm" id="mi-sync"'+(mItemsMissing().length?"":" disabled")+'>委託業務一覧表の項目を追加('+mItemsMissing().length+'件)</button></div><div class="sub" style="padding:0 14px 10px">「07 排水管清掃費」のようにコード(2桁)から始まる名前は、建物維持管理の「業務内容」ページの項目コードと対応します。注文書の読み取りでも、このコードで項目を当てはめます。</div></div>',
    company:'<div class="panel"><h3>自社情報(水道の届出などの届出者)</h3><div class="fields" style="padding:12px">'+[["name","会社名(使用者氏名)"],["kana","フリガナ"],["tel","連絡先電話番号"],["addr","住所(転居先・連絡先の住所)"],["pay","支払い方法(例:納付書、口座振替)"]].map(function(r){return '<label class="'+(r[0]==="addr"?"wide":"")+'">'+r[1]+'<input type="text" data-co="'+r[0]+'" value="'+esc((S.settings.company||{})[r[0]]||"")+'"></label>'}).join("")+'</div><div class="sub" style="padding:0 12px 12px">水道の届出シートの初期値として使います。</div></div>',
    emfee:'<div class="panel"><h3>緊急出動費(税別)</h3><div class="set-row"><span style="flex:1">基本料金 日中(7:00〜19:00)</span><input type="number" data-ef="day" value="'+f.day+'"></div><div class="set-row"><span style="flex:1">基本料金 夜間(19:00〜7:00)</span><input type="number" data-ef="night" value="'+f.night+'"></div><div class="set-row"><span style="flex:1">2時間超の加算</span><input type="number" data-ef="over" value="'+f.over+'"></div></div>'}[t];
@@ -2958,7 +2959,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
- {v:"2026-10-28",t:"案件ごとに写真を保存",d:"工事・緊急出動・維持管理・エアコンの各案件の編集画面に「📷 写真」を追加しました。写真は作業前・作業中・作業後・その他に分けて、メモ付きで保存できます。保存時に自動で縮小・圧縮し(画質は標準・軽量・最軽量・元のままから選択)、保存済みの写真も「まとめて軽量化」で容量を減らせます。"},
+ {v:"2026-10-28",t:"案件ごとに写真を保存",d:"工事・緊急出動・維持管理・エアコンの各案件の編集画面に「📷 写真」を追加しました。写真は作業前・作業中・作業後・その他に分けて、メモ付きで保存できます。保存時に自動で縮小・圧縮します。画質は設定→全体共通→「写真の画質」で一括管理し、保存済みの写真もまとめて軽量化できます。"},
  {v:"2026-10-27",t:"ロゴ・アイコンを設定で変更",d:"設定→全体共通→「ロゴ・アイコン」で、画面左上のロゴ・アプリ名と、ホーム画面・インストール時のアイコンを変更できます(背景色・余白も調整できます)。"},
  {v:"2026-10-27",t:"アプリとしてインストール",d:"Web版を、スマホのホーム画面やPCのデスクトップにアプリとしてインストールできるようになりました。ホームの「インストール」ボタン、またはお知らせ→設定から行えます。iPhoneはSafariの共有→「ホーム画面に追加」です。"},
  {v:"2026-10-27",t:"お知らせを現場管理アプリのように",d:"お知らせに「通知の設定」「通知の履歴」「ご案内」を追加しました。Web版では、新しい案件・緊急出動・進捗の変更が、アプリを閉じていてもスマホに通知されます(通知の設定でオンにします。iPhoneはホーム画面に追加したアプリから)。"},
@@ -3450,13 +3451,12 @@ function phDraw(){
   var big=L.filter(function(p){return (p.size||0)>PH_Q.min.lim*1024*1.15}).length;
   var h='<div class="mask phmask"><div class="dlg lg phdlg"><h2>📷 写真 <span class="sub" style="font-weight:400">'+esc(phTitle(PHS.col,PHS.rid))+'</span></h2>'+
    '<div class="phtool"><label class="btn pri">＋ 写真を追加<input type="file" accept="image/*" multiple data-phadd="1" style="display:none"></label><label class="btn">📷 撮影<input type="file" accept="image/*" capture="environment" data-phadd="1" style="display:none"></label>'+
-   '<label class="phq">保存の画質 <select id="ph-q">'+Object.keys(PH_Q).map(function(k){return '<option value="'+k+'"'+(k===qk?" selected":"")+">"+PH_Q[k].n+"</option>"}).join("")+'</select></label></div>'+
+   '<span class="phq sub">保存の画質: <b>'+esc(PH_Q[qk].n)+'</b>(設定で一括管理)</span></div>'+
    '<div class="sub" style="margin:2px 0 8px">'+esc(PH_Q[qk].d)+'。写真は追加するときに自動で縮小・圧縮して保存します(位置情報などの撮影データは削除されます)。</div>'+
    '<div class="phchips">'+[["all","すべて",L.length]].concat(PH_TAGS.map(function(t){return [t,t,cnt(t)]})).map(function(x){return '<button type="button" class="chip2'+(PHS.tag===x[0]?" on":"")+'" data-phtag="'+x[0]+'">'+x[1]+" "+x[2]+"</button>"}).join("")+'</div>'+
    (PHS.msg?'<div class="banner" style="margin:8px 0">'+esc(PHS.msg)+"</div>":"")+
    (F.length?'<div class="phgrid">'+F.map(function(x){var p=x[0],i=x[1];return '<button type="button" class="phcell" data-phview="'+i+'"><span class="phimg" data-phth="'+i+'"></span><span class="phtg">'+esc(p.tag||"その他")+'</span><span class="phsz">'+phSize(p.size)+"</span>"+(p.cap?'<span class="phcap">'+esc(p.cap)+"</span>":"")+"</button>"}).join("")+"</div>":'<div class="empty" style="padding:30px 6px;text-align:center">'+(L.length?"この分類の写真はありません":"まだ写真がありません。「＋ 写真を追加」または「📷 撮影」から追加してください。")+"</div>")+
    '<div class="phfoot"><span class="sub">'+L.length+"枚・合計 "+phSize(tot)+(window.dsFiles?"":"<br>※この表示(Claude版)では写真は開いている間だけ保持されます。Web版ではサーバーに保存されます。")+'</span>'+
-   (L.length?'<button type="button" class="btn sm" id="ph-slim"'+(PHS.busy?" disabled":"")+' title="保存済みの写真を、選んだ画質まで縮小し直して容量を減らします">🗜 まとめて軽量化</button>':"")+
    '<button type="button" class="btn primary" id="ph-x">閉じる</button></div></div></div>';
   o.innerHTML=h;phThumbs();
 }
@@ -3495,27 +3495,46 @@ async function phAdd(files){
   PHS.busy=false;PHS.msg=done?done+"枚を保存しました("+phSize(before)+" → "+phSize(after)+(before>after?"、"+Math.round((1-after/before)*100)+"%軽量化":"")+")"+(fail?"。"+fail+"枚は保存できませんでした":""):"保存できませんでした";
   phDraw();
 }
-async function phSlim(){
-  var qk=phQ(),P=PH_Q[qk];if(qk==="orig"){toast("「元のまま」では軽量化できません。画質を選んでください");return}
-  var L=phList(PHS.col,PHS.rid).slice(),key=PHS.key,before=0,after=0,n=0;
-  var target=L.filter(function(p){return (p.size||0)>P.lim*1024*1.1||(p.w&&Math.max(p.w,p.h)>P.max)});
-  if(!target.length){PHS.msg="すべての写真が「"+P.n+"」以下の容量です。軽量化の必要はありません";phDraw();return}
-  PHS.busy=true;
-  for(var i=0;i<L.length;i++){
-    var p=L[i];if(target.indexOf(p)<0)continue;
-    PHS.msg="軽量化中… "+(++n)+" / "+target.length+"枚";phDraw();
-    try{
-      var b=await phBlob(p,false);if(!b)continue;
-      var r=await phEncode(await createImageBitmap(b),P.max,P.q,P.lim);if(!r.blob||r.blob.size>=b.size)continue;
-      if(window.dsFiles){var j=await window.dsFiles.put(p.id,r.blob,{name:p.name,mime:"image/jpeg",type:"photo",typeName:"案件写真",summary:phTitle(PHS.col,PHS.rid)});if(!j||j.ok===false||j.error)continue}
-      before+=b.size;after+=r.blob.size;PHB["f:"+p.id]=r.blob;
-      L[i]=Object.assign({},p,{size:r.blob.size,w:r.w,h:r.h,orig:p.orig||b.size});
-    }catch(e){}
+// 保存済みの写真を、設定の画質まで縮小し直す(keys: 対象の案件キー)
+async function phSlimKeys(keys,prog){
+  var qk=phQ(),P=PH_Q[qk],res={before:0,after:0,n:0,total:0};if(qk==="orig")return res;
+  var big=function(p){return (p.size||0)>P.lim*1024*1.1||(p.w&&Math.max(p.w,p.h)>P.max)};
+  keys.forEach(function(k){var d=PHD[k];if(d&&Array.isArray(d.list))res.total+=d.list.filter(big).length});
+  for(var x=0;x<keys.length;x++){
+    var key=keys[x],d=PHD[key];if(!d||!Array.isArray(d.list))continue;var L=d.list.slice(),ch=false,ttl=phTitle(d.col,d.rid);
+    for(var i=0;i<L.length;i++){
+      var p=L[i];if(!big(p))continue;res.n++;if(prog)prog(res);
+      try{
+        var b=await phBlob(p,false);if(!b)continue;
+        var r=await phEncode(await createImageBitmap(b),P.max,P.q,P.lim);if(!r.blob||r.blob.size>=b.size)continue;
+        if(window.dsFiles){var j=await window.dsFiles.put(p.id,r.blob,{name:p.name,mime:"image/jpeg",type:"photo",typeName:"案件写真",summary:ttl});if(!j||j.ok===false||j.error)continue}
+        res.before+=b.size;res.after+=r.blob.size;PHB["f:"+p.id]=r.blob;ch=true;
+        L[i]=Object.assign({},p,{size:r.blob.size,w:r.w,h:r.h,orig:p.orig||b.size});
+      }catch(e){}
+    }
+    if(ch)phSaveList(key,L);
   }
-  phSaveList(key,L);PHS.busy=false;
-  PHS.msg=before?"軽量化しました: "+phSize(before)+" → "+phSize(after)+"("+Math.round((1-after/before)*100)+"%削減)":"軽量化できる写真はありませんでした";
-  phDraw();
+  return res;
 }
+var PHA={busy:false,msg:""};
+function phStats(){var c=0,n=0,sz=0;Object.keys(PHD).forEach(function(k){var L=PHD[k]&&PHD[k].list;if(Array.isArray(L)&&L.length){c++;n+=L.length;L.forEach(function(p){sz+=p.size||0})}});return {c:c,n:n,sz:sz}}
+function vPhotoTab(){
+  var qk=phQ(),ro=!!(window.dsApi&&!isAdmin()),st=phStats();
+  var h=ro?'<div class="panel"><div class="empty">写真の画質の変更は、管理者でログインしたときだけできます。</div></div>':"";
+  h+='<div class="panel"><h3>保存の画質</h3><div class="sub" style="padding:0 12px 8px">案件の写真・報告書の写真シートなど、アプリで保存するすべての写真に使われます。写真は追加するときにこの画質へ自動で縮小・圧縮されます(位置情報などの撮影データは削除されます)。</div>'+
+   Object.keys(PH_Q).map(function(k){var P=PH_Q[k];return '<label class="set-row" style="gap:10px;align-items:flex-start;cursor:pointer"><input type="radio" name="phq" data-phqset="'+k+'"'+(k===qk?" checked":"")+(ro?" disabled":"")+' style="margin-top:4px;flex:none"><span style="flex:1;min-width:0"><b>'+esc(P.n)+(k==="light"?' <span class="tag">おすすめ</span>':"")+'</b><span class="sub" style="display:block">'+esc(P.d)+"</span></span></label>"}).join("")+"</div>";
+  h+='<div class="panel"><h3>保存済みの写真</h3><div class="set-row" style="flex-wrap:wrap;gap:14px"><span>'+st.c+"件の案件・"+st.n+"枚・合計 <b>"+phSize(st.sz)+"</b></span></div>"+
+   (window.dsFiles?'<div class="sub" style="padding:0 12px 8px">保存済みの写真のうち、いまの画質より大きいものを縮小し直して、サーバーの容量を減らします。</div><div class="set-row"><button type="button" class="btn pri" id="pha-slim"'+(ro||PHA.busy||!st.n||qk==="orig"?" disabled":"")+'>🗜 すべての写真を「'+esc(PH_Q[qk].n)+'」に軽量化</button></div>':'<div class="sub" style="padding:0 12px 10px">Claude版では写真は開いている間だけ保持されます。まとめて軽量化はWeb版で使えます。</div>')+
+   (PHA.msg?'<div class="banner" style="margin:0 12px 12px">'+esc(PHA.msg)+"</div>":"")+"</div>";
+  return h;
+}
+async function phSlimAll(){
+  if(PHA.busy)return;PHA.busy=true;PHA.msg="対象の写真を確認しています…";render();
+  var r=await phSlimKeys(Object.keys(PHD),function(x){PHA.msg="軽量化中… "+x.n+" / "+x.total+"枚";if(S.tab==="set"&&S.setTab==="photo")render()});
+  PHA.busy=false;PHA.msg=r.before?"軽量化しました: "+r.n+"枚 "+phSize(r.before)+" → "+phSize(r.after)+"("+Math.round((1-r.after/r.before)*100)+"%削減)":"軽量化が必要な写真はありませんでした";
+  render();
+}
+
 function phDel(i){
   var L=phList(PHS.col,PHS.rid).slice(),p=L[i];if(!p)return;
   L.splice(i,1);phSaveList(PHS.key,L);
@@ -3535,15 +3554,14 @@ document.addEventListener("click",function(e){
   if(id==="ph-back"){PHS.view=-1;phDraw();return}
   if(id==="ph-prev"){PHS.view--;phDraw();return}
   if(id==="ph-next"){PHS.view++;phDraw();return}
-  if(id==="ph-slim"){phSlim();return}
   if(id==="ph-dl"){var p=phList(PHS.col,PHS.rid)[PHS.view];if(p)phBlob(p,false).then(function(bb){if(!bb){toast("読み込めませんでした");return}var a=document.createElement("a");a.href=phUrl(bb);a.download=(phTitle(PHS.col,PHS.rid)+"_"+(p.tag||"")+"_"+(PHS.view+1)).replace(/[\\\/:*?"<>|\s]+/g,"_")+".jpg";document.body.appendChild(a);a.click();a.remove()});return}
   if(id==="ph-del"){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に削除";return}phDel(PHS.view);return}
   if(t.classList&&t.classList.contains("phmask")){phClose();return}
 },true);
 document.addEventListener("change",function(e){
+  var q=e.target&&e.target.getAttribute&&e.target.getAttribute("data-phqset");if(q&&PH_Q[q]){S.settings.photoQ=q;saveSettings(true);PHA.msg="";render();toast("写真の画質を「"+PH_Q[q].n+"」にしました");return}
   var t=e.target;if(!t||!t.closest||!t.closest("#phl"))return;
   if(t.getAttribute("data-phadd")){var fs=[].slice.call(t.files||[]);t.value="";phAdd(fs);return}
-  if(t.id==="ph-q"){S.settings.photoQ=t.value;saveSettings(true);PHS.msg="";phDraw();return}
   if(t.id==="ph-tag"){phMeta({tag:t.value});return}
   if(t.id==="ph-cap"){phMeta({cap:t.value.trim().slice(0,80)});return}
 });
@@ -4433,12 +4451,8 @@ async function repBlob(m,i){
   return null;
 }
 async function repShrink(f){
-  var bm=await createImageBitmap(f),k=Math.min(1,1280/Math.max(bm.width,bm.height)),c=document.createElement("canvas");
-  c.width=Math.max(1,Math.round(bm.width*k));c.height=Math.max(1,Math.round(bm.height*k));
-  var x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(bm,0,0,c.width,c.height);
-  var q=0.8,out=null;
-  for(var i=0;i<4;i++){out=await new Promise(function(r){c.toBlob(r,"image/jpeg",q)});if(out&&out.size<=300*1024)break;q-=0.1}
-  return out;
+  var P=PH_Q[phQ()],bm=await createImageBitmap(f,{imageOrientation:"from-image"}).catch(function(){return createImageBitmap(f)});
+  return (await phEncode(bm,P.max,P.q,P.lim)).blob;
 }
 function repUrl(m,i){var key=m.id+":"+i,b=REPB[m.id]&&REPB[m.id][i];if(!b)return RPV[key]||"";
   if(!RPV[key]||RPV[key].b!==b){RPV[key]={b:b,u:URL.createObjectURL(b)}}return RPV[key].u}
@@ -4690,6 +4704,7 @@ function modClick(e,t,d){
   if(t.id==="pn-x"){try{localStorage.setItem("pushOffX",String(Date.now()))}catch(e){}render();return true}
   if(t.id==="nt-hist"){openNotifHist();return true}
   if(t.id==="a2hs-open"){openA2hs();return true}
+  if(t.id==="pha-slim"){phSlimAll();return true}
   if(d&&d.brrst){var bk=d.brrst;brSet(function(b){b[bk]=null});return true}
   if(t.id==="a2hs-go"){$("#modal").innerHTML="";doInstall();return true}
   if(t.id==="inst-x"){try{localStorage.setItem("instX",String(Date.now()))}catch(e){}render();return true}
