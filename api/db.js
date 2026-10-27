@@ -1,6 +1,7 @@
 // データ保存: コレクションごとに Redis の Hash(daito:<col>)。更新のたびに版番号(daito:ver:<col>)を増やす
 const { authed, pipeline, body } = require("./_lib");
 const { maybeDaily } = require("./_backup");
+const { notify } = require("./push");
 const COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform", "ac"];
 const key = (c) => "daito:" + c;
 const vkey = (c) => "daito:ver:" + c;
@@ -9,6 +10,17 @@ function split(path) {
   const m = /^([a-z]+)\/([^/]{1,80})$/.exec(String(path || ""));
   if (!m || COLS.indexOf(m[1]) < 0) return null;
   return { col: m[1], id: m[2] };
+}
+
+
+const JOB_ST = ["指示書受領", "注文書受領", "請書提出済", "施工予定", "完了報告済", "請求済", "入金済"];
+const EM_ST = ["受付", "出動中", "対応完了", "報告済", "請求済", "入金済"];
+// 新規登録・進捗の変更を、管理者と担当者にスマホ通知する(サンプル・金額の更新は対象外)
+async function pushEvents(col, o, n, actor) {
+  if (!n || n.sample) return;
+  const nm = [n.site, n.room].filter(Boolean).join(" ") || "(名称なし)", st = col === "jobs" ? JOB_ST : EM_ST, who = actor && actor.name ? "(" + actor.name + ")" : "";
+  if (!o) return void (await notify(col === "jobs" ? "job" : "emerg", nm, (col === "jobs" ? "新しい案件が登録されました" : "緊急出動が登録されました") + who, n.staff, actor));
+  if (o.status !== n.status && typeof n.status === "number") await notify("status", nm, (col === "emerg" ? "緊急出動: " : "") + (st[o.status] || "") + " → " + (st[n.status] || "") + who, n.staff, actor);
 }
 
 module.exports = async (req, res) => {
@@ -31,11 +43,14 @@ module.exports = async (req, res) => {
     if (b.op === "set" || b.op === "del") {
       const p = split(b.path);
       if (!p) return res.status(400).json({ error: { code: "bad_request" } });
+      let before = null;
+      if (b.op === "set" && (p.col === "jobs" || p.col === "emerg")) { try { const o = (await pipeline([["HGET", key(p.col), p.id]]))[0]; before = o ? JSON.parse(o) : null; } catch (e) {} }
       const cmds = b.op === "set"
         ? [["HSET", key(p.col), p.id, JSON.stringify(b.data == null ? {} : b.data)], ["INCR", vkey(p.col)]]
         : [["HDEL", key(p.col), p.id], ["INCR", vkey(p.col)]];
       const r = await pipeline(cmds);
       await maybeDaily();
+      if (b.op === "set" && b.data && (p.col === "jobs" || p.col === "emerg")) { try { await pushEvents(p.col, before, b.data, authed(req)); } catch (e) {} }
       return res.json({ ok: true, ver: Number(r[1]) });
     }
     if (b.op === "import") {

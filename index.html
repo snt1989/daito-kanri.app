@@ -2932,7 +2932,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
- {v:"2026-10-27",t:"スマホ・PCへの通知",d:"ベル(お知らせ)の「端末への通知」をオンにすると、新しい緊急・対応が必要な案件、大東建託からのメール、アプリの更新を端末に通知します(アプリを開いている間)。iPhoneは「ホーム画面に追加」して開くと使えます。"},
+ {v:"2026-10-27",t:"お知らせを現場管理アプリのように",d:"お知らせに「通知の設定」「通知の履歴」「ご案内」を追加しました。Web版では、新しい案件・緊急出動・進捗の変更が、アプリを閉じていてもスマホに通知されます(通知の設定でオンにします。iPhoneはホーム画面に追加したアプリから)。"},
  {v:"2026-10-23",t:"FAX取込から「そのまま登録」",d:"FAX取込の各書類に「そのまま登録」ボタンを追加しました。確認画面を省いて、工事予定書は工事一覧、注文書・作業依頼書や年間発注予定一覧表は建物維持管理、出動要請書・金額確定通知書は緊急出動に直接登録します。内容を見てから登録したいときは「確認して登録」を使ってください。登録後は一覧で内容を確認してください。"},
  {v:"2026-10-22",t:"建物維持管理に「報告書作成」を追加",d:"建物維持管理に「報告書作成」のページを追加しました。各建物の写真シート(営業所・建物CD・建物名称・作業完了日・作業実施項目と、①建物 ②〜④作業前 ⑤〜⑦作業後の写真7枚)を作り、1か月分を表紙つきの1つのPDFにまとめて保存できます。表紙の営業所・会社名・フリースペースも設定できます。"},
  {v:"2026-10-22",t:"価値観共有チェックシートの画面を一覧プレビューに",d:"価値観共有チェックシートの画面から、チェック項目を無くしました。各案件のシート(記入済みがあればそれ、なければ取り込んだシート)の縮小プレビューが並び、タップして記入できます。記入(保存)すると「記入済」になり、「完了報告済にする」を押せます。設定の「完了報告チェック」も無くしました。"},
@@ -2969,6 +2969,88 @@ function infoUnseen(){
 function infoSeen(){var v=lsGet("infoSeen");return typeof v==="string"?v:""}
 function infoNew(){return infoUnseen().length}
 function infoMarkSeen(){lsSet("infoSeenK",ckey(CHANGELOG[0]));lsSet("infoSeen",CHANGELOG[0].v)}
+/* ---------- スマホ通知(Web Push。Web版のみ) ---------- */
+var PU={status:null,sub:null,prefs:null,busy:false,msg:"",failed:false,loading:false};
+var PUSH_KINDS=[["job","新規案件","新しい案件が登録されたとき"],["emerg","緊急出動","緊急出動が登録されたとき"],["status","案件の進捗","案件・緊急出動の進捗が変わったとき"]];
+function pushSupported(){return !!(window.dsApi&&/^https?:$/.test(location.protocol)&&"serviceWorker" in navigator&&"PushManager" in window&&typeof Notification!=="undefined")}
+function pushCall(action,extra){return window.dsApi("/api/push",Object.assign({action:action},extra||{})).then(function(j){if(!j||j.error||(j.status&&j.status>=400))throw new Error((j&&j.error)||"サーバーエラー");return j})}
+function pushLoad(){
+  if(!pushSupported()||PU.loading||PU.status||PU.failed)return;
+  PU.loading=true;
+  navigator.serviceWorker.getRegistration().then(function(r){return r&&r.pushManager.getSubscription()}).catch(function(){return null})
+    .then(function(sub){PU.sub=sub||null;return pushCall("status",{endpoint:sub?sub.endpoint:""})})
+    .then(function(j){PU.status=j;PU.prefs=j.prefs||null},function(){PU.failed=true})
+    .then(function(){PU.loading=false;if(S.ready)render()});
+}
+function pushKeyBytes(b64){var s=(b64+"====".slice(b64.length%4||4)).replace(/-/g,"+").replace(/_/g,"/"),raw=atob(s),a=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)a[i]=raw.charCodeAt(i);return a}
+function pushOffDismissed(){try{var t=Number(localStorage.getItem("pushOffX")||0);return t&&Date.now()-t<7*86400000}catch(e){return false}}
+function pushOffBanner(){
+  if(!pushSupported()||pushOffDismissed())return "";
+  pushLoad();var st=PU.status;if(!st||!st.configured||PU.sub)return "";
+  return '<div class="todo" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="tt" style="flex:1;min-width:180px"><b>スマホ通知がオフです</b><small>オンにすると、新しい案件・緊急出動・進捗をすぐ受け取れます</small></span><button type="button" class="btn sm primary" id="pn-row">通知をオンにする</button><button type="button" class="btn sm" id="pn-x" aria-label="閉じる">×</button></div>';
+}
+function a2hsShow(){try{var st=matchMedia("(display-mode: standalone)").matches||navigator.standalone;return !st&&/iPhone|iPad|Android/i.test(navigator.userAgent)&&localStorage.getItem("a2hsX")!=="1"}catch(e){return false}}
+function openA2hs(){
+  var ios=/iPhone|iPad/i.test(navigator.userAgent);
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(520px,100%)"><h2>ホーム画面に追加</h2><div class="sub" style="line-height:1.8">'+(ios?"1. Safariで、画面下の共有ボタン(□に↑)をタップ<br>2. 「ホーム画面に追加」をタップ<br>3. ホーム画面のアイコンから開いて、通知をオンにしてください<br>※iPhoneは、ホーム画面に追加したアプリからでないと通知が使えません(iOS 16.4以降)":"1. Chromeの右上のメニュー(︙)をタップ<br>2. 「ホーム画面に追加」または「アプリをインストール」をタップ<br>3. ホーム画面のアイコンから開くと、アプリのように使えます")+'</div><div class="acts"><span><button type="button" class="btn" id="a2hs-no">表示しない</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+}
+function pushPrefsHtml(){
+  var pr=PU.prefs||{};
+  return PUSH_KINDS.map(function(k){return '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.5;margin:6px 0"><input type="checkbox" data-pnpref="'+k[0]+'"'+(pr[k[0]]!==false?" checked":"")+'><span>'+esc(k[1])+'<span class="sub" style="display:block">'+esc(k[2])+"</span></span></label>"}).join("");
+}
+function openPushSet(){
+  var h='<h2>通知の設定</h2>';
+  if(!pushSupported()){
+    h+='<div class="sub" style="line-height:1.7">この環境ではスマホ通知(プッシュ)は使えません。Web版(Vercel)をスマホのホーム画面に追加してお使いください。</div>'+pnBtn();
+  }else{
+    pushLoad();var st=PU.status;
+    if(!st)h+='<div class="sub">'+(PU.failed?"通知の状態を取得できませんでした。":"読み込み中…")+"</div>";
+    else if(!st.configured)h+='<div class="sub" style="line-height:1.7">スマホ通知はまだ準備ができていません。管理者がサーバーの設定(VAPIDキー)を行うと使えます。</div>';
+    else{
+      var on=!!PU.sub,den=Notification.permission==="denied";
+      h+='<div class="sub" style="line-height:1.7">担当・管理している案件に動きがあると、この端末に通知します。アプリを閉じていても届きます。(iPhoneは「ホーム画面に追加」したアプリから設定してください)</div>'+
+        '<div style="margin:12px 0;font-weight:700">この端末の通知: <b style="color:'+(on?"var(--ok,#1a7f37)":"inherit")+'">'+(on?"オン":"オフ")+"</b></div>"+
+        (den?'<div class="sub" style="color:var(--danger,#c0392b)">ブラウザの設定で通知がブロックされています。端末・ブラウザの設定から許可してください。</div>':"")+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+(on?'<button type="button" class="btn" id="pn-off"'+(PU.busy?" disabled":"")+'>通知をオフにする</button><button type="button" class="btn" id="pn-test">テスト通知</button>':'<button type="button" class="btn primary" id="pn-on"'+(PU.busy||den?" disabled":"")+'>この端末で通知を受け取る</button>')+"</div>"+
+        (on?'<div style="font-weight:700;margin:14px 0 2px">通知する内容(この端末)</div>'+pushPrefsHtml():"")+
+        (PU.msg?'<div class="sub" style="margin-top:8px">'+esc(PU.msg)+"</div>":"");
+    }
+  }
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(520px,100%)">'+h+'<div class="acts"><span><button type="button" class="btn" id="pn-back">お知らせに戻る</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+}
+function pushOn(){
+  PU.busy=true;PU.msg="";openPushSet();
+  Notification.requestPermission().then(function(p){if(p!=="granted")throw new Error("通知が許可されませんでした");return navigator.serviceWorker.ready})
+    .then(function(reg){return reg.pushManager.getSubscription().then(function(old){return old||reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushKeyBytes(PU.status.publicKey)})})})
+    .then(function(sub){PU.sub=sub;return pushCall("subscribe",{subscription:sub.toJSON(),prefs:PU.prefs||null})})
+    .then(function(){PU.msg="通知をオンにしました。";PU.status.configured=true},function(e){PU.msg="設定できませんでした: "+e.message})
+    .then(function(){PU.busy=false;openPushSet()});
+}
+function pushOff(){
+  PU.busy=true;openPushSet();var sub=PU.sub,ep=sub&&sub.endpoint;
+  Promise.resolve(sub&&sub.unsubscribe()).then(function(){return ep&&pushCall("unsubscribe",{endpoint:ep})})
+    .then(function(){PU.sub=null;PU.msg="通知をオフにしました。"},function(e){PU.msg=e.message}).then(function(){PU.busy=false;openPushSet()});
+}
+function pushTest(){navigator.serviceWorker.ready.then(function(r){return r.showNotification("大東受注ナビ",{body:"テスト通知です。この表示が出れば設定できています。"})}).then(function(){toast("テスト通知を出しました")},function(){toast("通知を表示できませんでした")})}
+document.addEventListener("change",function(e){
+  var k=e.target&&e.target.getAttribute&&e.target.getAttribute("data-pnpref");if(!k||!PU.sub)return;
+  var pr={};document.querySelectorAll("[data-pnpref]").forEach(function(x){pr[x.getAttribute("data-pnpref")]=x.checked});PU.prefs=pr;
+  pushCall("prefs",{endpoint:PU.sub.endpoint,prefs:pr}).then(function(){toast("通知の設定を保存しました")},function(){toast("保存できませんでした")});
+});
+var NOTIF_ICON={job:"🏗",emerg:"🚨",status:"🔄",report:"📝"};
+function openNotifHist(){
+  var put=function(h){var el=$("#nh-body");if(el)el.innerHTML=h};
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(560px,100%)"><h2>通知の履歴</h2><div id="nh-body" class="sub" style="min-height:80px;padding:12px 0">読み込み中…</div><div class="acts"><span><button type="button" class="btn" id="pn-back">お知らせに戻る</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+  if(!pushSupported()){put("通知の履歴は、Web版(Vercel)でのみ使えます。");return}
+  pushCall("history").then(function(j){
+    var L=j.list||[];if(!L.length){put('<div style="text-align:center;padding:18px 0">この30日間に届いた通知はありません</div>');return}
+    var last="";put(L.map(function(x){var d=new Date(x.at),day=(d.getMonth()+1)+"月"+d.getDate()+"日",hm=("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2),hd="";
+      if(day!==last){last=day;hd='<div class="ngrp">'+day+"</div>"}
+      return hd+'<div class="nrow"><span class="ni">'+(NOTIF_ICON[x.kind]||"🔔")+'</span><span class="nb"><b>'+esc(x.title)+'</b><span class="sub">'+esc(x.body)+'</span></span><span class="sub">'+hm+"</span></div>"}).join(""));
+  },function(e){put("読み込めませんでした: "+esc(e.message))});
+}
+function pushBadgeSync(n){try{if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.controller.postMessage({type:"badge-sync",n:n})}catch(e){}}
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&S.ready){try{renderTabs()}catch(e){}}});
 /* ---------- スマホ・PCの通知(OSの通知) ---------- */
 function pnOk(){return typeof Notification!=="undefined"}
 function pnOn(){return pnOk()&&Notification.permission==="granted"&&lsGet("pnOn")==="1"}
@@ -2978,7 +3060,7 @@ function pnShow(t,b,tag){
   try{new Notification(t,o)}catch(e){}
 }
 function pnCheck(){
-  if(!pnOn()||!S.ready)return;
+  if(pushSupported()||!pnOn()||!S.ready)return;
   var keys=[],names={};
   ntUnread().forEach(function(x){var k="m:"+x.id;keys.push(k);names[k]="メール: "+(x.subject||x.sender||"")});
   todos().forEach(function(t){var k="t:"+t.kind+":"+t.id;keys.push(k);names[k]=t.tag+": "+t.title});
@@ -3008,7 +3090,7 @@ function pnBtn(){
 }
 function ntUnread(){return NT.list.filter(function(x){return ntDone().indexOf(x.id)<0})}
 function infoBadge(){return ntUnread().length+(infoNew()?1:0)}
-function appBadge(n){try{if(n>0&&navigator.setAppBadge)navigator.setAppBadge(n).catch(function(){});else if(n<=0&&navigator.clearAppBadge)navigator.clearAppBadge().catch(function(){})}catch(e){}}
+function appBadge(n){try{pushBadgeSync(n)}catch(e){}try{if(n>0&&navigator.setAppBadge)navigator.setAppBadge(n).catch(function(){});else if(n<=0&&navigator.clearAppBadge)navigator.clearAppBadge().catch(function(){})}catch(e){}}
 function infoDay(v){var a=String(v).split("-");return (+a[1])+"月"+(+a[2])+"日"}
 function relHtml(){
   var un=infoUnseen().map(ckey),days=[],map={};
@@ -3023,20 +3105,28 @@ function openRel(all){
   $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(620px,100%)"><h2>'+ttl+'</h2>'+(has?'<div class="sub">新しい機能・変更点をお知らせします。</div>':"")+'<div class="rel-list">'+relHtml()+'</div><div class="acts"><span><button type="button" class="btn" id="nf-open">お知らせに戻る</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
   if(has){infoMarkSeen();var b=$("#bell");if(b){var tn=todos().length+infoBadge();b.innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn)}}
 }
+function guideHtml(){
+  var out="",row=function(id,ic,t,sb){return '<button type="button" class="nrow" id="'+id+'"><span class="ni">'+ic+'</span><span class="nb"><b>'+esc(t)+'</b><span class="sub">'+esc(sb)+"</span></span></button>"};
+  if(a2hsShow())out+=row("a2hs-open","📲","ホーム画面に追加しましょう","アプリのようにすぐ開けて、通知も受け取れます");
+  else if(pushSupported()){pushLoad();if(PU.status&&PU.status.configured&&!PU.sub)out+=row("pn-row","🔔","スマホ通知をオンにしましょう","新しい案件・緊急出動・進捗をすぐ受け取れます")}
+  else out+=pnBtn();
+  return out?'<div class="ngrp">ご案内</div>'+out:"";
+}
 function openNotices(){
   ntKick();
   var T=todos(),M=ntUnread(),U=infoUnseen(),h="";
   var row=function(attr,icon,title,sub,urgent){return '<button type="button" class="nrow'+(urgent?" urgent":"")+'" '+attr+'><span class="ni">'+icon+'</span><span class="nb"><b>'+esc(title)+'</b><span class="sub">'+esc(sub)+"</span></span></button>"};
   if(U.length)h+='<div class="ngrp">アプリの更新</div>'+row('id="rel-open"',"🆕","アプリが新しくなりました","新しい機能・変更点があります("+U.length+"件)",true);
-  if(T.length)h+='<div class="ngrp">対応が必要な案件('+T.length+")</div>"+T.slice(0,5).map(function(t){return row('data-todo="'+t.kind+":"+esc(t.id)+'"',"✓",t.title,t.tag+(t.note?" ／ "+t.note:""),false)}).join("")+(T.length>5?'<div class="sub" style="padding:6px 2px">ほか '+(T.length-5)+" 件はホームで確認できます。</div>":"");
+  if(T.length)h+='<div class="ngrp">対応が必要な案件('+T.length+")</div>"+T.slice(0,5).map(function(t){return row('data-todo="'+t.kind+":"+esc(t.id)+'"',({j:"🏗",e:"🚨",m:"🏢",d:"⚠",w:"💧",a:"❄"})[t.kind]||"✓",t.title,t.tag+(t.note?" ／ "+t.note:""),false)}).join("")+(T.length>5?'<div class="sub" style="padding:6px 2px">ほか '+(T.length-5)+" 件はホームで確認できます。</div>":"");
   if(M.length)h+='<div class="ngrp">大東建託からのメール('+M.length+")</div>"+M.slice(0,5).map(function(x){var d=x.date?new Date(x.date):null,ds=d&&!isNaN(d)?(d.getMonth()+1)+"/"+d.getDate()+" ":"";return '<a class="nrow" href="'+esc(x.url)+'" target="_blank" rel="noopener"><span class="ni">📩</span><span class="nb"><b>'+esc(x.subject||"(件名なし)")+'</b><span class="sub">'+ds+esc(x.sender)+"</span></span></a>"}).join("")+(M.length>5?'<div class="sub" style="padding:6px 2px">ほか '+(M.length-5)+" 件はホームで確認できます。</div>":"");
   if(!h)h='<div class="empty" style="padding:26px 6px;text-align:center">新しいお知らせはありません</div>';
-  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(560px,100%)"><h2>お知らせ</h2><div>'+h+'</div>'+pnBtn()+'<div class="acts"><span><button type="button" class="btn" id="rel-hist">更新の履歴</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(560px,100%)"><h2>お知らせ</h2><div>'+h+'</div>'+guideHtml()+'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button type="button" class="btn" id="nt-hist">通知の履歴</button><button type="button" class="btn" id="pn-set">通知の設定</button><button type="button" class="btn" id="rel-hist">更新の履歴</button></div><div class="acts"><span></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
 }
 function infoBanner(){
   var n=ntUnread().length,u=infoNew(),h="";
   if(u)h+='<button type="button" class="todo" id="rel-open"><span class="dt">更新</span><span class="tt">アプリが新しくなりました<small>新しい機能・変更点 '+u+'件 — タップして内容を見る</small></span><span class="go sub">見る ›</span></button>';
   if(0)h+='<button class="todo" data-tab="info"><span class="dt">お知らせ</span><span class="tt">大東建託からのメール '+n+'件<small>お知らせ画面で内容を確認できます</small></span><span class="go sub">開く ›</span></button>';
+  try{h+=pushOffBanner()}catch(e){}
   return h}
 /* ---------- 担当ログイン(Web版のみ) ---------- */
 function ME(){return window.dsAuth&&window.dsAuth.me||null}
@@ -4298,6 +4388,15 @@ function modClick(e,t,d){
   if(t.id==="rel-open"){openRel(false);return true}
   if(t.id==="rel-hist"){openRel(true);return true}
   if(t.id==="pn-tg"){pnToggle().then(function(){openNotices()});return true}
+  if(t.id==="pn-set"||t.id==="pn-row"){openPushSet();return true}
+  if(t.id==="pn-on"){pushOn();return true}
+  if(t.id==="pn-off"){pushOff();return true}
+  if(t.id==="pn-test"){pushTest();return true}
+  if(t.id==="pn-back"){openNotices();return true}
+  if(t.id==="pn-x"){try{localStorage.setItem("pushOffX",String(Date.now()))}catch(e){}render();return true}
+  if(t.id==="nt-hist"){openNotifHist();return true}
+  if(t.id==="a2hs-open"){openA2hs();return true}
+  if(t.id==="a2hs-no"){try{localStorage.setItem("a2hsX","1")}catch(e){}$("#modal").innerHTML="";render();return true}
   if(t.id==="nf-open"){openNotices();return true}
   if(t.id==="nf-x"){$("#modal").innerHTML="";render();return true}
   if(d.stab){S.setTab=d.stab;render();return true}
