@@ -366,6 +366,15 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .nt-tabs .tab{padding:9px 2px;font-size:13.5px;white-space:nowrap;text-align:center}
 .ntc{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:11px;line-height:18px;text-align:center}
 .nt-body{min-height:260px}
+.pgstat{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 14px}.pgstat>div{display:flex;flex-direction:column;gap:2px}.pgstat b{font-size:18px}
+.pgbar,.pgact{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px}.pgbar input[type=search]{flex:1;min-width:180px}
+.pghd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:16px 2px 8px}
+.pggrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.phcell.pgon{outline:3px solid var(--accent);outline-offset:-3px}
+.pgck{position:absolute;right:6px;bottom:6px;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.9);border:2px solid var(--accent);color:var(--accent);font-weight:700;display:grid;place-items:center;z-index:1}
+.pgon .pgck{background:var(--accent);color:#fff}
+@media(max-width:720px){.pgstat{grid-template-columns:repeat(2,1fr)}.pggrid{grid-template-columns:repeat(3,1fr)}}
+
 .phmask{z-index:95}
 .phbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-2px 0 10px}
 .phtool{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 6px}
@@ -543,6 +552,7 @@ function counts(){
   });return c;
 }
 var ICONS={
+ image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
  home:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
  list:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
@@ -561,7 +571,7 @@ var ICONS={
  menu:'<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
  tool:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'};
 function ic(n,sz){sz=sz||20;return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[n]+"</svg>"}
-var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"docs",label:"書類ボックス",ic:"book"},{tab:"qa",label:"Q&A",ic:"help"},
+var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"docs",label:"書類ボックス",ic:"book"},{tab:"photos",label:"画像管理",ic:"image"},{tab:"qa",label:"Q&A",ic:"help"},
  {g:"原状回復工事"},{tab:"jobs",label:"工事一覧",ic:"list",d:"genkyo"},{tab:"sched",label:"施工予定",ic:"calendar",d:"genkyo"},{tab:"report",label:"価値観共有チェックシート",ic:"check",d:"genkyo"},{tab:"bill",label:"請求・入金",ic:"yen",d:"genkyo"},{tab:"water",label:"水道開始・中止届",ic:"drop",d:"genkyo"},
  {g:"緊急対応"},{tab:"elog",label:"出動一覧",ic:"alert",d:"emerg"},{tab:"esum",label:"月次集計",ic:"chart",d:"emerg"},
  {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mrep",label:"報告書作成",ic:"list",d:"maint"},
@@ -634,7 +644,7 @@ function pageHead(){
   else if(S.tab==="qa")act='<button class="btn pri" id="add">＋ Q&Aを追加</button>';
   else if(S.tab==="aclist")act='<button class="btn out" id="ac-imp">📄 書類から取り込む</button><input type="file" id="ac-file" accept="application/pdf,image/*" style="display:none"><button class="btn pri" id="add">＋ エアコン案件を追加</button>';
   else if(S.tab==="water")act='<button class="btn out" id="w-job">案件から作成</button><button class="btn pri" id="add">＋ 届出を追加</button>';
-  else if(S.tab!=="set"&&S.tab!=="mscope")act='<button class="btn pri" id="add">'+({genkyo:"＋ 案件を登録",emerg:"＋ 緊急出動を記録",maint:S.tab==="mplan"?"＋ 年間計画を追加":"＋ 維持管理を追加"}[S.div]||"＋ 追加")+"</button>";
+  else if(S.tab!=="set"&&S.tab!=="mscope"&&S.tab!=="photos")act='<button class="btn pri" id="add">'+({genkyo:"＋ 案件を登録",emerg:"＋ 緊急出動を記録",maint:S.tab==="mplan"?"＋ 年間計画を追加":"＋ 維持管理を追加"}[S.div]||"＋ 追加")+"</button>";
   if(S.tab==="jobs")act='<button class="btn out" id="vs-open">📎 価値観共有チェックシートを取り込む</button>'+act;
   return '<div class="pghead"><h2 class="pt">'+n.label+'</h2><div class="pgact">'+act+"</div></div>";
 }
@@ -675,7 +685,7 @@ function render0(){
   var m=$("#main"),h="";
   if(!S.persist)h+='<div class="banner">共有保存が使えない表示です。入力内容はこのブラウザにだけ保存されます。</div>';
   h+=pageHead();
-  h+=({home:vHome,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,mrep:vMrep,water:vWater}[S.tab]||vJobs)();
+  h+=({home:vHome,photos:vPhotos,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,mrep:vMrep,water:vWater}[S.tab]||vJobs)();
   m.innerHTML=h;
   moneyScrub(document);moneyBadge(document);
   decorate();mobTables();
@@ -2959,6 +2969,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-28",t:"画像管理ページ",d:"メニューに「画像管理」を追加しました。すべての案件の写真を、種類・分類・検索で絞り込んで一覧できます。案件ごとにまとまって表示され、まとめて分類の変更・ZIPでのダウンロード・削除ができます。"},
  {v:"2026-10-28",t:"案件ごとに写真を保存",d:"工事・緊急出動・維持管理・エアコンの各案件の編集画面に「📷 写真」を追加しました。写真は作業前・作業中・作業後・その他に分けて、メモ付きで保存できます。保存時に自動で縮小・圧縮します。画質は設定→全体共通→「写真の画質」で一括管理し、保存済みの写真もまとめて軽量化できます。"},
  {v:"2026-10-27",t:"ロゴ・アイコンを設定で変更",d:"設定→全体共通→「ロゴ・アイコン」で、画面左上のロゴ・アプリ名と、ホーム画面・インストール時のアイコンを変更できます(背景色・余白も調整できます)。"},
  {v:"2026-10-27",t:"アプリとしてインストール",d:"Web版を、スマホのホーム画面やPCのデスクトップにアプリとしてインストールできるようになりました。ホームの「インストール」ボタン、またはお知らせ→設定から行えます。iPhoneはSafariの共有→「ホーム画面に追加」です。"},
@@ -3400,7 +3411,7 @@ var PH_Q={std:{n:"標準",max:1600,q:0.82,lim:480,d:"長辺1600px・約300〜500
 function phQ(){var k=S.settings.photoQ;return PH_Q[k]?k:"light"}
 function phInit(){
   if(!db){var v=lsGet("photo");PHD=v&&typeof v==="object"?v:{};return}
-  db.collection("photo").onSnapshot(function(snap){var o={};snap.docs.forEach(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}o[x.id]=d});PHD=o;if(PHS.key)phDraw()},function(){});
+  db.collection("photo").onSnapshot(function(snap){var o={};snap.docs.forEach(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}o[x.id]=d});PHD=o;if(PHS.key)phDraw();if(S.tab==="photos"&&!PG.busy&&!PG.selMode)render()},function(){});
 }
 function phKey(col,id){return col+"_"+id}
 function phList(col,id){var d=PHD[phKey(col,id)];return d&&Array.isArray(d.list)?d.list:[]}
@@ -3564,6 +3575,111 @@ document.addEventListener("change",function(e){
   if(t.getAttribute("data-phadd")){var fs=[].slice.call(t.files||[]);t.value="";phAdd(fs);return}
   if(t.id==="ph-tag"){phMeta({tag:t.value});return}
   if(t.id==="ph-cap"){phMeta({cap:t.value.trim().slice(0,80)});return}
+});
+/* ====================== 画像管理(全案件の写真) ====================== */
+var PG={q:"",col:"",tag:"",sort:"new",sel:{},selMode:false,lim:120,busy:false,msg:""};
+var PG_COL={jobs:["工事","🏗"],emerg:["緊急","🚨"],maint:["維持管理","🏢"],ac:["エアコン","❄"]};
+function pgItems(){
+  var out=[];Object.keys(PHD).forEach(function(k){var d=PHD[k];if(!d||!Array.isArray(d.list))return;var ttl=phTitle(d.col,d.rid),has=!!phRec(d.col,d.rid);
+    d.list.forEach(function(p,i){out.push({key:k,col:d.col,rid:d.rid,i:i,p:p,ttl:has?ttl:"(削除された案件)",orphan:!has})})});
+  return out;
+}
+function pgFiltered(){
+  var q=PG.q.trim().toLowerCase();
+  var L=pgItems().filter(function(x){if(PG.col&&x.col!==PG.col)return false;if(PG.tag&&(x.p.tag||"その他")!==PG.tag)return false;
+    if(PG.col==="_orphan"&&!x.orphan)return false;
+    return !q||(x.ttl+" "+(x.p.cap||"")+" "+(x.p.by||"")).toLowerCase().indexOf(q)>=0});
+  if(PG.col==="_orphan")L=pgItems().filter(function(x){return x.orphan&&(!q||(x.p.cap||"").toLowerCase().indexOf(q)>=0)});
+  var sk={new:function(a,b){return String(b.p.at||"").localeCompare(String(a.p.at||""))},old:function(a,b){return String(a.p.at||"").localeCompare(String(b.p.at||""))},big:function(a,b){return (b.p.size||0)-(a.p.size||0)},name:function(a,b){return a.ttl.localeCompare(b.ttl,"ja")||String(a.p.at||"").localeCompare(String(b.p.at||""))}};
+  return L.sort(sk[PG.sort]||sk.new);
+}
+function pgSelKey(x){return x.key+"|"+x.p.id}
+function vPhotos(){
+  var all=pgItems(),L=pgFiltered(),tot=all.reduce(function(a,x){return a+(x.p.size||0)},0),ftot=L.reduce(function(a,x){return a+(x.p.size||0)},0);
+  var cases={};all.forEach(function(x){cases[x.key]=1});
+  var nsel=Object.keys(PG.sel).length,orph=all.filter(function(x){return x.orphan}).length;
+  var h='<div class="panel pgstat"><div><b>'+all.length+'</b><span class="sub">枚</span></div><div><b>'+Object.keys(cases).length+'</b><span class="sub">件の案件</span></div><div><b>'+phSize(tot)+'</b><span class="sub">合計容量</span></div><div><b>'+esc(PH_Q[phQ()].n)+'</b><span class="sub">保存の画質 <button type="button" class="chip2" id="pg-gq">変更 ›</button></span></div></div>';
+  h+='<div class="panel pgbar"><input type="search" id="pg-q" value="'+esc(PG.q)+'" placeholder="案件名・メモ・撮影者で検索">'+
+   '<select id="pg-col" aria-label="案件の種類"><option value="">種類:すべて</option>'+Object.keys(PG_COL).map(function(k){return '<option value="'+k+'"'+(PG.col===k?" selected":"")+">"+PG_COL[k][0]+"</option>"}).join("")+(orph?'<option value="_orphan"'+(PG.col==="_orphan"?" selected":"")+">案件なし("+orph+")</option>":"")+"</select>"+
+   '<select id="pg-tag" aria-label="分類"><option value="">分類:すべて</option>'+PH_TAGS.map(function(t){return "<option"+(PG.tag===t?" selected":"")+">"+t+"</option>"}).join("")+"</select>"+
+   '<select id="pg-sort" aria-label="並び順">'+[["new","新しい順"],["old","古い順"],["big","容量が大きい順"],["name","案件名順"]].map(function(x){return '<option value="'+x[0]+'"'+(PG.sort===x[0]?" selected":"")+">"+x[1]+"</option>"}).join("")+"</select>"+
+   '<button type="button" class="btn sm'+(PG.selMode?" pri":"")+'" id="pg-selmode">'+(PG.selMode?"選択をやめる":"☑ 選択")+"</button></div>";
+  if(PG.selMode)h+='<div class="panel pgact"><span><b>'+nsel+'</b>枚を選択中</span><button type="button" class="btn sm" id="pg-all">表示中をすべて選択</button><button type="button" class="btn sm" id="pg-none"'+(nsel?"":" disabled")+'>選択を解除</button>'+
+   '<select id="pg-settag"'+(nsel?"":" disabled")+'><option value="">分類を変更…</option>'+PH_TAGS.map(function(t){return "<option>"+t+"</option>"}).join("")+'</select><button type="button" class="btn sm" id="pg-dl"'+(nsel&&!PG.busy?"":" disabled")+'>⬇ ダウンロード(ZIP)</button>'+(window.dsApi&&!isAdmin()?"":'<button type="button" class="btn sm danger" id="pg-del"'+(nsel&&!PG.busy?"":" disabled")+">削除</button>")+"</div>";
+  if(PG.msg)h+='<div class="banner">'+esc(PG.msg)+"</div>";
+  if(!window.dsFiles)h+='<div class="sub" style="margin:4px 2px 8px">※Claude版では写真は開いている間だけ保持されます。Web版ではサーバーに保存され、全員で共有されます。</div>';
+  if(!L.length)return h+'<div class="empty" style="padding:40px 10px;text-align:center">'+(all.length?"条件に合う写真はありません":"まだ写真がありません。各案件の編集画面の「📷 写真」から追加できます。")+"</div>";
+  h+='<div class="sub" style="margin:4px 2px 8px">'+L.length+"枚・"+phSize(ftot)+(L.length>PG.lim?"(先頭 "+PG.lim+" 枚を表示)":"")+"</div>";
+  var V=L.slice(0,PG.lim),groups=[],gi={};
+  if(PG.sort==="name"||PG.sort==="new"||PG.sort==="old"){V.forEach(function(x){if(gi[x.key]==null){gi[x.key]=groups.length;groups.push({x:x,items:[]})}groups[gi[x.key]].items.push(x)})}
+  else groups=[{x:null,items:V}];
+  h+=groups.map(function(g){
+    var hd=g.x?'<div class="pghd"><span class="tag">'+PG_COL[g.x.col][1]+" "+PG_COL[g.x.col][0]+"</span><b>"+esc(g.x.ttl)+'</b><span class="sub">'+g.items.length+"枚</span>"+(g.x.orphan?"":'<button type="button" class="chip2" data-pgcase="'+esc(g.x.key)+'">案件を開く ›</button>')+"</div>":"";
+    return hd+'<div class="phgrid pggrid">'+g.items.map(function(x){var on=!!PG.sel[pgSelKey(x)],dt=x.p.at?new Date(x.p.at):null;
+      return '<button type="button" class="phcell'+(on?" pgon":"")+'" data-pgk="'+esc(x.key)+'" data-pgi="'+x.i+'"><span class="phimg" data-pgth="'+esc(x.key)+"|"+x.i+'"></span><span class="phtg">'+esc(x.p.tag||"その他")+'</span><span class="phsz">'+phSize(x.p.size)+"</span>"+(PG.selMode?'<span class="pgck">'+(on?"✓":"")+"</span>":"")+'<span class="phcap">'+(g.x?"":esc(x.ttl)+" ")+(dt&&!isNaN(dt)?(dt.getMonth()+1)+"/"+dt.getDate():"")+(x.p.cap?" "+esc(x.p.cap):"")+"</span></button>"}).join("")+"</div>"}).join("");
+  if(L.length>PG.lim)h+='<div style="text-align:center;margin:14px"><button type="button" class="btn" id="pg-more">さらに表示('+(L.length-PG.lim)+"枚)</button></div>";
+  setTimeout(pgThumbs,0);
+  return h;
+}
+var PGIO=null;
+function pgThumbs(){
+  var els=[].slice.call(document.querySelectorAll("[data-pgth]"));if(!els.length)return;
+  var load=function(el){var a=el.getAttribute("data-pgth").split("|"),d=PHD[a[0]],p=d&&d.list&&d.list[+a[1]];if(!p)return;phBlob(p,true).then(function(b){if(b&&document.body.contains(el))el.style.backgroundImage="url("+phUrl(b)+")"})};
+  if(!("IntersectionObserver" in window)){els.forEach(load);return}
+  if(PGIO)PGIO.disconnect();
+  PGIO=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){PGIO.unobserve(e.target);load(e.target)}})},{rootMargin:"300px"});
+  els.forEach(function(el){PGIO.observe(el)});
+}
+function pgSelected(){var all=pgItems();return all.filter(function(x){return PG.sel[pgSelKey(x)]})}
+function pgOpenCase(key){var d=PHD[key];if(!d)return;var f={jobs:openJob,emerg:openEmerg,maint:openMaint,ac:openAc}[d.col];if(f&&phRec(d.col,d.rid))f(d.rid)}
+async function pgDownload(){
+  var X=pgSelected();if(!X.length||PG.busy)return;PG.busy=true;PG.msg="ZIPを作成中… 0 / "+X.length;render();
+  try{
+    await loadJszip();if(typeof JSZip==="undefined")throw new Error("ZIPのライブラリを読み込めませんでした");
+    var zip=new JSZip(),used={},n=0;
+    for(var i=0;i<X.length;i++){var x=X[i],b=await phBlob(x.p,false);PG.msg="ZIPを作成中… "+(i+1)+" / "+X.length;render();if(!b)continue;
+      var base=(x.ttl+"/"+(x.p.tag||"その他")+"_"+String(x.p.at||"").slice(0,10)+(x.p.cap?"_"+x.p.cap:"")).replace(/[\\:*?"<>|]+/g,"_"),nm=base+".jpg",k=1;while(used[nm]){nm=base+"_"+(++k)+".jpg"}used[nm]=1;zip.file(nm,b);n++}
+    var blob=await zip.generateAsync({type:"blob"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="写真_"+TODAY()+".zip";document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},60000);
+    PG.msg=n+"枚をZIPでダウンロードしました";
+  }catch(e){PG.msg="ダウンロードできませんでした: "+e.message}
+  PG.busy=false;render();
+}
+function pgDelete(){
+  var X=pgSelected();if(!X.length)return;var by={};X.forEach(function(x){(by[x.key]=by[x.key]||[]).push(x.p.id)});
+  Object.keys(by).forEach(function(k){var d=PHD[k];if(!d)return;var L=d.list.filter(function(p){return by[k].indexOf(p.id)<0});phSaveList(k,L)});
+  if(window.dsFiles&&window.dsFiles.del)X.forEach(function(x){try{window.dsFiles.del(x.p.id);if(x.p.tid)window.dsFiles.del(x.p.tid)}catch(e){}});
+  PG.sel={};PG.msg=X.length+"枚を削除しました";render();
+}
+function pgSetTag(t){
+  var X=pgSelected();if(!X.length||!t)return;var by={};X.forEach(function(x){(by[x.key]=by[x.key]||[]).push(x.p.id)});
+  Object.keys(by).forEach(function(k){var d=PHD[k];if(!d)return;phSaveList(k,d.list.map(function(p){return by[k].indexOf(p.id)>=0?Object.assign({},p,{tag:t}):p}))});
+  PG.msg=X.length+"枚の分類を「"+t+"」にしました";render();
+}
+document.addEventListener("click",function(e){
+  if(S.tab!=="photos")return;var t=e.target&&e.target.closest?e.target:null;if(!t||t.closest("#phl")||t.closest("#modal .mask"))return;
+  var x;
+  if((x=t.closest("[data-pgk]"))){var k=x.getAttribute("data-pgk"),i=+x.getAttribute("data-pgi"),d=PHD[k],p=d&&d.list[i];if(!p)return;
+    if(PG.selMode){var sk=k+"|"+p.id;if(PG.sel[sk])delete PG.sel[sk];else PG.sel[sk]=1;render();return}
+    PHS={key:k,col:d.col,rid:d.rid,tag:"all",view:i,busy:false,msg:"",sel:{}};phDraw();return}
+  if((x=t.closest("[data-pgcase]"))){pgOpenCase(x.getAttribute("data-pgcase"));return}
+  var id=(t.closest("button")||{}).id||"";
+  if(id==="pg-gq"){S.tab="set";S.setTab="photo";render();return}
+  if(id==="pg-selmode"){PG.selMode=!PG.selMode;if(!PG.selMode)PG.sel={};PG.msg="";render();return}
+  if(id==="pg-all"){pgFiltered().forEach(function(x){PG.sel[pgSelKey(x)]=1});render();return}
+  if(id==="pg-none"){PG.sel={};render();return}
+  if(id==="pg-more"){PG.lim+=120;render();return}
+  if(id==="pg-dl"){pgDownload();return}
+  if(id==="pg-del"){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当に"+Object.keys(PG.sel).length+"枚を削除";return}pgDelete();return}
+});
+document.addEventListener("change",function(e){
+  if(S.tab!=="photos")return;var t=e.target;if(!t)return;
+  if(t.id==="pg-col"){PG.col=t.value;PG.lim=120;render();return}
+  if(t.id==="pg-tag"){PG.tag=t.value;PG.lim=120;render();return}
+  if(t.id==="pg-sort"){PG.sort=t.value;render();return}
+  if(t.id==="pg-settag"){pgSetTag(t.value);return}
+});
+document.addEventListener("input",function(e){
+  if(S.tab!=="photos"||!e.target||e.target.id!=="pg-q")return;PG.q=e.target.value;clearTimeout(PG.qt);PG.qt=setTimeout(function(){var el=$("#pg-q"),pos=el&&el.selectionStart;render();var n=$("#pg-q");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}},300);
 });
 /* ====================== 水道届の様式(アップロード)に記入して出力 ====================== */
 var WTF_KEYS=[["name","使用者氏名"],["kana","フリガナ"],["addr","使用場所の住所"],["tel","連絡先電話番号"],["custNo","お客様番号"],["pay","支払い方法"],["payer","支払者氏名"],["newAddr","転居先の住所"],["workplace","勤務先"],["occupants","世帯人数"],["sendTo","送付先"],
