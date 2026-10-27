@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="/manifest.webmanifest"><script src="/shim.js"></script><script>try{if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js")}catch(e){}</script></head><body>
+<html lang="ja" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#c8102e"><link rel="icon" type="image/png" href="/icons/icon-192.png"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="大東受注ナビ"><meta name="apple-mobile-web-app-status-bar-style" content="default"><script src="/shim.js"></script><script>try{if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js")}catch(e){}window.__bip=null;addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__bip=e;try{if(window.__bipCb)window.__bipCb()}catch(x){}});addEventListener("appinstalled",function(){window.__bip=null;try{if(window.__bipCb)window.__bipCb()}catch(x){}});</script></head><body>
 <title>大東受注ナビ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
@@ -366,6 +366,11 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .nt-tabs .tab{padding:9px 2px;font-size:13.5px;white-space:nowrap;text-align:center}
 .ntc{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:11px;line-height:18px;text-align:center}
 .nt-body{min-height:260px}
+.hbnr{display:flex;gap:10px;align-items:center;padding:12px 12px 12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card,#fff);margin:10px 0}
+.hbnr .hb-ic{flex:none;font-size:20px}
+.hbnr .hb-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.hbnr .hb-t small{color:var(--muted);font-size:12px;line-height:1.5}
+.hbnr .btn{flex:none}
+.hbnr .hb-x{flex:none;border:0;background:none;color:var(--muted);font-size:18px;width:32px;height:32px;cursor:pointer;border-radius:50%}
 .rel-list{max-height:min(60vh,520px);overflow-y:auto}
 .rel-day{margin:2px 0 14px}
 .rel-h{font-size:13px;font-weight:700;margin-bottom:4px}
@@ -2936,6 +2941,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-27",t:"アプリとしてインストール",d:"Web版を、スマホのホーム画面やPCのデスクトップにアプリとしてインストールできるようになりました。ホームの「インストール」ボタン、またはお知らせ→設定から行えます。iPhoneはSafariの共有→「ホーム画面に追加」です。"},
  {v:"2026-10-27",t:"お知らせを現場管理アプリのように",d:"お知らせに「通知の設定」「通知の履歴」「ご案内」を追加しました。Web版では、新しい案件・緊急出動・進捗の変更が、アプリを閉じていてもスマホに通知されます(通知の設定でオンにします。iPhoneはホーム画面に追加したアプリから)。"},
  {v:"2026-10-23",t:"FAX取込から「そのまま登録」",d:"FAX取込の各書類に「そのまま登録」ボタンを追加しました。確認画面を省いて、工事予定書は工事一覧、注文書・作業依頼書や年間発注予定一覧表は建物維持管理、出動要請書・金額確定通知書は緊急出動に直接登録します。内容を見てから登録したいときは「確認して登録」を使ってください。登録後は一覧で内容を確認してください。"},
  {v:"2026-10-22",t:"建物維持管理に「報告書作成」を追加",d:"建物維持管理に「報告書作成」のページを追加しました。各建物の写真シート(営業所・建物CD・建物名称・作業完了日・作業実施項目と、①建物 ②〜④作業前 ⑤〜⑦作業後の写真7枚)を作り、1か月分を表紙つきの1つのPDFにまとめて保存できます。表紙の営業所・会社名・フリースペースも設定できます。"},
@@ -2991,12 +2997,24 @@ function pushOffDismissed(){try{var t=Number(localStorage.getItem("pushOffX")||0
 function pushOffBanner(){
   if(!pushSupported()||pushOffDismissed())return "";
   pushLoad();var st=PU.status;if(!st||!st.configured||PU.sub)return "";
-  return '<div class="todo" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="tt" style="flex:1;min-width:180px"><b>スマホ通知がオフです</b><small>オンにすると、新しい案件・緊急出動・進捗をすぐ受け取れます</small></span><button type="button" class="btn sm primary" id="pn-row">通知をオンにする</button><button type="button" class="btn sm" id="pn-x" aria-label="閉じる">×</button></div>';
+  return '<div class="hbnr"><span class="hb-ic">🔔</span><span class="hb-t"><b>スマホ通知がオフです</b><small>オンにすると、新しい案件・緊急出動・進捗をすぐ受け取れます</small></span><button type="button" class="btn sm primary" id="pn-row">オンにする</button><button type="button" class="hb-x" id="pn-x" aria-label="閉じる">×</button></div>';
 }
-function a2hsShow(){try{var st=matchMedia("(display-mode: standalone)").matches||navigator.standalone;return !st&&/iPhone|iPad|Android/i.test(navigator.userAgent)&&localStorage.getItem("a2hsX")!=="1"}catch(e){return false}}
+function isStandalone(){try{return matchMedia("(display-mode: standalone)").matches||!!navigator.standalone}catch(e){return false}}
+function canInstall(){return !!(window.__bip&&!isStandalone())}
+function a2hsShow(){try{if(!window.dsApi||isStandalone()||localStorage.getItem("a2hsX")==="1")return false;return canInstall()||/iPhone|iPad|Android/i.test(navigator.userAgent)}catch(e){return false}}
+function doInstall(){
+  var p=window.__bip;if(!p){openA2hs();return}
+  try{p.prompt();(p.userChoice||Promise.resolve({})).then(function(r){window.__bip=null;toast(r&&r.outcome==="accepted"?"インストールしました。ホーム画面(デスクトップ)のアイコンから開けます":"インストールを取りやめました");try{render()}catch(e){}})}catch(e){openA2hs()}
+}
+window.__bipCb=function(){try{if(S.ready){render();if(NTAB==="set"&&$("#modal .nt-dlg"))openNotices("set")}}catch(e){}};
+function installBanner(){
+  if(!a2hsShow())return "";
+  try{var t=Number(localStorage.getItem("instX")||0);if(t&&Date.now()-t<14*86400000)return ""}catch(e){}
+  return '<div class="hbnr"><span class="hb-ic">📲</span><span class="hb-t"><b>アプリとしてインストールできます</b><small>ホーム画面から1タップで開けて、通知も受け取れます</small></span><button type="button" class="btn sm primary" id="a2hs-go">インストール</button><button type="button" class="hb-x" id="inst-x" aria-label="閉じる">×</button></div>';
+}
 function openA2hs(){
   var ios=/iPhone|iPad/i.test(navigator.userAgent);
-  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(520px,100%)"><h2>ホーム画面に追加</h2><div class="sub" style="line-height:1.8">'+(ios?"1. Safariで、画面下の共有ボタン(□に↑)をタップ<br>2. 「ホーム画面に追加」をタップ<br>3. ホーム画面のアイコンから開いて、通知をオンにしてください<br>※iPhoneは、ホーム画面に追加したアプリからでないと通知が使えません(iOS 16.4以降)":"1. Chromeの右上のメニュー(︙)をタップ<br>2. 「ホーム画面に追加」または「アプリをインストール」をタップ<br>3. ホーム画面のアイコンから開くと、アプリのように使えます")+'</div><div class="acts"><span><button type="button" class="btn" id="a2hs-no">表示しない</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(520px,100%)"><h2>ホーム画面に追加</h2><div class="sub" style="line-height:1.8">'+(ios?"1. Safariで、画面下の共有ボタン(□に↑)をタップ<br>2. 「ホーム画面に追加」をタップ<br>3. ホーム画面のアイコンから開いて、通知をオンにしてください<br>※iPhoneは、ホーム画面に追加したアプリからでないと通知が使えません(iOS 16.4以降)":"1. Chromeの右上のメニュー(︙)をタップ<br>2. 「ホーム画面に追加」または「アプリをインストール」をタップ<br>3. ホーム画面のアイコンから開くと、アプリのように使えます")+'</div><div class="acts"><span><button type="button" class="btn" id="a2hs-no">表示しない</button></span><span>'+(canInstall()?'<button type="button" class="btn primary" id="a2hs-go">インストール</button>':"")+'<button type="button" class="btn'+(canInstall()?"":" primary")+'" id="nf-x">閉じる</button></span></div></div></div>';
 }
 function pushPrefsHtml(){
   var pr=PU.prefs||{};
@@ -3112,7 +3130,7 @@ function openRel(all){
 }
 function guideHtml(){
   var out="",row=function(id,ic,t,sb){return '<button type="button" class="nrow" id="'+id+'"><span class="ni">'+ic+'</span><span class="nb"><b>'+esc(t)+'</b><span class="sub">'+esc(sb)+"</span></span></button>"};
-  if(a2hsShow())out+=row("a2hs-open","📲","ホーム画面に追加しましょう","アプリのようにすぐ開けて、通知も受け取れます");
+  if(a2hsShow())out+=canInstall()?row("a2hs-go","📲","アプリをインストール","ホーム画面(PCはデスクトップ)にアプリとして追加します。通知も受け取れます"):row("a2hs-open","📲","ホーム画面に追加しましょう","アプリのようにすぐ開けて、通知も受け取れます");
   else if(pushSupported()){pushLoad();if(PU.status&&PU.status.configured&&!PU.sub)out+=row("pn-row","🔔","スマホ通知をオンにしましょう","新しい案件・緊急出動・進捗をすぐ受け取れます")}
   return out?'<div class="ngrp">ご案内</div>'+out:"";
 }
@@ -3147,6 +3165,7 @@ function infoBanner(){
   var n=ntUnread().length,u=infoNew(),h="";
   if(u)h+='<button type="button" class="todo" id="rel-open"><span class="dt">更新</span><span class="tt">アプリが新しくなりました<small>新しい機能・変更点 '+u+'件 — タップして内容を見る</small></span><span class="go sub">見る ›</span></button>';
   if(0)h+='<button class="todo" data-tab="info"><span class="dt">お知らせ</span><span class="tt">大東建託からのメール '+n+'件<small>お知らせ画面で内容を確認できます</small></span><span class="go sub">開く ›</span></button>';
+  try{h+=installBanner()}catch(e){}
   try{h+=pushOffBanner()}catch(e){}
   return h}
 /* ---------- 担当ログイン(Web版のみ) ---------- */
@@ -4418,6 +4437,8 @@ function modClick(e,t,d){
   if(t.id==="pn-x"){try{localStorage.setItem("pushOffX",String(Date.now()))}catch(e){}render();return true}
   if(t.id==="nt-hist"){openNotifHist();return true}
   if(t.id==="a2hs-open"){openA2hs();return true}
+  if(t.id==="a2hs-go"){$("#modal").innerHTML="";doInstall();return true}
+  if(t.id==="inst-x"){try{localStorage.setItem("instX",String(Date.now()))}catch(e){}render();return true}
   if(t.id==="a2hs-no"){try{localStorage.setItem("a2hsX","1")}catch(e){}$("#modal").innerHTML="";render();return true}
   if(t.id==="nf-open"){openNotices();return true}
   if(t.id==="nf-x"){$("#modal").innerHTML="";render();return true}

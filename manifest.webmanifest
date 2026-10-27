@@ -1,1 +1,18 @@
-{"name":"大東受注ナビ","short_name":"大東受注ナビ","start_url":"/","display":"standalone","background_color":"#ffffff","theme_color":"#c8102e"}
+{
+  "id": "/",
+  "name": "大東受注ナビ",
+  "short_name": "大東受注ナビ",
+  "description": "大東建託パートナーズの工事・緊急出動・維持管理を管理するアプリ",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#c8102e",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

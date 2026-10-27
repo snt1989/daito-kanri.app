@@ -1,6 +1,19 @@
 // 最小のサービスワーカー: スマホ通知(プッシュ)の受信と、ホーム画面アイコンの件数バッジ
-self.addEventListener("install", function () { self.skipWaiting(); });
-self.addEventListener("activate", function (e) { e.waitUntil(self.clients.claim()); });
+var CACHE = "daito-shell-v1";
+var SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
+self.addEventListener("install", function (e) { e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).catch(function () {}).then(function () { return self.skipWaiting(); })); });
+self.addEventListener("activate", function (e) {
+  e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== CACHE && k !== "daito-badge"; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); }));
+});
+// 画面はネットワーク優先(更新をすぐ反映)。通信できないときだけ保存しておいた画面を使う。/api/ は対象外
+self.addEventListener("fetch", function (e) {
+  var req = e.request, url = new URL(req.url);
+  if (req.method !== "GET" || url.origin !== self.location.origin || url.pathname.indexOf("/api/") === 0) return;
+  e.respondWith(fetch(req).then(function (res) {
+    if (res && res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
+    return res;
+  }).catch(function () { return caches.match(req).then(function (m) { return m || caches.match("/"); }); }));
+});
 function badgeGet() { return caches.open("daito-badge").then(function (c) { return c.match("badge"); }).then(function (r) { return r ? r.text() : "0"; }).then(function (t) { return Number(t) || 0; }).catch(function () { return 0; }); }
 function badgeSet(n) { return caches.open("daito-badge").then(function (c) { return c.put("badge", new Response(String(n))); }).catch(function () {}); }
 function badgeShow(n) { try { if (self.navigator && self.navigator.setAppBadge) return n > 0 ? self.navigator.setAppBadge(n) : self.navigator.clearAppBadge(); } catch (_) {} return Promise.resolve(); }
