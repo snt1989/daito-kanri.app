@@ -362,6 +362,10 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .nrow .ni{width:22px;text-align:center;flex:none}
 .nrow .nb{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .nrow.urgent .nb b{color:var(--warn)}
+.nt-tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin:4px 0 6px;overflow:visible}
+.nt-tabs .tab{padding:9px 2px;font-size:13.5px;white-space:nowrap;text-align:center}
+.ntc{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:11px;line-height:18px;text-align:center}
+.nt-body{min-height:260px}
 .rel-list{max-height:min(60vh,520px);overflow-y:auto}
 .rel-day{margin:2px 0 14px}
 .rel-h{font-size:13px;font-weight:700;margin-bottom:4px}
@@ -2998,8 +3002,8 @@ function pushPrefsHtml(){
   var pr=PU.prefs||{};
   return PUSH_KINDS.map(function(k){return '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.5;margin:6px 0"><input type="checkbox" data-pnpref="'+k[0]+'"'+(pr[k[0]]!==false?" checked":"")+'><span>'+esc(k[1])+'<span class="sub" style="display:block">'+esc(k[2])+"</span></span></label>"}).join("");
 }
-function openPushSet(){
-  var h='<h2>通知の設定</h2>';
+function pushSetHtml(){
+  var h=guideHtml();
   if(!pushSupported()){
     h+='<div class="sub" style="line-height:1.7">この環境ではスマホ通知(プッシュ)は使えません。Web版(Vercel)をスマホのホーム画面に追加してお使いください。</div>'+pnBtn();
   }else{
@@ -3016,8 +3020,9 @@ function openPushSet(){
         (PU.msg?'<div class="sub" style="margin-top:8px">'+esc(PU.msg)+"</div>":"");
     }
   }
-  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(520px,100%)">'+h+'<div class="acts"><span><button type="button" class="btn" id="pn-back">お知らせに戻る</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+  return h;
 }
+function openPushSet(){openNotices("set")}
 function pushOn(){
   PU.busy=true;PU.msg="";openPushSet();
   Notification.requestPermission().then(function(p){if(p!=="granted")throw new Error("通知が許可されませんでした");return navigator.serviceWorker.ready})
@@ -3038,9 +3043,8 @@ document.addEventListener("change",function(e){
   pushCall("prefs",{endpoint:PU.sub.endpoint,prefs:pr}).then(function(){toast("通知の設定を保存しました")},function(){toast("保存できませんでした")});
 });
 var NOTIF_ICON={job:"🏗",emerg:"🚨",status:"🔄",report:"📝"};
-function openNotifHist(){
+function histLoad(){
   var put=function(h){var el=$("#nh-body");if(el)el.innerHTML=h};
-  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(560px,100%)"><h2>通知の履歴</h2><div id="nh-body" class="sub" style="min-height:80px;padding:12px 0">読み込み中…</div><div class="acts"><span><button type="button" class="btn" id="pn-back">お知らせに戻る</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
   if(!pushSupported()){put("通知の履歴は、Web版(Vercel)でのみ使えます。");return}
   pushCall("history").then(function(j){
     var L=j.list||[];if(!L.length){put('<div style="text-align:center;padding:18px 0">この30日間に届いた通知はありません</div>');return}
@@ -3049,6 +3053,7 @@ function openNotifHist(){
       return hd+'<div class="nrow"><span class="ni">'+(NOTIF_ICON[x.kind]||"🔔")+'</span><span class="nb"><b>'+esc(x.title)+'</b><span class="sub">'+esc(x.body)+'</span></span><span class="sub">'+hm+"</span></div>"}).join(""));
   },function(e){put("読み込めませんでした: "+esc(e.message))});
 }
+function openNotifHist(){openNotices("hist")}
 function pushBadgeSync(n){try{if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.controller.postMessage({type:"badge-sync",n:n})}catch(e){}}
 document.addEventListener("visibilitychange",function(){if(!document.hidden&&S.ready){try{renderTabs()}catch(e){}}});
 /* ---------- スマホ・PCの通知(OSの通知) ---------- */
@@ -3109,18 +3114,34 @@ function guideHtml(){
   var out="",row=function(id,ic,t,sb){return '<button type="button" class="nrow" id="'+id+'"><span class="ni">'+ic+'</span><span class="nb"><b>'+esc(t)+'</b><span class="sub">'+esc(sb)+"</span></span></button>"};
   if(a2hsShow())out+=row("a2hs-open","📲","ホーム画面に追加しましょう","アプリのようにすぐ開けて、通知も受け取れます");
   else if(pushSupported()){pushLoad();if(PU.status&&PU.status.configured&&!PU.sub)out+=row("pn-row","🔔","スマホ通知をオンにしましょう","新しい案件・緊急出動・進捗をすぐ受け取れます")}
-  else out+=pnBtn();
   return out?'<div class="ngrp">ご案内</div>'+out:"";
 }
-function openNotices(){
+var NTAB="";
+function ntabDefault(){if(infoUnseen().length)return "rel";if(todos().length)return "todo";if(ntUnread().length)return "mail";return "todo"}
+function openNotices(tab){
   ntKick();
-  var T=todos(),M=ntUnread(),U=infoUnseen(),h="";
+  tab=tab||NTAB||ntabDefault();NTAB=tab;
+  var T=todos(),M=ntUnread(),U=infoUnseen(),h="",MAX=60;
   var row=function(attr,icon,title,sub,urgent){return '<button type="button" class="nrow'+(urgent?" urgent":"")+'" '+attr+'><span class="ni">'+icon+'</span><span class="nb"><b>'+esc(title)+'</b><span class="sub">'+esc(sub)+"</span></span></button>"};
-  if(U.length)h+='<div class="ngrp">アプリの更新</div>'+row('id="rel-open"',"🆕","アプリが新しくなりました","新しい機能・変更点があります("+U.length+"件)",true);
-  if(T.length)h+='<div class="ngrp">対応が必要な案件('+T.length+")</div>"+T.slice(0,5).map(function(t){return row('data-todo="'+t.kind+":"+esc(t.id)+'"',({j:"🏗",e:"🚨",m:"🏢",d:"⚠",w:"💧",a:"❄"})[t.kind]||"✓",t.title,t.tag+(t.note?" ／ "+t.note:""),false)}).join("")+(T.length>5?'<div class="sub" style="padding:6px 2px">ほか '+(T.length-5)+" 件はホームで確認できます。</div>":"");
-  if(M.length)h+='<div class="ngrp">大東建託からのメール('+M.length+")</div>"+M.slice(0,5).map(function(x){var d=x.date?new Date(x.date):null,ds=d&&!isNaN(d)?(d.getMonth()+1)+"/"+d.getDate()+" ":"";return '<a class="nrow" href="'+esc(x.url)+'" target="_blank" rel="noopener"><span class="ni">📩</span><span class="nb"><b>'+esc(x.subject||"(件名なし)")+'</b><span class="sub">'+ds+esc(x.sender)+"</span></span></a>"}).join("")+(M.length>5?'<div class="sub" style="padding:6px 2px">ほか '+(M.length-5)+" 件はホームで確認できます。</div>":"");
-  if(!h)h='<div class="empty" style="padding:26px 6px;text-align:center">新しいお知らせはありません</div>';
-  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(560px,100%)"><h2>お知らせ</h2><div>'+h+'</div>'+guideHtml()+'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button type="button" class="btn" id="nt-hist">通知の履歴</button><button type="button" class="btn" id="pn-set">通知の設定</button><button type="button" class="btn" id="rel-hist">更新の履歴</button></div><div class="acts"><span></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+  var empty=function(t){return '<div class="empty" style="padding:30px 6px;text-align:center">'+t+"</div>"};
+  var TABS=[["todo","対応",T.length],["mail","メール",M.length],["rel","更新",U.length],["hist","履歴",0],["set","設定",0]];
+  var bar='<div class="tabs nt-tabs" role="tablist">'+TABS.map(function(x){return '<button type="button" role="tab" class="tab'+(x[0]===tab?" on":"")+'" data-ntab="'+x[0]+'">'+x[1]+(x[2]?' <span class="ntc">'+(x[2]>99?"99+":x[2])+"</span>":"")+"</button>"}).join("")+"</div>";
+  if(tab==="todo"){
+    h=T.length?T.slice(0,MAX).map(function(t){return row('data-todo="'+t.kind+":"+esc(t.id)+'"',({j:"🏗",e:"🚨",m:"🏢",d:"⚠",w:"💧",a:"❄"})[t.kind]||"✓",t.title,t.tag+(t.note?" ／ "+t.note:""),false)}).join("")+(T.length>MAX?'<div class="sub" style="padding:8px 2px">ほか '+(T.length-MAX)+" 件はホームで確認できます。</div>":""):empty("対応が必要な案件はありません");
+  }else if(tab==="mail"){
+    if(NT.state==="off")h=empty("大東建託からのメールは、Claude版(Gmail連携)でのみ表示されます。");
+    else if(NT.state==="load"||NT.state==="idle")h=empty("読み込み中…");
+    else h=M.length?M.slice(0,MAX).map(function(x){var d=x.date?new Date(x.date):null,ds=d&&!isNaN(d)?(d.getMonth()+1)+"/"+d.getDate()+" ":"";return '<a class="nrow" href="'+esc(x.url)+'" target="_blank" rel="noopener"><span class="ni">📩</span><span class="nb"><b>'+esc(x.subject||"(件名なし)")+'</b><span class="sub">'+ds+esc(x.sender)+"</span></span></a>"}).join(""):empty("新しいメールはありません");
+  }else if(tab==="rel"){
+    h=(U.length?'<div class="sub" style="margin:6px 0">新しい機能・変更点が '+U.length+" 件あります。</div>":"")+'<div class="rel-list">'+relHtml()+"</div>";
+  }else if(tab==="hist"){
+    h='<div id="nh-body" class="sub" style="padding:12px 0">読み込み中…</div>';
+  }else{
+    h=pushSetHtml();
+  }
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg nt-dlg" style="width:min(560px,100%)"><h2>お知らせ</h2>'+bar+'<div class="nt-body">'+h+'</div><div class="acts"><span></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+  if(tab==="hist")histLoad();
+  if(tab==="rel"&&U.length){infoMarkSeen();try{renderTabs()}catch(e){}}
 }
 function infoBanner(){
   var n=ntUnread().length,u=infoNew(),h="";
@@ -4384,7 +4405,8 @@ function modClick(e,t,d){
   if(d.tab){S.tab=d.tab;resetFilters();saveUi();document.body.classList.remove("nav-open");render();window.scrollTo(0,0);return true}
   if(t.id==="menu"){document.body.classList.toggle("nav-open");return true}
   if(t.id==="fold"){document.body.classList.toggle("folded");render();return true}
-  if(t.id==="bell"){openNotices();return true}
+  if(t.id==="bell"){NTAB="";openNotices();return true}
+  if(d&&d.ntab){openNotices(d.ntab);return true}
   if(t.id==="rel-open"){openRel(false);return true}
   if(t.id==="rel-hist"){openRel(true);return true}
   if(t.id==="pn-tg"){pnToggle().then(function(){openNotices()});return true}
