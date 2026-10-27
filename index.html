@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><script src="/shim.js"></script></head><body>
+<html lang="ja" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="/manifest.webmanifest"><script src="/shim.js"></script><script>try{if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js")}catch(e){}</script></head><body>
 <title>大東受注ナビ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
@@ -600,7 +600,7 @@ function renderTabs(){
   if(cur&&sd.scrollHeight>sd.clientHeight){var cr=cur.getBoundingClientRect(),sr=sd.getBoundingClientRect();if(cr.bottom>sr.bottom-8)sd.scrollTop+=cr.bottom-sr.bottom+16;else if(cr.top<sr.top+8)sd.scrollTop-=sr.top-cr.top+16}
   $("#menu").innerHTML=ic("menu");renderBnav(B);
   var uc=userChipHtml();if(uc!==null){var ue=document.querySelector(".user");if(ue&&ue.dataset.c!==uc){ue.innerHTML=uc;ue.dataset.c=uc}}
-  var tn=todos().length+infoBadge();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn);
+  var tn=todos().length+infoBadge();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn);try{pnCheck()}catch(e){};
 }
 function pageHead(){
   var n=NAV.find(function(x){return x.tab===S.tab})||NAV[0],act="";
@@ -2932,6 +2932,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-27",t:"スマホ・PCへの通知",d:"ベル(お知らせ)の「端末への通知」をオンにすると、新しい緊急・対応が必要な案件、大東建託からのメール、アプリの更新を端末に通知します(アプリを開いている間)。iPhoneは「ホーム画面に追加」して開くと使えます。"},
  {v:"2026-10-23",t:"FAX取込から「そのまま登録」",d:"FAX取込の各書類に「そのまま登録」ボタンを追加しました。確認画面を省いて、工事予定書は工事一覧、注文書・作業依頼書や年間発注予定一覧表は建物維持管理、出動要請書・金額確定通知書は緊急出動に直接登録します。内容を見てから登録したいときは「確認して登録」を使ってください。登録後は一覧で内容を確認してください。"},
  {v:"2026-10-22",t:"建物維持管理に「報告書作成」を追加",d:"建物維持管理に「報告書作成」のページを追加しました。各建物の写真シート(営業所・建物CD・建物名称・作業完了日・作業実施項目と、①建物 ②〜④作業前 ⑤〜⑦作業後の写真7枚)を作り、1か月分を表紙つきの1つのPDFにまとめて保存できます。表紙の営業所・会社名・フリースペースも設定できます。"},
  {v:"2026-10-22",t:"価値観共有チェックシートの画面を一覧プレビューに",d:"価値観共有チェックシートの画面から、チェック項目を無くしました。各案件のシート(記入済みがあればそれ、なければ取り込んだシート)の縮小プレビューが並び、タップして記入できます。記入(保存)すると「記入済」になり、「完了報告済にする」を押せます。設定の「完了報告チェック」も無くしました。"},
@@ -2968,6 +2969,43 @@ function infoUnseen(){
 function infoSeen(){var v=lsGet("infoSeen");return typeof v==="string"?v:""}
 function infoNew(){return infoUnseen().length}
 function infoMarkSeen(){lsSet("infoSeenK",ckey(CHANGELOG[0]));lsSet("infoSeen",CHANGELOG[0].v)}
+/* ---------- スマホ・PCの通知(OSの通知) ---------- */
+function pnOk(){return typeof Notification!=="undefined"}
+function pnOn(){return pnOk()&&Notification.permission==="granted"&&lsGet("pnOn")==="1"}
+function pnShow(t,b,tag){
+  var o={body:b,tag:tag||"daito",icon:undefined};
+  try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration){navigator.serviceWorker.getRegistration().then(function(r){if(r&&r.showNotification)r.showNotification(t,o);else new Notification(t,o)}).catch(function(){try{new Notification(t,o)}catch(e){}});return}}catch(e){}
+  try{new Notification(t,o)}catch(e){}
+}
+function pnCheck(){
+  if(!pnOn()||!S.ready)return;
+  var keys=[],names={};
+  ntUnread().forEach(function(x){var k="m:"+x.id;keys.push(k);names[k]="メール: "+(x.subject||x.sender||"")});
+  todos().forEach(function(t){var k="t:"+t.kind+":"+t.id;keys.push(k);names[k]=t.tag+": "+t.title});
+  if(infoNew()){var k="r:"+ckey(CHANGELOG[0]);keys.push(k);names[k]="アプリが新しくなりました"}
+  var seen=lsGet("pnSeen");
+  if(!Array.isArray(seen)){lsSet("pnSeen",keys);return}
+  var nw=keys.filter(function(k){return seen.indexOf(k)<0});
+  if(!nw.length)return;
+  lsSet("pnSeen",keys.concat(seen.filter(function(k){return keys.indexOf(k)<0})).slice(0,1500));
+  pnShow("大東受注ナビ: 新着"+nw.length+"件",nw.slice(0,3).map(function(k){return names[k]}).join("\n"),"daito-new");
+}
+async function pnToggle(){
+  if(!pnOk()){toast("この端末・ブラウザは通知に対応していません(iPhoneは「ホーム画面に追加」してから開くと使えます)");return}
+  if(pnOn()){lsSet("pnOn","0");toast("通知をオフにしました");return}
+  var p=Notification.permission;
+  if(p==="default"){try{p=await Notification.requestPermission()}catch(e){}}
+  if(p!=="granted"){toast("通知が許可されていません。端末・ブラウザの設定で許可してください");return}
+  lsSet("pnOn","1");lsSet("pnSeen",null);pnCheck();
+  pnShow("通知をオンにしました","新しい案件・メール・更新があるとお知らせします","daito-test");
+  toast("通知をオンにしました");
+}
+function pnBtn(){
+  if(!pnOk())return '<div class="sub" style="margin-top:10px">この端末では通知を使えません。iPhoneは共有メニューの「ホーム画面に追加」から開くと使えます。</div>';
+  var on=pnOn(),den=Notification.permission==="denied";
+  return '<div class="nrow" style="margin-top:10px"><span class="ni">🔔</span><span class="nb"><b>端末への通知</b><span class="sub">'+(den?"ブラウザの設定で通知が拒否されています":on?"オン: アプリを開いているとき、新着を通知します":"オフ: オンにすると新着を端末に通知します")+'</span></span><button type="button" class="btn sm'+(on?"":" primary")+'" id="pn-tg">'+(on?"オフにする":"オンにする")+'</button></div>'+
+    (on?'<div class="sub" style="margin-top:4px">※アプリを閉じている間の通知(プッシュ)は、現在は対応していません。</div>':"");
+}
 function ntUnread(){return NT.list.filter(function(x){return ntDone().indexOf(x.id)<0})}
 function infoBadge(){return ntUnread().length+(infoNew()?1:0)}
 function appBadge(n){try{if(n>0&&navigator.setAppBadge)navigator.setAppBadge(n).catch(function(){});else if(n<=0&&navigator.clearAppBadge)navigator.clearAppBadge().catch(function(){})}catch(e){}}
@@ -2993,7 +3031,7 @@ function openNotices(){
   if(T.length)h+='<div class="ngrp">対応が必要な案件('+T.length+")</div>"+T.slice(0,5).map(function(t){return row('data-todo="'+t.kind+":"+esc(t.id)+'"',"✓",t.title,t.tag+(t.note?" ／ "+t.note:""),false)}).join("")+(T.length>5?'<div class="sub" style="padding:6px 2px">ほか '+(T.length-5)+" 件はホームで確認できます。</div>":"");
   if(M.length)h+='<div class="ngrp">大東建託からのメール('+M.length+")</div>"+M.slice(0,5).map(function(x){var d=x.date?new Date(x.date):null,ds=d&&!isNaN(d)?(d.getMonth()+1)+"/"+d.getDate()+" ":"";return '<a class="nrow" href="'+esc(x.url)+'" target="_blank" rel="noopener"><span class="ni">📩</span><span class="nb"><b>'+esc(x.subject||"(件名なし)")+'</b><span class="sub">'+ds+esc(x.sender)+"</span></span></a>"}).join("")+(M.length>5?'<div class="sub" style="padding:6px 2px">ほか '+(M.length-5)+" 件はホームで確認できます。</div>":"");
   if(!h)h='<div class="empty" style="padding:26px 6px;text-align:center">新しいお知らせはありません</div>';
-  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(560px,100%)"><h2>お知らせ</h2><div>'+h+'</div><div class="acts"><span><button type="button" class="btn" id="rel-hist">更新の履歴</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(560px,100%)"><h2>お知らせ</h2><div>'+h+'</div>'+pnBtn()+'<div class="acts"><span><button type="button" class="btn" id="rel-hist">更新の履歴</button></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
 }
 function infoBanner(){
   var n=ntUnread().length,u=infoNew(),h="";
@@ -4259,6 +4297,7 @@ function modClick(e,t,d){
   if(t.id==="bell"){openNotices();return true}
   if(t.id==="rel-open"){openRel(false);return true}
   if(t.id==="rel-hist"){openRel(true);return true}
+  if(t.id==="pn-tg"){pnToggle().then(function(){openNotices()});return true}
   if(t.id==="nf-open"){openNotices();return true}
   if(t.id==="nf-x"){$("#modal").innerHTML="";render();return true}
   if(d.stab){S.setTab=d.stab;render();return true}
