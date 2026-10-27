@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#c8102e"><link rel="icon" type="image/png" href="/icons/icon-192.png"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="大東受注ナビ"><meta name="apple-mobile-web-app-status-bar-style" content="default"><script src="/shim.js"></script><script>try{if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js")}catch(e){}window.__bip=null;addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__bip=e;try{if(window.__bipCb)window.__bipCb()}catch(x){}});addEventListener("appinstalled",function(){window.__bip=null;try{if(window.__bipCb)window.__bipCb()}catch(x){}});</script></head><body>
+<html lang="ja" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="/api/brand?manifest=1"><meta name="theme-color" content="#c8102e"><link rel="icon" type="image/png" href="/api/brand?s=192"><link rel="apple-touch-icon" href="/api/brand?s=180"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="大東受注ナビ"><meta name="apple-mobile-web-app-status-bar-style" content="default"><script src="/shim.js"></script><script>try{if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js")}catch(e){}window.__bip=null;addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__bip=e;try{if(window.__bipCb)window.__bipCb()}catch(x){}});addEventListener("appinstalled",function(){window.__bip=null;try{if(window.__bipCb)window.__bipCb()}catch(x){}});</script></head><body>
 <title>大東受注ナビ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
@@ -600,7 +600,7 @@ function renderTabs(){
   var c=counts(),eAct=S.emerg.filter(function(x){return x.status<2}).length,mSei=S.maint.filter(function(x){return x.status===1}).length;
   var B={aclist:S.ac.filter(function(r){return r.status===0&&mineOk(r)}).length,jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
   var sd=$("#side"),sTop=sd.scrollTop;
-  sd.innerHTML='<div class="brand"><i>'+BRANDSVG+'</i><span>大東受注ナビ</span></div>'+NAV.filter(function(n){return n.tab!=="docs"||window.dsFiles}).map(function(n){
+  sd.innerHTML='<div class="brand">'+brandLogoHtml()+'<span>'+esc(brandName())+'</span></div>'+NAV.filter(function(n){return n.tab!=="docs"||window.dsFiles}).map(function(n){
     if(n.g!==undefined)return n.g.trim()?'<div class="nv-g">'+n.g+"</div>":'<div class="nv-g" style="padding:6px"></div>';
     return '<button class="nv" data-tab="'+n.tab+'" title="'+n.label+'"'+(S.tab===n.tab?' aria-current="page"':"")+">"+ic(n.ic)+'<span class="lbl">'+n.label+"</span>"+(B[n.tab]?'<span class="n">'+B[n.tab]+"</span>":"")+"</button>"}).join("")+
     '<button class="fold" id="fold">'+(document.body.classList.contains("folded")?"›":"‹ 閉じる")+"</button>";
@@ -609,7 +609,7 @@ function renderTabs(){
   if(cur&&sd.scrollHeight>sd.clientHeight){var cr=cur.getBoundingClientRect(),sr=sd.getBoundingClientRect();if(cr.bottom>sr.bottom-8)sd.scrollTop+=cr.bottom-sr.bottom+16;else if(cr.top<sr.top+8)sd.scrollTop-=sr.top-cr.top+16}
   $("#menu").innerHTML=ic("menu");renderBnav(B);
   var uc=userChipHtml();if(uc!==null){var ue=document.querySelector(".user");if(ue&&ue.dataset.c!==uc){ue.innerHTML=uc;ue.dataset.c=uc}}
-  var tn=todos().length+infoBadge();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn);try{pnCheck()}catch(e){};
+  var tn=todos().length+infoBadge();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn);try{pnCheck()}catch(e){};try{brandApply()}catch(e){};
 }
 function pageHead(){
   var n=NAV.find(function(x){return x.tab===S.tab})||NAV[0],act="";
@@ -1413,6 +1413,7 @@ var SETGROUPS=[
   ["basic","基本設定","消費税率・支払日・期限が近いと扱う日数です。",[P("bill","請求・入金"),P("elog","出動一覧"),P("mmonth","作業一覧"),P("home","ホーム")]],
   ["staff","担当・作業員","担当に割り当てるチーム・作業員の名前です。",[P("jobs","工事一覧"),P("sched","施工予定"),P("elog","出動一覧")]],
   ["backup","バックアップ","データのコピーを自動・手動でサーバーに保存し、必要なときに戻せます(Web版・管理者のみ)。",[P("home","ホーム")]],
+  ["brand","ロゴ・アイコン","画面左上のロゴ・アプリ名と、ホーム画面・インストール時のアプリのアイコンです。",[P("home","ホーム")]],
   ["company","自社情報","水道の届出などで、届出者として使う会社の情報です。",[P("water","水道開始・中止届")]]]]];
 var SETTABS=[];SETGROUPS.forEach(function(g){g[1].forEach(function(t){SETTABS.push(t)})});
 var SET_ONE=["prices","layout","chk","emfee","emcat","mitems","staff","company","mtopts"];
@@ -1422,7 +1423,7 @@ function vSet(){
   var body={prices:b.prices,staff:b.staff,layout:vLayoutTab(),basic:vBasicTab(),
    genopts:vListsTab(["kind","area"]),emopts:vListsTab(["emFrom","emRes"]),mtopts:vListsTab(["mtKind"]),wtopts:vListsTab(["wtMethod","wtOffice"]),
    genstat:vStatTab(["job"]),emstat:vStatTab(["em"]),mtstat:vStatTab(["mt"]),wtstat:vStatTab(["wt"]),
-   chk:vChkTab(),fxtype:vFxType(),acprices:vAcPrices(),backup:vBackup(),emcat:vEmcatTab(),orgs:vOrgTab()+vWform(),
+   chk:vChkTab(),fxtype:vFxType(),acprices:vAcPrices(),backup:vBackup(),brand:vBrandTab(),emcat:vEmcatTab(),orgs:vOrgTab()+vWform(),
    mitems:'<div class="panel"><h3>維持管理の作業項目</h3>'+mi.map(function(m,i){return '<div class="set-row"><input type="text" data-mi="'+i+'" value="'+esc(m)+'" aria-label="作業項目"><button class="btn sm danger" data-midel="'+i+'">削除</button></div>'}).join("")+'<div class="set-row"><button class="btn sm" id="miadd">＋ 項目を追加</button><button class="btn sm" data-sb="mitems">一括編集</button><button class="btn sm" id="mi-sync"'+(mItemsMissing().length?"":" disabled")+'>委託業務一覧表の項目を追加('+mItemsMissing().length+'件)</button></div><div class="sub" style="padding:0 14px 10px">「07 排水管清掃費」のようにコード(2桁)から始まる名前は、建物維持管理の「業務内容」ページの項目コードと対応します。注文書の読み取りでも、このコードで項目を当てはめます。</div></div>',
    company:'<div class="panel"><h3>自社情報(水道の届出などの届出者)</h3><div class="fields" style="padding:12px">'+[["name","会社名(使用者氏名)"],["kana","フリガナ"],["tel","連絡先電話番号"],["addr","住所(転居先・連絡先の住所)"],["pay","支払い方法(例:納付書、口座振替)"]].map(function(r){return '<label class="'+(r[0]==="addr"?"wide":"")+'">'+r[1]+'<input type="text" data-co="'+r[0]+'" value="'+esc((S.settings.company||{})[r[0]]||"")+'"></label>'}).join("")+'</div><div class="sub" style="padding:0 12px 12px">水道の届出シートの初期値として使います。</div></div>',
    emfee:'<div class="panel"><h3>緊急出動費(税別)</h3><div class="set-row"><span style="flex:1">基本料金 日中(7:00〜19:00)</span><input type="number" data-ef="day" value="'+f.day+'"></div><div class="set-row"><span style="flex:1">基本料金 夜間(19:00〜7:00)</span><input type="number" data-ef="night" value="'+f.night+'"></div><div class="set-row"><span style="flex:1">2時間超の加算</span><input type="number" data-ef="over" value="'+f.over+'"></div></div>'}[t];
@@ -2941,6 +2942,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-27",t:"ロゴ・アイコンを設定で変更",d:"設定→全体共通→「ロゴ・アイコン」で、画面左上のロゴ・アプリ名と、ホーム画面・インストール時のアイコンを変更できます(背景色・余白も調整できます)。"},
  {v:"2026-10-27",t:"アプリとしてインストール",d:"Web版を、スマホのホーム画面やPCのデスクトップにアプリとしてインストールできるようになりました。ホームの「インストール」ボタン、またはお知らせ→設定から行えます。iPhoneはSafariの共有→「ホーム画面に追加」です。"},
  {v:"2026-10-27",t:"お知らせを現場管理アプリのように",d:"お知らせに「通知の設定」「通知の履歴」「ご案内」を追加しました。Web版では、新しい案件・緊急出動・進捗の変更が、アプリを閉じていてもスマホに通知されます(通知の設定でオンにします。iPhoneはホーム画面に追加したアプリから)。"},
  {v:"2026-10-23",t:"FAX取込から「そのまま登録」",d:"FAX取込の各書類に「そのまま登録」ボタンを追加しました。確認画面を省いて、工事予定書は工事一覧、注文書・作業依頼書や年間発注予定一覧表は建物維持管理、出動要請書・金額確定通知書は緊急出動に直接登録します。内容を見てから登録したいときは「確認して登録」を使ってください。登録後は一覧で内容を確認してください。"},
@@ -3294,6 +3296,85 @@ function vBackup(){
     return "<tr><td>"+esc(isNaN(d)?m.at:d.toLocaleString("ja-JP",{year:"numeric",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}))+'</td><td><span class="tag">'+esc(m.by||"")+'</span></td><td class="sub">案件 '+(c.jobs||0)+" / 出動 "+(c.emerg||0)+" / 維持管理 "+(c.maint||0)+" / 水道 "+(c.water||0)+'</td><td class="num">'+dfSize(m.size)+'</td><td style="white-space:nowrap"><button type="button" class="btn sm" data-bkdl="'+esc(m.id)+'">ダウンロード</button> <button type="button" class="btn sm" data-bkrs="'+esc(m.id)+'">この時点に戻す</button> <button type="button" class="btn sm danger" data-bkdel="'+esc(m.id)+'">削除</button></td></tr>'}).join(""):'<tr><td colspan="5" class="empty">'+(BKP.state==="load"?"読み込み中…":"まだバックアップがありません。")+"</td></tr>")+"</tbody></table></div>";
   return h;
 }
+/* ====================== ロゴ・アイコン ====================== */
+var BR={key:"",logoUrl:"",busy:false,msg:"",syncT:0};
+function brand(){var b=S.settings.brand;return b&&typeof b==="object"?b:{}}
+function brandName(){return String(brand().name||"").trim()||"大東受注ナビ"}
+function brandIconSlot(){var b=brand();return b.same===false?(b.icon||null):(b.logo||null)}
+function brLoadImg(src){return new Promise(function(ok,ng){var im=new Image();im.onload=function(){ok(im)};im.onerror=ng;im.src=src})}
+// 画像を正方形に合成(背景色・余白)。extra=マスク用に足す余白
+function brCompose(slot,size,extra){
+  return brLoadImg(slot.src).then(function(im){
+    var c=document.createElement("canvas");c.width=c.height=size;var g=c.getContext("2d");
+    if(slot.bg&&slot.bg!=="none"){g.fillStyle=slot.bg;g.fillRect(0,0,size,size)}
+    var pad=Math.max(0,Math.min(40,Number(slot.pad)||0))/100+(extra||0),box=size*(1-2*pad),r=Math.min(box/im.width,box/im.height);
+    var w=im.width*r,h=im.height*r;g.imageSmoothingQuality="high";g.drawImage(im,(size-w)/2,(size-h)/2,w,h);
+    return c.toDataURL("image/png");
+  });
+}
+function brandLogoHtml(){return BR.logoUrl?'<i style="background:transparent;overflow:hidden"><img src="'+BR.logoUrl+'" alt="" style="width:100%;height:100%;display:block"></i>':"<i>"+BRANDSVG+"</i>"}
+function brandApply(){
+  var b=brand(),key=JSON.stringify([b.name||"",b.logo||null]);
+  var nm=brandName();try{if(document.title!==nm)document.title=nm}catch(e){}
+  var tb=document.querySelector(".tb-brand");if(tb&&tb.lastChild&&tb.lastChild.nodeType===3&&tb.lastChild.nodeValue!==nm)tb.lastChild.nodeValue=nm;
+  if(key===BR.key)return;BR.key=key;
+  var done=function(u){BR.logoUrl=u||"";var l=document.querySelector(".tb-logo");if(l)l.style.background=u?"url("+u+") center/cover no-repeat":"";try{renderTabs()}catch(e){}};
+  if(b.logo&&b.logo.src)brCompose(b.logo,128).then(done,function(){done("")});else done("");
+}
+function brandSync(){
+  if(!window.dsApi||!isAdmin())return;
+  clearTimeout(BR.syncT);
+  BR.syncT=setTimeout(function(){
+    var slot=brandIconSlot(),b64=function(u){return String(u).split(",")[1]};
+    var p=slot&&slot.src?Promise.all([brCompose(slot,192),brCompose(slot,512),brCompose(Object.assign({},slot,{bg:slot.bg&&slot.bg!=="none"?slot.bg:"#ffffff"}),180),brCompose(Object.assign({},slot,{bg:slot.bg&&slot.bg!=="none"?slot.bg:"#ffffff"}),512,0.1)]).then(function(a){return {op:"set",name:brandName(),i192:b64(a[0]),i512:b64(a[1]),i180:b64(a[2]),m512:b64(a[3])}}):Promise.resolve({op:"set",name:brandName(),clearIcons:true});
+    p.then(function(d){return window.dsApi("/api/brand",d)}).then(function(j){if(j&&j.error){toast("アイコンをサーバーに登録できませんでした: "+j.error);return}brRefreshHead();toast("ロゴ・アイコンを反映しました")},function(){toast("アイコンをサーバーに登録できませんでした")});
+  },700);
+}
+function brRefreshHead(){
+  if(!window.dsApi)return;var v=Date.now();
+  [["link[rel=manifest]","/api/brand?manifest=1&t="+v],["link[rel=apple-touch-icon]","/api/brand?s=180&t="+v],["link[rel=icon]","/api/brand?s=192&t="+v]].forEach(function(x){var e=document.querySelector(x[0]);if(e)e.href=x[1]});
+}
+function brSlotHtml(k,slot,title){
+  slot=slot||{};var has=!!slot.src,bg=slot.bg||"#ffffff",tr=bg==="none";
+  return '<div class="set-row" style="flex-wrap:wrap;gap:10px"><label class="btn sm pri" style="cursor:pointer">画像を選ぶ<input type="file" accept="image/*" data-brfile="'+k+'" style="display:none"></label>'+(has?'<button type="button" class="btn sm" data-brrst="'+k+'">初期に戻す</button>':"")+'<span class="sub">PNG・JPEG・SVGなど。正方形に近い画像がきれいに表示されます。</span></div>'+
+   (has?'<div class="set-row" style="flex-wrap:wrap;gap:14px"><label style="display:flex;align-items:center;gap:6px">背景色 <input type="color" data-brbg="'+k+'" value="'+(tr?"#ffffff":esc(bg))+'"'+(tr?" disabled":"")+'></label><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" data-brtr="'+k+'"'+(tr?" checked":"")+'> 透明</label><label style="display:flex;align-items:center;gap:6px;flex:1;min-width:200px">余白 <input type="range" min="0" max="30" step="1" data-brpad="'+k+'" value="'+(Number(slot.pad)||0)+'" style="flex:1"> <span class="sub">'+(Number(slot.pad)||0)+'%</span></label></div>':"");
+}
+function vBrandTab(){
+  var b=brand(),ro=!!(window.dsApi&&!isAdmin());
+  var prevIcon=function(u,r,sz){return '<span style="display:inline-block;width:'+sz+'px;height:'+sz+'px;border-radius:'+r+';overflow:hidden;background:#c8102e;box-shadow:0 1px 4px rgba(0,0,0,.18);vertical-align:middle">'+(u?'<img src="'+u+'" alt="" style="width:100%;height:100%;display:block">':'<img src="data:image/svg+xml;utf8,'+encodeURIComponent(BRANDSVG.replace('width="22" height="22"','width="100%" height="100%"').replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" style="padding:18%;box-sizing:border-box" '))+'" alt="" style="width:100%;height:100%;display:block">')+"</span>"};
+  var h='';
+  if(ro)h+='<div class="panel"><div class="empty">ロゴ・アイコンの変更は、管理者でログインしたときだけできます。</div></div>';
+  h+='<div class="panel"><h3>アプリ名</h3><div class="set-row"><input type="text" id="br-name" maxlength="30" value="'+esc(b.name||"")+'" placeholder="大東受注ナビ" style="flex:1"'+(ro?" disabled":"")+'></div><div class="sub" style="padding:0 12px 10px">画面左上・ブラウザのタブ・インストールしたアプリの名前に使われます。空欄にすると「大東受注ナビ」です。</div></div>';
+  h+='<div class="panel"><h3>ロゴ(画面左上)</h3><div class="set-row" style="gap:16px"><span class="brand" style="padding:0;color:inherit"><span id="br-pv-logo">'+brandLogoHtml()+'</span><span>'+esc(brandName())+'</span></span></div>'+(ro?"":brSlotHtml("logo",b.logo))+'</div>';
+  var same=b.same!==false;
+  h+='<div class="panel"><h3>アプリのアイコン(ホーム画面・インストール・ブラウザのタブ)</h3><div class="set-row" style="gap:18px;align-items:flex-end;flex-wrap:wrap" id="br-pv-icon">'+
+     '<span style="text-align:center">'+prevIcon(BR.iconPv||"","22%",72)+'<div class="sub">iPhone</div></span><span style="text-align:center">'+prevIcon(BR.iconPv||"","50%",72)+'<div class="sub">Android</div></span><span style="text-align:center">'+prevIcon(BR.iconPv||"","4px",32)+'<div class="sub">タブ</div></span></div>'+
+     (ro?"":'<div class="set-row"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="br-same"'+(same?" checked":"")+'> ロゴと同じ画像を使う</label></div>'+(same?"":brSlotHtml("icon",b.icon)))+
+     '<div class="sub" style="padding:0 12px 12px;line-height:1.7">'+(window.dsApi?"変更すると、Web版のアイコンとしてサーバーに登録されます。すでにインストールしたアプリやホーム画面のアイコンは、端末によっては一度削除して追加し直すまで変わりません。":"アイコンの変更は、Web版(インストール・ホーム画面のアイコン)に反映されます。Claude版では画面左上のロゴとアプリ名だけが変わります。")+"</div></div>";
+  brIconPreview();
+  return h;
+}
+function brIconPreview(){
+  var slot=brandIconSlot(),k=JSON.stringify(slot);if(k===BR.iconPvKey)return;BR.iconPvKey=k;
+  if(!slot||!slot.src){BR.iconPv="";return}
+  brCompose(slot,192).then(function(u){BR.iconPv=u;if(S.tab==="set"&&S.setTab==="brand")render()});
+}
+function brSet(fn){var b=Object.assign({},brand());fn(b);S.settings.brand=b;saveSettings(true);brandApply();BR.iconPvKey="";brandSync();render()}
+function brReadFile(file){
+  return new Promise(function(ok,ng){var fr=new FileReader();fr.onload=function(){ok(String(fr.result))};fr.onerror=ng;fr.readAsDataURL(file)})
+   .then(brLoadImg).then(function(im){var w=im.naturalWidth||im.width||512,h=im.naturalHeight||im.height||512,r=Math.min(1,512/Math.max(w,h));if(!w||!h){w=h=512;r=1}
+     var c=document.createElement("canvas");c.width=Math.max(1,Math.round(w*r));c.height=Math.max(1,Math.round(h*r));c.getContext("2d").drawImage(im,0,0,c.width,c.height);return c.toDataURL("image/png")});
+}
+document.addEventListener("change",function(e){
+  var t=e.target;if(!t||!t.getAttribute)return;
+  var k=t.getAttribute("data-brfile");
+  if(k){var fl=t.files&&t.files[0];if(!fl)return;brReadFile(fl).then(function(src){brSet(function(b){var o=Object.assign({bg:"#ffffff",pad:8},b[k]||{});o.src=src;b[k]=o})},function(){toast("画像を読み込めませんでした")});t.value="";return}
+  if((k=t.getAttribute("data-brbg"))){var v=t.value;brSet(function(b){b[k]=Object.assign({},b[k],{bg:v})});return}
+  if((k=t.getAttribute("data-brtr"))){var on=t.checked;brSet(function(b){b[k]=Object.assign({},b[k],{bg:on?"none":"#ffffff"})});return}
+  if((k=t.getAttribute("data-brpad"))){var p=Number(t.value)||0;brSet(function(b){b[k]=Object.assign({},b[k],{pad:p})});return}
+  if(t.id==="br-name"){var n=t.value.trim().slice(0,30);brSet(function(b){b.name=n});return}
+  if(t.id==="br-same"){var sm=t.checked;brSet(function(b){b.same=sm});return}
+});
 /* ====================== 水道届の様式(アップロード)に記入して出力 ====================== */
 var WTF_KEYS=[["name","使用者氏名"],["kana","フリガナ"],["addr","使用場所の住所"],["tel","連絡先電話番号"],["custNo","お客様番号"],["pay","支払い方法"],["payer","支払者氏名"],["newAddr","転居先の住所"],["workplace","勤務先"],["occupants","世帯人数"],["sendTo","送付先"],
  ["site","物件名"],["room","号室"],["office","窓口名"],["memo","備考"],
@@ -4437,6 +4518,7 @@ function modClick(e,t,d){
   if(t.id==="pn-x"){try{localStorage.setItem("pushOffX",String(Date.now()))}catch(e){}render();return true}
   if(t.id==="nt-hist"){openNotifHist();return true}
   if(t.id==="a2hs-open"){openA2hs();return true}
+  if(d&&d.brrst){var bk=d.brrst;brSet(function(b){b[bk]=null});return true}
   if(t.id==="a2hs-go"){$("#modal").innerHTML="";doInstall();return true}
   if(t.id==="inst-x"){try{localStorage.setItem("instX",String(Date.now()))}catch(e){}render();return true}
   if(t.id==="a2hs-no"){try{localStorage.setItem("a2hsX","1")}catch(e){}$("#modal").innerHTML="";render();return true}
