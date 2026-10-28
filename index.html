@@ -366,6 +366,23 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .nt-tabs .tab{padding:9px 2px;font-size:13.5px;white-space:nowrap;text-align:center}
 .ntc{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:11px;line-height:18px;text-align:center}
 .nt-body{min-height:260px}
+.bgmask{z-index:96}
+.bgtiles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.bgtile{flex:1;min-width:140px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}.bgtile b{display:block;font-size:17px;margin-top:2px;font-variant-numeric:tabular-nums}
+.bgfilter{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;padding:10px 12px}
+.bgfi{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);position:relative}.bgfi>span:first-child{font-weight:700}.bgfi>input,.bgfi>select{flex:none;height:auto}
+.bgdd-btn{display:flex;gap:6px;align-items:center;justify-content:space-between;min-width:130px;max-width:200px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:7px 10px;font:inherit;color:var(--ink);cursor:pointer}.bgdd-btn>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bgdd-btn.on{border-color:var(--accent);color:var(--accent);font-weight:700}
+.bgdd-panel{position:absolute;top:100%;left:0;z-index:30;min-width:240px;max-height:320px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:8px;color:var(--ink)}
+.bgopt{display:flex;gap:8px;align-items:center;padding:5px 2px;font-size:13px;color:var(--ink);cursor:pointer}
+.bgselbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px;border-color:var(--accent);background:var(--accent-soft)}
+.bgtbl table{min-width:1050px}@media(max-width:720px){.bgtbl table{min-width:0}.bgtbl .sub{font-weight:400}}.bgtbl td,.bgtbl th{font-size:12.5px}.bgtbl td.num,.bgtbl th.num{text-align:right;white-space:nowrap}
+.bgbar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}.bgbar i{display:block;height:100%}
+.bgh{font-size:14px;margin:16px 0 6px}
+table.bgl{min-width:720px}table.bgl input,table.bgl select{padding:6px 8px;font-size:12.5px}
+.bgbody td.num,.bgbody th.num{text-align:right;white-space:nowrap}
+.bgcost{border-top:1px solid var(--line);padding:10px 2px}.bgedit{background:var(--accent-soft);border-radius:10px;padding:12px}
+
 .pgstat{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 14px}.pgstat>div{display:flex;flex-direction:column;gap:2px}.pgstat b{font-size:18px}
 .pgbar,.pgact{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px}.pgbar input[type=search]{flex:1;min-width:180px}
 .pghd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:16px 2px 8px}
@@ -571,7 +588,7 @@ var ICONS={
  menu:'<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
  tool:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'};
 function ic(n,sz){sz=sz||20;return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[n]+"</svg>"}
-var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"docs",label:"書類ボックス",ic:"book"},{tab:"photos",label:"画像管理",ic:"image"},{tab:"qa",label:"Q&A",ic:"help"},
+var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"docs",label:"書類ボックス",ic:"book"},{tab:"photos",label:"画像管理",ic:"image"},{tab:"budget",label:"予算管理",ic:"yen"},{tab:"qa",label:"Q&A",ic:"help"},
  {g:"原状回復工事"},{tab:"jobs",label:"工事一覧",ic:"list",d:"genkyo"},{tab:"sched",label:"施工予定",ic:"calendar",d:"genkyo"},{tab:"report",label:"価値観共有チェックシート",ic:"check",d:"genkyo"},{tab:"bill",label:"請求・入金",ic:"yen",d:"genkyo"},{tab:"water",label:"水道開始・中止届",ic:"drop",d:"genkyo"},
  {g:"緊急対応"},{tab:"elog",label:"出動一覧",ic:"alert",d:"emerg"},{tab:"esum",label:"月次集計",ic:"chart",d:"emerg"},
  {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mrep",label:"報告書作成",ic:"list",d:"maint"},
@@ -644,6 +661,7 @@ function pageHead(){
   else if(S.tab==="qa")act='<button class="btn pri" id="add">＋ Q&Aを追加</button>';
   else if(S.tab==="aclist")act='<button class="btn out" id="ac-imp">📄 書類から取り込む</button><input type="file" id="ac-file" accept="application/pdf,image/*" style="display:none"><button class="btn pri" id="add">＋ エアコン案件を追加</button>';
   else if(S.tab==="water")act='<button class="btn out" id="w-job">案件から作成</button><button class="btn pri" id="add">＋ 届出を追加</button>';
+  else if(S.tab==="budget")act=bgPageAct();
   else if(S.tab!=="set"&&S.tab!=="mscope"&&S.tab!=="photos")act='<button class="btn pri" id="add">'+({genkyo:"＋ 案件を登録",emerg:"＋ 緊急出動を記録",maint:S.tab==="mplan"?"＋ 年間計画を追加":"＋ 維持管理を追加"}[S.div]||"＋ 追加")+"</button>";
   if(S.tab==="jobs")act='<button class="btn out" id="vs-open">📎 価値観共有チェックシートを取り込む</button>'+act;
   return '<div class="pghead"><h2 class="pt">'+n.label+'</h2><div class="pgact">'+act+"</div></div>";
@@ -680,12 +698,12 @@ function render0(){
   if(S.composing){S.pending=true;return}
   S.pending=false;
   var fk=focusKey(),ss=null;if(fk){try{ss=[document.activeElement.selectionStart,document.activeElement.selectionEnd]}catch(e){}}
-  if(!canMoney()){if(S.tab==="bill"||S.tab==="esum")S.tab="home";if(S.tab==="set"&&MNY_SET.indexOf(S.setTab||"prices")>=0)S.setTab="staff"}
+  if(!canMoney()){if(S.tab==="bill"||S.tab==="esum"||S.tab==="budget")S.tab="home";if(S.tab==="set"&&MNY_SET.indexOf(S.setTab||"prices")>=0)S.setTab="staff"}
   renderTabs();
   var m=$("#main"),h="";
   if(!S.persist)h+='<div class="banner">共有保存が使えない表示です。入力内容はこのブラウザにだけ保存されます。</div>';
   h+=pageHead();
-  h+=({home:vHome,photos:vPhotos,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,mrep:vMrep,water:vWater}[S.tab]||vJobs)();
+  h+=({home:vHome,photos:vPhotos,budget:vBudget,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,mrep:vMrep,water:vWater}[S.tab]||vJobs)();
   m.innerHTML=h;
   moneyScrub(document);moneyBadge(document);
   decorate();mobTables();
@@ -1439,6 +1457,7 @@ var SETGROUPS=[
   ["basic","基本設定","消費税率・支払日・期限が近いと扱う日数です。",[P("bill","請求・入金"),P("elog","出動一覧"),P("mmonth","作業一覧"),P("home","ホーム")]],
   ["staff","担当・作業員","担当に割り当てるチーム・作業員の名前です。",[P("jobs","工事一覧"),P("sched","施工予定"),P("elog","出動一覧")]],
   ["backup","バックアップ","データのコピーを自動・手動でサーバーに保存し、必要なときに戻せます(Web版・管理者のみ)。",[P("home","ホーム")]],
+  ["acct","勘定科目","予算管理の「予算の明細」と「実績」で選ぶ勘定科目です。",[P("budget","予算管理")]],
   ["photo","写真の画質","案件の写真・報告書の写真を保存するときの画質(軽量化の度合い)を、全体で一括管理します。",[P("mrep","報告書作成")]],
   ["brand","ロゴ・アイコン","画面左上のロゴ・アプリ名と、ホーム画面・インストール時のアプリのアイコンです。",[P("home","ホーム")]],
   ["company","自社情報","水道の届出などで、届出者として使う会社の情報です。",[P("water","水道開始・中止届")]]]]];
@@ -1450,7 +1469,7 @@ function vSet(){
   var body={prices:b.prices,staff:b.staff,layout:vLayoutTab(),basic:vBasicTab(),
    genopts:vListsTab(["kind","area"]),emopts:vListsTab(["emFrom","emRes"]),mtopts:vListsTab(["mtKind"]),wtopts:vListsTab(["wtMethod","wtOffice"]),
    genstat:vStatTab(["job"]),emstat:vStatTab(["em"]),mtstat:vStatTab(["mt"]),wtstat:vStatTab(["wt"]),
-   chk:vChkTab(),fxtype:vFxType(),acprices:vAcPrices(),backup:vBackup(),brand:vBrandTab(),photo:vPhotoTab(),emcat:vEmcatTab(),orgs:vOrgTab()+vWform(),
+   chk:vChkTab(),fxtype:vFxType(),acprices:vAcPrices(),backup:vBackup(),brand:vBrandTab(),photo:vPhotoTab(),acct:vAcctTab(),emcat:vEmcatTab(),orgs:vOrgTab()+vWform(),
    mitems:'<div class="panel"><h3>維持管理の作業項目</h3>'+mi.map(function(m,i){return '<div class="set-row"><input type="text" data-mi="'+i+'" value="'+esc(m)+'" aria-label="作業項目"><button class="btn sm danger" data-midel="'+i+'">削除</button></div>'}).join("")+'<div class="set-row"><button class="btn sm" id="miadd">＋ 項目を追加</button><button class="btn sm" data-sb="mitems">一括編集</button><button class="btn sm" id="mi-sync"'+(mItemsMissing().length?"":" disabled")+'>委託業務一覧表の項目を追加('+mItemsMissing().length+'件)</button></div><div class="sub" style="padding:0 14px 10px">「07 排水管清掃費」のようにコード(2桁)から始まる名前は、建物維持管理の「業務内容」ページの項目コードと対応します。注文書の読み取りでも、このコードで項目を当てはめます。</div></div>',
    company:'<div class="panel"><h3>自社情報(水道の届出などの届出者)</h3><div class="fields" style="padding:12px">'+[["name","会社名(使用者氏名)"],["kana","フリガナ"],["tel","連絡先電話番号"],["addr","住所(転居先・連絡先の住所)"],["pay","支払い方法(例:納付書、口座振替)"]].map(function(r){return '<label class="'+(r[0]==="addr"?"wide":"")+'">'+r[1]+'<input type="text" data-co="'+r[0]+'" value="'+esc((S.settings.company||{})[r[0]]||"")+'"></label>'}).join("")+'</div><div class="sub" style="padding:0 12px 12px">水道の届出シートの初期値として使います。</div></div>',
    emfee:'<div class="panel"><h3>緊急出動費(税別)</h3><div class="set-row"><span style="flex:1">基本料金 日中(7:00〜19:00)</span><input type="number" data-ef="day" value="'+f.day+'"></div><div class="set-row"><span style="flex:1">基本料金 夜間(19:00〜7:00)</span><input type="number" data-ef="night" value="'+f.night+'"></div><div class="set-row"><span style="flex:1">2時間超の加算</span><input type="number" data-ef="over" value="'+f.over+'"></div></div>'}[t];
@@ -2969,6 +2988,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-10-28",t:"予算管理ページ",d:"メニューに「予算管理」(管理者のみ)を追加しました。現場管理アプリと同じく、案件ごとに勘定科目別の予算の明細と実績(実際にかかった費用)を登録して、残り予算・消化率・予算上の粗利・現時点の粗利を確認できます。絞り込み・並び替え、CSVの入出力、まとめての予算追加・削除ができます。各案件の編集画面の「💴 予算・実績」からも開けます。勘定科目は設定→全体共通→「勘定科目」で編集します。"},
  {v:"2026-10-28",t:"画像管理ページ",d:"メニューに「画像管理」を追加しました。すべての案件の写真を、種類・分類・検索で絞り込んで一覧できます。案件ごとにまとまって表示され、まとめて分類の変更・ZIPでのダウンロード・削除ができます。"},
  {v:"2026-10-28",t:"案件ごとに写真を保存",d:"工事・緊急出動・維持管理・エアコンの各案件の編集画面に「📷 写真」を追加しました。写真は作業前・作業中・作業後・その他に分けて、メモ付きで保存できます。保存時に自動で縮小・圧縮します。画質は設定→全体共通→「写真の画質」で一括管理し、保存済みの写真もまとめて軽量化できます。"},
  {v:"2026-10-27",t:"ロゴ・アイコンを設定で変更",d:"設定→全体共通→「ロゴ・アイコン」で、画面左上のロゴ・アプリ名と、ホーム画面・インストール時のアイコンを変更できます(背景色・余白も調整できます)。"},
@@ -3423,7 +3443,7 @@ function phSaveList(key,list){
 }
 function phRec(col,id){var a={jobs:S.jobs,emerg:S.emerg,maint:S.maint,ac:S.ac}[col]||[];return a.find(function(x){return x.id===id})||null}
 function phTitle(col,id){var r=phRec(col,id)||{};return [r.site||r.bldgName||r.name||r.client||"",r.room||r.item||""].filter(Boolean).join(" ")||"(未保存の案件)"}
-function phBtnHtml(col,id){var n=phCount(col,id);return '<div class="phbar"><button type="button" class="btn sm" data-phopen="'+col+"|"+esc(id)+'">📷 写真'+(n?" <b>"+n+"</b>枚":"を追加")+'</button><span class="sub">現場写真を案件ごとに保存できます(軽量化して保存)</span></div>'}
+function phBtnHtml(col,id){var n=phCount(col,id);return '<div class="phbar"><button type="button" class="btn sm" data-phopen="'+col+"|"+esc(id)+'">📷 写真'+(n?" <b>"+n+"</b>枚":"を追加")+'</button>'+bgBtnHtml(col,id)+'<span class="sub">現場写真を案件ごとに保存できます(軽量化して保存)</span></div>'}
 function phSize(n){n=Number(n)||0;return n>=1048576?(n/1048576).toFixed(1)+"MB":Math.max(1,Math.round(n/1024))+"KB"}
 async function phEncode(src,max,q,lim){
   var bm=src.width?src:await createImageBitmap(src,{imageOrientation:"from-image"}).catch(function(){return createImageBitmap(src)});
@@ -3680,6 +3700,314 @@ document.addEventListener("change",function(e){
 });
 document.addEventListener("input",function(e){
   if(S.tab!=="photos"||!e.target||e.target.id!=="pg-q")return;PG.q=e.target.value;clearTimeout(PG.qt);PG.qt=setTimeout(function(){var el=$("#pg-q"),pos=el&&el.selectionStart;render();var n=$("#pg-q");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}},300);
+});
+/* ====================== 予算管理(管理者のみ) ====================== */
+// 案件ごとに、勘定科目別の予算(明細)と、実際にかかった費用(実績)を登録して、残りと粗利を見る。保存先: budget コレクション(ID=種類_案件ID)
+var BGD={},BGS={f:null,sort:{key:"recv",dir:"desc"},sel:{},dd:"",lim:200};
+var DEF_ACCT=["材料費","外注費","労務費","廃棄物処理費","車両費","消耗品費","旅費交通費","雑費"];
+function bgAcct(){var a=S.settings.acct;return Array.isArray(a)&&a.length?a:DEF_ACCT}
+var BG_T={
+  jobs:{n:"工事",ic:"🏗",st:function(){return STAT},arr:function(){return S.jobs},amt:function(r){return calc(r).sub},name:function(r){return (r.site||"")+" "+(r.room||"")},date:function(r){return r.orderDate||r.receivedDate||""},open:function(id){openJob(id)}},
+  emerg:{n:"緊急",ic:"🚨",st:function(){return EM_STAT},arr:function(){return S.emerg},amt:function(r){return +r.fixAmt>0?Math.round(+r.fixAmt*100/(100+TAXRATE)):emFee(r).sub},name:function(r){return (r.site||"")+" "+(r.room||"")},date:function(r){return String(r.recvAt||"").slice(0,10)},open:function(id){openEmerg(id)}},
+  maint:{n:"維持管理",ic:"🏢",st:function(){return MT_STAT},arr:function(){return S.maint},amt:function(r){return (+r.price||0)*(r.qty==null||r.qty===""?1:+r.qty||0)},name:function(r){return (r.bldgName||"")+" "+(r.item||"")},date:function(r){return r.month?r.month+"-01":""},open:function(id){openMaint(id)}},
+  ac:{n:"エアコン",ic:"❄",st:function(){return AC_STAT},arr:function(){return S.ac},amt:function(r){return acCalc(r).sub},name:function(r){return (r.site||r.bldgName||r.name||"")+" "+(r.room||"")},date:function(r){return r.reqDate||""},open:function(id){openAc(id)}}
+};
+function bgInit(){
+  if(!db){var v=lsGet("budget");BGD=v&&typeof v==="object"?v:{};return}
+  db.collection("budget").onSnapshot(function(snap){var o={};snap.docs.forEach(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}o[x.id]=d});BGD=o;if(S.tab==="budget"&&!$("#bgl .mask"))render()},function(){});
+}
+function bgKey(col,id){return col+"_"+id}
+function bgDoc(col,id){return BGD[bgKey(col,id)]||null}
+function bgNum(v){var n=Number(String(v==null?"":v).replace(/[,，円¥\s]/g,""));return isFinite(n)?n:0}
+function bgYen(n){return Math.round(n||0).toLocaleString("ja-JP")+"円"}
+function bgPct(x){return x==null||!isFinite(x)?"—":(Math.round(x*1000)/10)+"%"}
+function bgLines(d){return d&&Array.isArray(d.lines)?d.lines:[]}
+function bgCalcFor(contract,d){
+  d=d||{};var lines=bgLines(d),costs=Array.isArray(d.costs)?d.costs:[],b=0,a=0,byCat={},bud={},byLine={};
+  lines.forEach(function(l){var n=bgNum(l.amount);b+=n;bud[l.cat]=(bud[l.cat]||0)+n});
+  costs.forEach(function(x){var n=bgNum(x.amount);a+=n;byCat[x.cat]=(byCat[x.cat]||0)+n;if(x.lineId)byLine[x.lineId]=(byLine[x.lineId]||0)+n});
+  return {contract:contract,budget:b,actual:a,remain:b-a,rate:b?a/b:null,profit:contract-a,profitRate:contract?(contract-a)/contract:null,planProfit:contract-b,planProfitRate:contract?(contract-b)/contract:null,byCat:byCat,bud:bud,lines:lines,byLine:byLine,costs:costs,has:!!d.key};
+}
+function bgRowOf(col,r){var T=BG_T[col],st=T.st(),si=+r.status||0;return {col:col,r:r,id:r.id,key:bgKey(col,r.id),name:T.name(r).trim()||"(名称なし)",st:(st[si]||{}).n||"",si:si,last:si>=st.length-1,date:T.date(r),who:Array.isArray(r.staff)?r.staff:[],c:bgCalcFor(T.amt(r)||0,bgDoc(col,r.id))}}
+function bgCats(c){var out=bgAcct().slice();Object.keys(c.bud||{}).concat(Object.keys(c.byCat||{})).forEach(function(k){if(k&&out.indexOf(k)<0)out.push(k)});return out}
+var BG_CONDS=[["over","予算を超えている(実績＞予算)"],["warn","予算の消化率が80%以上"],["planLoss","予算上の粗利がマイナス"],["loss","現時点の粗利がマイナス"],["hasbudget","予算を登録済み"],["nobudget","予算が未設定"],["nocost","実績が未入力"],["nocontract","契約金額が0円"]];
+var BG_SORTS={
+  name:{label:"案件名",get:function(x){return x.name},str:true},
+  recv:{label:"受付日・作業月",get:function(x){return x.date||null},str:true},
+  status:{label:"進捗",get:function(x){return x.si}},
+  contract:{label:"契約金額",get:function(x){return x.c.contract}},
+  budget:{label:"予算",get:function(x){return x.c.budget}},
+  planProfit:{label:"予算上の粗利",get:function(x){return x.c.contract&&x.c.budget?x.c.planProfit:null}},
+  planProfitRate:{label:"予算上の粗利率",get:function(x){return x.c.contract&&x.c.budget?x.c.planProfitRate:null}},
+  actual:{label:"実績",get:function(x){return x.c.actual}},
+  remain:{label:"残り予算",get:function(x){return x.c.budget?x.c.remain:null}},
+  rate:{label:"消化率",get:function(x){return x.c.rate}},
+  profit:{label:"現時点の粗利",get:function(x){return x.c.contract?x.c.profit:null}},
+  profitRate:{label:"現時点の粗利率",get:function(x){return x.c.contract?x.c.profitRate:null}},
+  photo:{label:"写真の容量",get:function(x){return bgPhotoBytes(x.col,x.id)}}
+};
+function bgPhotoBytes(col,id){var d=typeof PHD!=="undefined"&&PHD[col+"_"+id];return d&&Array.isArray(d.list)?d.list.reduce(function(a,p){return a+(p.size||0)},0):0}
+function bgFilter(){
+  var f=BGS.f=BGS.f||{};
+  if(!Array.isArray(f.type))f.type=["jobs","emerg","ac"];
+  ["who","cond"].forEach(function(k){if(!Array.isArray(f[k]))f[k]=[]});
+  if(f.prog==null)f.prog="all";if(f.q==null)f.q="";if(f.cmin==null)f.cmin="";if(f.cmax==null)f.cmax="";if(f.ym==null)f.ym="";
+  return f;
+}
+function bgActive(){var f=bgFilter();return (f.type.length!==3||f.type.indexOf("maint")>=0?1:0)+(f.prog!=="all"?1:0)+(f.cond.length?1:0)+(f.who.length?1:0)+(f.q?1:0)+(f.cmin!==""?1:0)+(f.cmax!==""?1:0)+(f.ym?1:0)}
+function bgRows(){
+  var f=bgFilter(),q=f.q.trim().toLowerCase(),cmin=f.cmin!==""?bgNum(f.cmin):null,cmax=f.cmax!==""?bgNum(f.cmax):null,out=[];
+  (f.type.length?f.type:Object.keys(BG_T)).forEach(function(col){(BG_T[col].arr()||[]).forEach(function(r){if(r&&r.id&&!r.sample)out.push(bgRowOf(col,r))})});
+  out=out.filter(function(x){var c=x.c;
+    if(f.prog==="open"&&x.last)return false;if(f.prog==="paid"&&!x.last)return false;
+    if(f.ym&&String(x.date).slice(0,7)!==f.ym)return false;
+    if(f.who.length&&!x.who.some(function(n){return f.who.indexOf(n)>=0}))return false;
+    if(q&&(x.name+" "+x.who.join(" ")+" "+(x.r.address||"")+" "+(x.r.orderNo||"")).toLowerCase().indexOf(q)<0)return false;
+    if(cmin!=null&&c.contract<cmin)return false;if(cmax!=null&&c.contract>cmax)return false;
+    if(f.cond.length&&!f.cond.some(function(k){switch(k){
+      case "over":return c.budget>0&&c.actual>c.budget;case "warn":return c.rate!=null&&c.rate>=0.8;
+      case "planLoss":return !!(c.contract&&c.budget&&c.planProfit<0);case "loss":return !!(c.contract&&c.actual&&c.profit<0);
+      case "hasbudget":return c.budget>0;case "nobudget":return !(c.budget>0);case "nocost":return !(c.actual>0);case "nocontract":return !(c.contract>0)}return false}))return false;
+    return true});
+  var so=BGS.sort,def=BG_SORTS[so.key]||BG_SORTS.recv,dir=so.dir==="asc"?1:-1;
+  out.sort(function(a,b){var x=def.get(a),y=def.get(b);if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;var r=def.str?String(x).localeCompare(String(y),"ja"):(x-y);return r*dir||a.name.localeCompare(b.name,"ja")});
+  return out;
+}
+function vBudget(){
+  if(!canMoney())return '<div class="empty" style="padding:40px;text-align:center">🔒 この画面は管理者のみ使えます</div>';
+  var f=bgFilter(),so=BGS.sort,sel=BGS.sel,list=bgRows(),T={contract:0,budget:0,actual:0};
+  list.forEach(function(x){T.contract+=x.c.contract;T.budget+=x.c.budget;T.actual+=x.c.actual});
+  var nSel=list.filter(function(x){return sel[x.key]}).length,allOn=list.length>0&&nSel===list.length;
+  var tile=function(l,v,sub,warn){return '<div class="bgtile"><div class="sub">'+l+'</div><b'+(warn?' style="color:var(--danger,#c0392b)"':"")+">"+v+"</b>"+(sub?'<div class="sub">'+sub+"</div>":"")+"</div>"};
+  var h='<div class="sub" style="margin:-4px 2px 10px">現場(案件)ごとの予算と、実際にかかった費用(実績)を管理します。行をタップすると予算と実績を入力できます。金額はすべて税別です。<span class="mnybadge">🔒</span>管理者のみ</div>';
+  h+='<div class="bgtiles">'+tile("契約金額の合計",bgYen(T.contract),list.length+"件")+tile("予算の合計",bgYen(T.budget))+tile("予算上の粗利(契約−予算)",bgYen(T.contract-T.budget),T.contract?"粗利率 "+bgPct((T.contract-T.budget)/T.contract):"",T.contract-T.budget<0)+tile("実績(支払い)の合計",bgYen(T.actual),T.budget?"予算の"+bgPct(T.actual/T.budget):"",T.budget>0&&T.actual>T.budget)+tile("現時点の粗利(契約−実績)",bgYen(T.contract-T.actual),T.contract?"粗利率 "+bgPct((T.contract-T.actual)/T.contract):"",T.contract-T.actual<0)+"</div>";
+  var who={};Object.keys(BG_T).forEach(function(c){(BG_T[c].arr()||[]).forEach(function(r){(Array.isArray(r.staff)?r.staff:[]).forEach(function(n){if(n)who[n]=1})})});
+  var grp=function(key,label,note,items){var sl=f[key],on=sl.length>0,open=BGS.dd===key,names=items.filter(function(it){return sl.indexOf(it[0])>=0}).map(function(it){return it[1]});
+    var txt=!on?"すべて":names.length<=2?names.join("・"):names.length+"件を選択";
+    return '<div class="bgfi bgdd"><span>'+label+'</span><button type="button" class="bgdd-btn'+(on?" on":"")+'" data-bgdd="'+key+'"><span>'+esc(txt)+'</span><span class="sub">'+(open?"▲":"▼")+"</span></button>"+
+      (open?'<div class="bgdd-panel"><div class="sub" style="display:flex;justify-content:space-between;gap:8px;padding:2px 2px 6px;border-bottom:1px solid var(--line);margin-bottom:4px"><span>'+esc(note)+'</span><span><a href="#" data-bgc-all="'+key+'">すべて</a>　<a href="#" data-bgc-none="'+key+'">解除</a></span></div>'+
+        (items.length?items.map(function(it){return '<label class="bgopt"><input type="checkbox" data-bgc="'+key+'" value="'+esc(it[0])+'"'+(sl.indexOf(it[0])>=0?" checked":"")+">"+esc(it[1])+"</label>"}).join(""):'<div class="sub" style="padding:8px 2px">登録がありません</div>')+"</div>":"")+"</div>"};
+  var opt=function(v,l,cur){return '<option value="'+esc(v)+'"'+(String(cur)===String(v)?" selected":"")+">"+esc(l)+"</option>"};
+  h+='<div class="panel bgfilter">'+
+    grp("type","種類","未選択＝すべて",Object.keys(BG_T).map(function(k){return [k,BG_T[k].n]}))+
+    '<div class="bgfi"><span>進捗</span><select data-bgf="prog">'+opt("all","すべて",f.prog)+opt("open","入金前(未完了)",f.prog)+opt("paid","入金済",f.prog)+"</select></div>"+
+    '<div class="bgfi"><span>月(受付日・作業月)</span><input type="month" data-bgf="ym" value="'+esc(f.ym)+'"></div>'+
+    grp("who","担当","未選択＝すべて",Object.keys(who).sort(function(a,b){return a.localeCompare(b,"ja")}).map(function(n){return [n,n]}))+
+    grp("cond","状態","いずれかに当てはまる案件",BG_CONDS)+
+    '<div class="bgfi"><span>契約金額(円)</span><span style="display:flex;gap:6px;align-items:center"><input type="text" inputmode="numeric" data-bgf="cmin" value="'+esc(f.cmin)+'" placeholder="下限" style="width:92px"> 〜 <input type="text" inputmode="numeric" data-bgf="cmax" value="'+esc(f.cmax)+'" placeholder="上限" style="width:92px"></span></div>'+
+    '<div class="bgfi" style="flex:1;min-width:180px"><span>案件名・担当・住所で検索</span><input type="search" data-bgf="q" value="'+esc(f.q)+'"></div>'+
+    '<div class="bgfi"><span>並び替え</span><span style="display:flex;gap:6px"><select data-bgsort-key>'+Object.keys(BG_SORTS).map(function(k){return opt(k,BG_SORTS[k].label,so.key)}).join("")+'</select><button type="button" class="btn sm" data-bgsort-dir>'+(so.dir==="asc"?"▲ 昇順":"▼ 降順")+"</button></span></div>"+
+    (bgActive()?'<button type="button" class="btn sm" data-bg-clear>条件をクリア('+bgActive()+")</button>":"")+"</div>";
+  var tv={};list.forEach(function(x){var o=tv[x.col]||(tv[x.col]={n:0,contract:0,budget:0,actual:0});o.n++;o.contract+=x.c.contract;o.budget+=x.c.budget;o.actual+=x.c.actual});
+  if(Object.keys(tv).length>1)h+='<details class="panel" style="padding:10px 14px"><summary style="cursor:pointer;font-weight:700">種類ごとの集計</summary><div class="scroll" style="margin-top:8px"><table><thead><tr><th>種類</th><th class=num>件数</th><th class=num>契約金額</th><th class=num>予算</th><th class=num>実績</th><th class=num>予算上の粗利</th><th class=num>現時点の粗利</th></tr></thead><tbody>'+
+    Object.keys(BG_T).filter(function(k){return tv[k]}).map(function(k){var o=tv[k];return "<tr><td>"+BG_T[k].ic+" "+BG_T[k].n+'</td><td class=num>'+o.n+'</td><td class=num>'+bgYen(o.contract)+'</td><td class=num>'+bgYen(o.budget)+'</td><td class=num>'+bgYen(o.actual)+'</td><td class=num>'+bgYen(o.contract-o.budget)+'</td><td class=num>'+bgYen(o.contract-o.actual)+"</td></tr>"}).join("")+"</tbody></table></div></details>";
+  if(nSel)h+='<div class="panel bgselbar"><b>'+nSel+'件を選択中</b><button type="button" class="btn sm pri" data-bg-bulk="add">予算の明細を一括で追加</button><button type="button" class="btn sm" data-bg-export="list-sel">選択分を一覧CSV</button><button type="button" class="btn sm" data-bg-export="detail-sel">選択分を明細CSV</button><button type="button" class="btn sm danger" data-bg-bulk="clear">予算・実績を一括で削除</button><button type="button" class="btn sm" data-bg-selnone>選択を解除</button></div>';
+  if(!list.length)return h+'<div class="empty" style="padding:30px;text-align:center">該当する案件がありません。絞り込みの条件を変えてください</div>';
+  var th=function(k,label,num){var on=so.key===k;return '<th data-bg-sort="'+k+'" class="'+(num?"num":"")+'" style="cursor:pointer;white-space:nowrap" title="押すと並び替え">'+label+(on?(so.dir==="asc"?" ▲":" ▼"):' <span class="sub">↕</span>')+"</th>"};
+  var V=list.slice(0,BGS.lim);
+  h+='<div class="panel scroll bgtbl"><table><thead><tr><th style="width:34px"><input type="checkbox" data-bg-all'+(allOn?" checked":"")+' aria-label="すべて選択"></th>'+th("name","案件")+th("contract","契約金額",1)+th("budget","予算",1)+th("planProfit",'予算上の粗利<div class="sub">契約−予算</div>',1)+th("actual","実績",1)+th("remain","残り予算",1)+th("rate","消化率")+th("profit",'現時点の粗利<div class="sub">契約−実績</div>',1)+th("photo","写真の容量",1)+"</tr></thead><tbody>"+
+    V.map(function(x){var c=x.c,over=c.budget>0&&c.actual>c.budget,w=c.rate==null?0:Math.min(100,Math.round(c.rate*100)),red=function(b){return b?' style="color:var(--danger,#c0392b);font-weight:700"':""},ps=bgPhotoBytes(x.col,x.id);
+      return '<tr class="row" data-bg-open="'+esc(x.key)+'"'+(sel[x.key]?' style="background:var(--accent-soft)"':"")+'><td><input type="checkbox" data-bg-sel="'+esc(x.key)+'"'+(sel[x.key]?" checked":"")+' aria-label="選択"></td>'+
+        '<td><span class="tag">'+BG_T[x.col].ic+" "+BG_T[x.col].n+"</span> <b>"+esc(x.name)+'</b><div class="sub">'+esc(x.st)+(x.date?" ／ "+esc(x.date.slice(0,x.col==="maint"?7:10)):"")+(x.who.length?" ／ "+esc(x.who.join("・")):"")+' ／ <a href="#" data-bg-detail="'+esc(x.key)+'">案件を開く ›</a></div></td>'+
+        '<td class=num>'+(c.contract?bgYen(c.contract):"—")+"</td><td class=num>"+(c.budget?bgYen(c.budget):'<span class="sub">未設定</span>')+"</td>"+
+        "<td class=num"+red(c.contract&&c.budget&&c.planProfit<0)+">"+(c.contract&&c.budget?bgYen(c.planProfit)+'<div class="sub">'+bgPct(c.planProfitRate)+"</div>":"—")+"</td>"+
+        "<td class=num>"+(c.actual?bgYen(c.actual):"—")+"</td><td class=num"+red(c.budget&&c.remain<0)+">"+(c.budget?bgYen(c.remain):"—")+"</td>"+
+        '<td style="min-width:100px"><div class="bgbar"><i style="width:'+w+"%;background:"+(over?"var(--danger,#c0392b)":"var(--accent)")+'"></i></div><div class="sub"'+(over?' style="color:var(--danger,#c0392b)"':"")+">"+bgPct(c.rate)+"</div></td>"+
+        "<td class=num"+red(c.contract&&c.actual&&c.profit<0)+">"+(c.contract&&c.actual?bgYen(c.profit)+'<div class="sub">'+bgPct(c.profitRate)+"</div>":"—")+"</td>"+
+        "<td class=num>"+(ps?phSize(ps):"—")+"</td></tr>"}).join("")+"</tbody></table></div>";
+  if(list.length>BGS.lim)h+='<div style="text-align:center;margin:12px"><button type="button" class="btn" data-bg-more>さらに表示(残り'+(list.length-BGS.lim)+"件)</button></div>";
+  return h;
+}
+function bgPageAct(){return canMoney()?'<button class="btn out" data-bg-import>📥 CSV入力</button><button class="btn out" data-bg-export="list">一覧をCSV出力</button><button class="btn out" data-bg-export="detail">明細をCSV出力</button>':""}
+/* ---- CSV ---- */
+var BG_DETAIL_HEAD=["種別","案件の種類","案件ID","案件名","勘定科目","項目名","数量","単位","単価","金額","日付","支払先","内容","予算の項目"];
+function bgExport(kind){
+  var list=bgRows();if(/-sel$/.test(kind))list=list.filter(function(x){return BGS.sel[x.key]});
+  if(!list.length){toast("出力する案件がありません");return}
+  if(/^list/.test(kind)){
+    var rows=[["案件の種類","案件名","進捗","日付","担当","契約金額","予算","予算上の粗利","予算上の粗利率","実績","残り予算","消化率","現時点の粗利","現時点の粗利率"]];
+    list.forEach(function(x){var c=x.c,p=function(v){return v==null?"":Math.round(v*1000)/10+"%"};rows.push([BG_T[x.col].n,x.name,x.st,x.date,x.who.join("、"),c.contract||"",c.budget||"",c.contract&&c.budget?c.planProfit:"",c.contract&&c.budget?p(c.planProfitRate):"",c.actual||"",c.budget?c.remain:"",p(c.rate),c.contract?c.profit:"",c.contract?p(c.profitRate):""])});
+    saveCsv("予算管理一覧_"+TODAY()+".csv",rows);
+  }else{
+    var out=[BG_DETAIL_HEAD];
+    list.forEach(function(x){var nm={};x.c.lines.forEach(function(l){nm[l.id]=l.name});
+      x.c.lines.forEach(function(l){out.push(["予算",BG_T[x.col].n,x.id,x.name,l.cat||"",l.name||"",l.qty===0?"":(l.qty||""),l.unit||"",l.price||"",bgNum(l.amount)||"","","","",""])});
+      x.c.costs.slice().sort(function(a,b){return String(a.date||"").localeCompare(String(b.date||""))}).forEach(function(c){out.push(["実績",BG_T[x.col].n,x.id,x.name,c.cat||"","","","","",bgNum(c.amount)||"",c.date||"",c.vendor||"",c.memo||"",c.lineId?(nm[c.lineId]||""):""])})});
+    if(out.length===1)out.push(["予算",BG_T[list[0].col].n,list[0].id,list[0].name,"外注費","足場",3,"式",25000,75000,"","","",""]);
+    saveCsv("予算管理明細_"+TODAY()+".csv",out);
+  }
+}
+function bgDateIso(v){v=String(v||"").trim().replace(/[年\/.]/g,"-").replace(/月/g,"-").replace(/日/g,"");var m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);return m?m[1]+"-"+pad(+m[2])+"-"+pad(+m[3]):""}
+function bgNorm(v){return String(v||"").normalize("NFKC").toLowerCase().replace(/[\s　・\-ー_]/g,"")}
+function bgNid(k){return k+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function bgImport(){
+  var inp=document.createElement("input");inp.type="file";inp.accept=".csv,text/csv";
+  inp.addEventListener("change",function(){var fl=inp.files&&inp.files[0];if(!fl)return;var fr=new FileReader();
+    fr.onload=function(){
+      var buf=new Uint8Array(fr.result),txt;try{txt=new TextDecoder("utf-8",{fatal:true}).decode(buf)}catch(e){try{txt=new TextDecoder("shift_jis").decode(buf)}catch(e2){txt=new TextDecoder().decode(buf)}}
+      var rows=parseCsv(txt);if(rows.length<2){toast("データの行がありません");return}
+      var head=rows[0].map(function(x){return String(x).trim()}),ix={};BG_DETAIL_HEAD.forEach(function(h){ix[h]=head.indexOf(h)});
+      if(ix["種別"]<0||(ix["案件名"]<0&&ix["案件ID"]<0)){toast("1行目に「種別」「案件名」の列が必要です(「明細をCSV出力」の形式です)");return}
+      var all=[];Object.keys(BG_T).forEach(function(col){(BG_T[col].arr()||[]).forEach(function(r){all.push({col:col,r:r,n:bgNorm(BG_T[col].name(r))})})});
+      var get=function(r,h){return ix[h]<0?"":String(r[ix[h]]==null?"":r[ix[h]]).trim().replace(/^'/,"")};
+      var jobs={},errs=[],nB=0,nC=0;
+      rows.slice(1).forEach(function(r,i){
+        var line=i+2,kind=get(r,"種別"),id=get(r,"案件ID"),nm=get(r,"案件名"),tn=get(r,"案件の種類"),tcol=Object.keys(BG_T).find(function(k){return BG_T[k].n===tn});
+        var hit=all.find(function(a){return id&&a.r.id===id&&(!tcol||a.col===tcol)})||all.find(function(a){return a.n===bgNorm(nm)&&(!tcol||a.col===tcol)});
+        if(!hit){errs.push(line+"行目:案件「"+nm+"」が見つかりません");return}
+        var k=bgKey(hit.col,hit.r.id),j=jobs[k]||(jobs[k]={key:k,col:hit.col,id:hit.r.id,lines:[],costs:[]});
+        var cat=get(r,"勘定科目")||"雑費",qty=bgNum(get(r,"数量")),price=bgNum(get(r,"単価")),amt=bgNum(get(r,"金額"))||(qty&&price?Math.round(qty*price):0);
+        if(kind==="予算"){if(!amt){errs.push(line+"行目:予算の金額がありません");return}j.lines.push({id:bgNid("l"),cat:cat,name:get(r,"項目名")||cat,qty:qty||"",unit:get(r,"単位"),price:price||"",amount:Math.round(amt)});nB++}
+        else if(kind==="実績"){if(!amt){errs.push(line+"行目:実績の金額がありません");return}var d=get(r,"日付");if(d&&!bgDateIso(d)){errs.push(line+"行目:日付「"+d+"」は 2026-10-27 の形式で入力してください");return}
+          j.costs.push({cat:cat,date:bgDateIso(d)||TODAY(),vendor:get(r,"支払先"),memo:get(r,"内容"),amount:Math.round(amt),lineName:get(r,"予算の項目")});nC++}
+        else errs.push(line+"行目:種別は「予算」か「実績」にしてください")});
+      var L=Object.keys(jobs).map(function(k){return jobs[k]});
+      bgDlg("CSVから予算・実績を取り込む",'<div style="line-height:1.8">取り込む内容:予算の明細 <b>'+nB+"</b>行/実績 <b>"+nC+"</b>件(対象の案件 <b>"+L.length+'</b>件)<br><span class="sub">すでに登録されている予算・実績は消えず、追加されます。</span></div>'+(errs.length?'<div style="margin-top:10px;color:var(--danger,#c0392b);line-height:1.7"><b>取り込めない行('+errs.length+"件)</b><br>"+errs.slice(0,10).map(esc).join("<br>")+(errs.length>10?"<br>ほか"+(errs.length-10)+"件":"")+"</div>":""),
+        '<button type="button" class="btn" data-bgl-x>キャンセル</button><button type="button" class="btn primary" id="bgi-go"'+(L.length?"":" disabled")+">取り込む</button>");
+      var go=$("#bgi-go");if(go)go.onclick=function(){
+        L.forEach(function(j){var d=BGD[j.key]||{},lines=bgLines(d).concat(j.lines),costs=(d.costs||[]).slice();
+          j.costs.forEach(function(x){var ln=x.lineName?lines.find(function(l){return l.name===x.lineName}):null;costs.push({id:bgNid("c"),date:x.date,cat:x.cat,lineId:ln?ln.id:"",vendor:x.vendor,memo:x.memo,amount:x.amount})});
+          bgSave(j.col,j.id,{lines:lines,costs:costs})});
+        bgClose();toast(L.length+"件の案件に取り込みました");render()};
+    };fr.readAsArrayBuffer(fl)});
+  inp.click();
+}
+function bgSave(col,id,patch){
+  if(!canMoney()){toast("管理者のみ行えます");return}
+  var k=bgKey(col,id),d=BGD[k]||{},T=BG_T[col],r=(T.arr()||[]).find(function(x){return x.id===id})||{};
+  var nx=Object.assign({key:k,col:col,rid:id,lines:bgLines(d),costs:d.costs||[]},patch,{name:T.name(r).trim()||d.name||"",updatedAt:new Date().toISOString(),updatedBy:(ME()&&ME().name)||""});
+  BGD[k]=nx;
+  if(db)db.doc("budget/"+k).set(nx).catch(function(){toast("予算の保存に失敗しました")});else lsSet("budget",BGD);
+}
+/* ---- 画面の重ね表示(案件の編集画面の上にも開ける) ---- */
+function bgDlg(title,body,foot,wide){
+  var o=$("#bgl");if(!o){o=document.createElement("div");o.id="bgl";document.body.appendChild(o)}
+  o.innerHTML='<div class="mask bgmask"><div class="dlg'+(wide?" lg":"")+'" style="'+(wide?"width:min(980px,100%)":"width:min(620px,100%)")+'"><h2>'+title+'</h2><div class="bgbody">'+body+'</div><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">'+foot+"</div></div></div>";
+}
+function bgClose(){var o=$("#bgl");if(o)o.innerHTML="";var b=document.querySelector("[data-bgopen]");if(b){var p=b.getAttribute("data-bgopen").split("|");b.outerHTML=bgBtnHtml(p[0],p[1])}}
+function bgBtnHtml(col,id){if(!canMoney())return "";var c=bgCalcFor(0,bgDoc(col,id));return '<button type="button" class="btn sm" data-bgopen="'+col+"|"+esc(id)+'">💴 予算・実績'+(c.budget||c.actual?' <span class="sub">予算 '+bgYen(c.budget)+" / 実績 "+bgYen(c.actual)+"</span>":"")+"</button>"}
+function bgSelRows(){return bgRows().filter(function(x){return BGS.sel[x.key]})}
+function bgBulkAdd(){
+  var rows=bgSelRows();if(!rows.length)return;
+  bgDlg("予算の明細を一括で追加",'<div class="sub" style="line-height:1.7;margin-bottom:10px">選んだ <b>'+rows.length+"件</b> の案件に、同じ予算の明細を1行ずつ追加します(すでにある予算は消えません)。</div>"+
+    '<div class="fields"><label>勘定科目<select id="bga-cat">'+bgAcct().map(function(k){return "<option>"+esc(k)+"</option>"}).join("")+'</select></label><label>項目名<input type="text" id="bga-name" placeholder="例:外注費(一式)"></label></div>'+
+    '<div style="margin-top:12px;font-weight:700">金額の決め方</div><label class="bgopt"><input type="radio" name="bga-mode" value="pct" checked> 契約金額の <input type="text" inputmode="numeric" id="bga-pct" value="70" style="width:70px;text-align:right"> %</label><label class="bgopt"><input type="radio" name="bga-mode" value="fix"> 同じ金額 <input type="text" inputmode="numeric" id="bga-fix" placeholder="0" style="width:120px;text-align:right"> 円</label><div class="sub" id="bga-note" style="margin-top:6px"></div>',
+    '<button type="button" class="btn" data-bgl-x>キャンセル</button><button type="button" class="btn primary" id="bga-go">'+rows.length+"件に追加する</button>");
+  var calcA=function(x){var m=(document.querySelector('input[name="bga-mode"]:checked')||{}).value;return m==="pct"?Math.round(x.c.contract*bgNum($("#bga-pct").value)/100):Math.round(bgNum($("#bga-fix").value))};
+  var note=function(){var s=rows.filter(function(x){return !calcA(x)}).length;$("#bga-note").textContent=s?"※金額が0円になる案件("+s+"件。契約金額が0円など)は追加しません":""};
+  [].slice.call(document.querySelectorAll("#bgl input")).forEach(function(el){el.addEventListener("input",note);el.addEventListener("change",note)});note();
+  $("#bga-go").onclick=function(){var cat=$("#bga-cat").value,name=$("#bga-name").value.trim()||cat,tg=rows.filter(function(x){return calcA(x)>0});
+    if(!tg.length){toast("追加できる案件がありません(金額が0円です)");return}
+    tg.forEach(function(x){var a=calcA(x);bgSave(x.col,x.id,{lines:bgLines(BGD[x.key]).concat([{id:bgNid("l"),cat:cat,name:name,qty:1,unit:"式",price:a,amount:a}])})});
+    bgClose();toast(tg.length+"件の案件に予算の明細を追加しました");render()};
+}
+function bgBulkClear(){
+  var rows=bgSelRows();if(!rows.length)return;
+  bgDlg("予算・実績を一括で削除",'<div style="line-height:1.7;margin-bottom:10px">選んだ <b>'+rows.length+'件</b> の案件から、次のデータを削除します。<b style="color:var(--danger,#c0392b)">元に戻せません。</b></div><label class="bgopt"><input type="checkbox" id="bgc-lines"> 予算の明細</label><label class="bgopt"><input type="checkbox" id="bgc-costs"> 実績(支払い)</label>',
+    '<button type="button" class="btn" data-bgl-x>キャンセル</button><button type="button" class="btn danger" id="bgc-go">削除に進む</button>');
+  $("#bgc-go").onclick=function(e){var dl=$("#bgc-lines").checked,dc=$("#bgc-costs").checked;if(!dl&&!dc){toast("削除するデータにチェックを入れてください");return}
+    var b=e.currentTarget;if(!b.dataset.sure){b.dataset.sure="1";b.textContent="本当に"+rows.length+"件から削除する";return}
+    rows.forEach(function(x){var p={};if(dl)p.lines=[];if(dc)p.costs=[];bgSave(x.col,x.id,p)});BGS.sel={};bgClose();toast(rows.length+"件の案件から削除しました");render()};
+}
+function openBudget(col,id){
+  if(!canMoney())return;var T=BG_T[col],r=(T.arr()||[]).find(function(x){return x.id===id});
+  if(!r){toast("先に案件を保存してください");return}
+  var key=bgKey(col,id),L=bgLines(BGD[key]).map(function(l){return Object.assign({},l)}),edit="";
+  var cur=function(){var d=Object.assign({},BGD[key]||{});d.lines=L;return bgCalcFor(T.amt(r)||0,d)};
+  var acct=function(sel){var a=bgAcct().slice();if(sel&&a.indexOf(sel)<0)a.push(sel);return a.map(function(k){return "<option"+(k===sel?" selected":"")+">"+esc(k)+"</option>"}).join("")};
+  var tile=function(l,v,w){return '<div class="bgtile"><div class="sub">'+l+"</div><b"+(w?' style="color:var(--danger,#c0392b)"':"")+">"+v+"</b></div>"};
+  var headH=function(){var c=cur();return tile("契約金額(税別)",c.contract?bgYen(c.contract):"0円")+tile("予算合計",bgYen(c.budget))+tile("予算上の粗利(契約−予算)",c.contract&&c.budget?bgYen(c.planProfit)+"("+bgPct(c.planProfitRate)+")":"—",c.contract>0&&c.budget>0&&c.planProfit<0)+tile("実績合計",bgYen(c.actual),c.budget>0&&c.actual>c.budget)+tile("残り予算",c.budget?bgYen(c.remain):"—",c.budget>0&&c.remain<0)+tile("現時点の粗利(契約−実績)",c.contract?bgYen(c.profit)+"("+bgPct(c.profitRate)+")":"—",c.contract>0&&c.profit<0)};
+  var linesH=function(){var c=cur();if(!L.length)return '<tr><td colspan="9" class="sub" style="text-align:center;padding:14px">まだ予算の明細がありません。「明細を追加」から入力してください</td></tr>';
+    var inp=function(i,f,v,w,al){return '<input type="text" data-l="'+f+'" data-i="'+i+'" value="'+esc(v==null?"":v)+'" style="width:'+w+(al?";text-align:right":"")+'"'+(al?' inputmode="decimal"':"")+">"};
+    return L.map(function(l,i){var a=c.byLine[l.id]||0,b=bgNum(l.amount);return '<tr><td><select data-l="cat" data-i="'+i+'">'+acct(l.cat)+"</select></td><td>"+inp(i,"name",l.name,"140px")+"</td><td>"+inp(i,"qty",l.qty,"56px",1)+"</td><td>"+inp(i,"unit",l.unit,"46px")+"</td><td>"+inp(i,"price",l.price,"86px",1)+"</td><td>"+inp(i,"amount",b||"","96px",1)+'</td><td class=num>'+(a?bgYen(a):"—")+'</td><td class=num data-rem'+(b&&b-a<0?' style="color:var(--danger,#c0392b);font-weight:700"':"")+">"+(b||a?bgYen(b-a):"—")+'</td><td><button type="button" class="btn sm" data-l-del="'+i+'" title="この行を削除">✕</button></td></tr>'}).join("")};
+  var catH=function(){var c=cur();return bgCats(c).filter(function(k){return c.bud[k]||c.byCat[k]}).map(function(k){var a=c.byCat[k]||0,b=c.bud[k]||0;return "<tr><td>"+esc(k)+(bgAcct().indexOf(k)<0?'<div class="sub">マスタにない科目</div>':"")+"</td><td class=num>"+(b?bgYen(b):"—")+"</td><td class=num>"+(a?bgYen(a):"—")+"</td><td class=num"+(b&&b-a<0?' style="color:var(--danger,#c0392b);font-weight:700"':"")+">"+bgYen(b-a)+"</td></tr>"}).join("")||'<tr><td colspan="4" class="sub" style="text-align:center;padding:10px">予算・実績を入力すると集計が出ます</td></tr>'};
+  var lineOpts=function(sel){return '<option value="">(指定なし)</option>'+L.filter(function(l){return l.name||bgNum(l.amount)}).map(function(l){return '<option value="'+esc(l.id)+'"'+(l.id===sel?" selected":"")+">"+esc((l.cat||"")+":"+(l.name||"(項目名なし)"))+"</option>"}).join("")};
+  var costsH=function(){var c=cur(),nm={};L.forEach(function(l){nm[l.id]=l.name});var cs=c.costs.slice().sort(function(a,b){return String(b.date||"").localeCompare(String(a.date||""))});
+    if(!cs.length)return '<div class="sub" style="text-align:center;padding:14px;border-top:1px solid var(--line)">まだ実績がありません</div>';
+    return cs.map(function(x){
+      if(edit===x.id)return '<div class="bgcost bgedit"><b>実績を編集</b><div class="fields" style="margin-top:6px"><label>日付<input type="date" data-ce="date" value="'+esc(x.date||TODAY())+'"></label><label>勘定科目<select data-ce="cat">'+acct(x.cat||"")+'</select></label><label>予算の項目<select data-ce="lineId">'+lineOpts(x.lineId||"")+'</select></label><label>支払先<input type="text" data-ce="vendor" value="'+esc(x.vendor||"")+'"></label><label>金額(円)<input type="text" inputmode="numeric" data-ce="amount" value="'+esc(x.amount||"")+'"></label><label class="wide">内容<input type="text" data-ce="memo" value="'+esc(x.memo||"")+'"></label></div><div style="display:flex;gap:8px;margin-top:8px"><button type="button" class="btn sm pri" data-ce-save="'+esc(x.id)+'">この内容で更新する</button><button type="button" class="btn sm" data-ce-cancel>やめる</button></div></div>';
+      return '<div class="bgcost"><div style="display:flex;gap:10px;justify-content:space-between;align-items:baseline"><div><span class="sub">'+esc(x.date||"")+"</span> <b>"+esc(x.cat||"")+"</b>"+(x.lineId&&nm[x.lineId]?' <span class="sub">/ '+esc(nm[x.lineId])+"</span>":"")+'</div><b style="white-space:nowrap">'+bgYen(bgNum(x.amount))+"</b></div>"+(x.vendor||x.memo?'<div class="sub">'+esc(x.vendor||"")+(x.vendor&&x.memo?" / ":"")+esc(x.memo||"")+"</div>":"")+'<div style="display:flex;gap:8px;margin-top:6px"><button type="button" class="btn sm" data-ce-edit="'+esc(x.id)+'">編集</button><button type="button" class="btn sm" data-ce-del="'+esc(x.id)+'">削除</button></div></div>'}).join("")};
+  var clean=function(){return L.filter(function(l){return String(l.name||"").trim()||bgNum(l.amount)}).map(function(l){return {id:l.id,cat:l.cat||bgAcct()[0]||"雑費",name:String(l.name||"").trim(),qty:bgNum(l.qty),unit:String(l.unit||"").trim(),price:bgNum(l.price),amount:Math.round(bgNum(l.amount))}})};
+  var draw=function(){
+    bgDlg("💴 予算管理:"+esc(T.name(r).trim()||"案件")+' <span class="tag">'+T.ic+" "+T.n+"</span>",
+      '<div class="bgtiles" id="bg-head">'+headH()+"</div>"+
+      '<h3 class="bgh">予算の明細</h3><div class="sub" style="margin-bottom:6px">項目ごとに、勘定科目・数量・単価を入力します(金額は数量×単価で自動計算。金額だけを直接入力してもかまいません)。</div>'+
+      '<div class="scroll"><table class="bgl"><thead><tr><th>勘定科目</th><th>項目名</th><th class=num>数量</th><th>単位</th><th class=num>単価</th><th class=num>金額</th><th class=num>実績</th><th class=num>残り</th><th></th></tr></thead><tbody id="bg-lines">'+linesH()+'</tbody></table></div><div style="margin-top:8px"><button type="button" class="btn sm" id="bg-l-add">＋ 明細を追加</button></div>'+
+      '<h3 class="bgh">勘定科目ごとの集計</h3><div class="scroll"><table><thead><tr><th>勘定科目</th><th class=num>予算</th><th class=num>実績</th><th class=num>残り</th></tr></thead><tbody id="bg-cats">'+catH()+"</tbody></table></div>"+
+      '<h3 class="bgh">実績(実際にかかった費用)を追加</h3><div class="fields"><label>日付<input type="date" id="bg-c-date" value="'+TODAY()+'"></label><label>勘定科目<select id="bg-c-cat">'+acct("")+'</select></label><label>予算の項目(任意)<select id="bg-c-line">'+lineOpts("")+'</select></label><label>支払先<input type="text" id="bg-c-vendor" placeholder="例:○○建材"></label><label>金額(円・税別)<input type="text" inputmode="numeric" id="bg-c-amt" placeholder="0"></label><label class="wide">内容(任意)<input type="text" id="bg-c-memo" placeholder="例:解体材の処分費"></label></div><div style="margin-top:8px"><button type="button" class="btn pri" id="bg-c-add">＋ 実績を追加</button></div>'+
+      '<h3 class="bgh">実績の一覧('+cur().costs.length+"件)</h3>"+costsH(),
+      '<button type="button" class="btn" id="bg-case" style="margin-right:auto">案件を開く</button><button type="button" class="btn" data-bgl-x>閉じる</button><button type="button" class="btn primary" id="bg-save">予算を保存する</button>',true);
+    bind();
+  };
+  var refresh=function(full){var h=$("#bg-head");if(h)h.innerHTML=headH();var c=$("#bg-cats");if(c)c.innerHTML=catH();var ls=$("#bg-c-line");if(ls){var v=ls.value;ls.innerHTML=lineOpts(v)}if(full){$("#bg-lines").innerHTML=linesH();bindLines()}};
+  var bindLines=function(){
+    [].slice.call(document.querySelectorAll("#bg-lines [data-l]")).forEach(function(el){el.addEventListener(el.tagName==="SELECT"?"change":"input",function(){
+      var i=+el.getAttribute("data-i"),f=el.getAttribute("data-l"),l=L[i];if(!l)return;l[f]=el.value;
+      if(f==="qty"||f==="price"){var q=bgNum(l.qty),p=bgNum(l.price);if(q&&p){l.amount=Math.round(q*p);var ai=document.querySelector('#bg-lines [data-l="amount"][data-i="'+i+'"]');if(ai)ai.value=l.amount}}
+      refresh(false);var tr=el.closest("tr"),rc=tr&&tr.querySelector("[data-rem]");if(rc){var b2=bgNum(l.amount),a2=cur().byLine[l.id]||0;rc.textContent=b2||a2?bgYen(b2-a2):"—";rc.style.color=b2&&b2-a2<0?"var(--danger,#c0392b)":"";rc.style.fontWeight=b2&&b2-a2<0?"700":""}})});
+    [].slice.call(document.querySelectorAll("#bg-lines [data-l-del]")).forEach(function(b){b.onclick=function(){L.splice(+b.getAttribute("data-l-del"),1);refresh(true)}});
+  };
+  var bind=function(){
+    bindLines();
+    $("#bg-l-add").onclick=function(){L.push({id:bgNid("l"),cat:bgAcct()[0]||"雑費",name:"",qty:"",unit:"",price:"",amount:""});refresh(true);var ins=document.querySelectorAll('#bg-lines [data-l="name"]');if(ins.length)ins[ins.length-1].focus()};
+    $("#bg-save").onclick=function(){bgSave(col,id,{lines:clean()});toast("予算を保存しました");bgClose();if(S.tab==="budget")render()};
+    $("#bg-case").onclick=function(){bgClose();if(!$("#modal").innerHTML)T.open(id)};
+    $("#bg-c-add").onclick=function(){var amt=bgNum($("#bg-c-amt").value);if(!amt){toast("金額を入力してください");return}
+      var item={id:bgNid("c"),date:$("#bg-c-date").value||TODAY(),cat:$("#bg-c-cat").value,lineId:$("#bg-c-line").value||"",vendor:$("#bg-c-vendor").value.trim(),memo:$("#bg-c-memo").value.trim(),amount:amt};
+      L=clean();bgSave(col,id,{lines:L,costs:((BGD[key]||{}).costs||[]).concat([item])});toast("実績を追加しました");draw()};
+    [].slice.call(document.querySelectorAll("#bgl [data-ce-edit]")).forEach(function(b){b.onclick=function(){edit=b.getAttribute("data-ce-edit");draw();var e=document.querySelector("#bgl .bgedit");if(e)e.scrollIntoView({block:"center"})}});
+    [].slice.call(document.querySelectorAll("#bgl [data-ce-cancel]")).forEach(function(b){b.onclick=function(){edit="";draw()}});
+    [].slice.call(document.querySelectorAll("#bgl [data-ce-save]")).forEach(function(b){b.onclick=function(){var cid=b.getAttribute("data-ce-save"),box=b.closest(".bgedit"),v={};[].slice.call(box.querySelectorAll("[data-ce]")).forEach(function(el){v[el.getAttribute("data-ce")]=el.value});
+      var amt=bgNum(v.amount);if(!amt){toast("金額を入力してください");return}
+      L=clean();bgSave(col,id,{lines:L,costs:((BGD[key]||{}).costs||[]).map(function(y){return y.id===cid?Object.assign({},y,{date:v.date||y.date,cat:v.cat,lineId:v.lineId||"",vendor:(v.vendor||"").trim(),memo:(v.memo||"").trim(),amount:amt}):y})});edit="";toast("実績を更新しました");draw()}});
+    [].slice.call(document.querySelectorAll("#bgl [data-ce-del]")).forEach(function(b){b.onclick=function(){if(!b.dataset.sure){b.dataset.sure="1";b.textContent="本当に削除";return}var cid=b.getAttribute("data-ce-del");
+      bgSave(col,id,{costs:((BGD[key]||{}).costs||[]).filter(function(x){return x.id!==cid})});toast("実績を削除しました");draw()}});
+  };
+  draw();
+}
+function vAcctTab(){
+  var a=bgAcct();
+  return '<div class="panel"><h3>勘定科目</h3><div class="sub" style="padding:0 12px 8px">予算管理の「予算の明細」と「実績」で選ぶ勘定科目です。1行に1つずつ入力してください。削除しても、登録済みの予算・実績の科目はそのまま残ります。</div><div class="set-row"><textarea id="acct-ta" rows="10" style="flex:1;font:inherit">'+esc(a.join("\n"))+'</textarea></div><div class="set-row"><button type="button" class="btn pri" id="acct-save">保存</button><button type="button" class="btn sm" id="acct-def">初期の科目に戻す</button></div></div>';
+}
+document.addEventListener("click",function(e){
+  var t=e.target&&e.target.closest?e.target:null;if(!t)return;var x;
+  if((x=t.closest("[data-bgopen]"))){e.preventDefault();e.stopPropagation();var q=x.getAttribute("data-bgopen").split("|");openBudget(q[0],q.slice(1).join("|"));return}
+  if(t.closest("#bgl")){
+    if(t.closest("[data-bgl-x]")||(t.classList&&t.classList.contains("bgmask"))){bgClose();if(S.tab==="budget")render();return}
+    return;
+  }
+  var id=(t.closest("button")||{}).id||"";
+  if(id==="acct-save"){var v=($("#acct-ta").value||"").split(/\r?\n/).map(function(s){return s.trim()}).filter(Boolean).filter(function(s,i,a){return a.indexOf(s)===i});S.settings.acct=v.length?v:DEF_ACCT.slice();saveSettings();toast("勘定科目を保存しました");return}
+  if(id==="acct-def"){S.settings.acct=DEF_ACCT.slice();saveSettings();toast("初期の勘定科目に戻しました");return}
+  if(S.tab!=="budget")return;
+  if(t.closest("[data-bg-import]")){bgImport();return}
+  if((x=t.closest("[data-bg-export]"))){bgExport(x.getAttribute("data-bg-export"));return}
+  if((x=t.closest("[data-bg-bulk]"))){if(x.getAttribute("data-bg-bulk")==="add")bgBulkAdd();else bgBulkClear();return}
+  if(t.closest("[data-bg-selnone]")){BGS.sel={};render();return}
+  if(t.closest("[data-bg-more]")){BGS.lim+=200;render();return}
+  if(t.closest("[data-bg-clear]")){BGS.f=null;BGS.dd="";render();return}
+  if((x=t.closest("[data-bgdd]"))){var k=x.getAttribute("data-bgdd");BGS.dd=BGS.dd===k?"":k;render();return}
+  if((x=t.closest("[data-bgc-all]"))){e.preventDefault();var k2=x.getAttribute("data-bgc-all"),f=bgFilter();f[k2]=[].slice.call(document.querySelectorAll('[data-bgc="'+k2+'"]')).map(function(i){return i.value});render();return}
+  if((x=t.closest("[data-bgc-none]"))){e.preventDefault();bgFilter()[x.getAttribute("data-bgc-none")]=[];render();return}
+  if(t.closest("[data-bgc]"))return;
+  if(t.closest("[data-bgsort-dir]")){BGS.sort.dir=BGS.sort.dir==="asc"?"desc":"asc";render();return}
+  if((x=t.closest("[data-bg-sort]"))){var sk=x.getAttribute("data-bg-sort");if(BGS.sort.key===sk)BGS.sort.dir=BGS.sort.dir==="asc"?"desc":"asc";else BGS.sort={key:sk,dir:BG_SORTS[sk].str?"asc":"desc"};render();return}
+  if(t.closest("[data-bg-all]")){var on=t.closest("[data-bg-all]").checked;bgRows().forEach(function(r){if(on)BGS.sel[r.key]=1;else delete BGS.sel[r.key]});render();return}
+  if((x=t.closest("[data-bg-sel]"))){var sk2=x.getAttribute("data-bg-sel");if(x.checked)BGS.sel[sk2]=1;else delete BGS.sel[sk2];render();return}
+  if((x=t.closest("[data-bg-detail]"))){e.preventDefault();var p=x.getAttribute("data-bg-detail").split("_"),c0=p[0];BG_T[c0].open(p.slice(1).join("_"));return}
+  if((x=t.closest("[data-bg-open]"))){var p2=x.getAttribute("data-bg-open").split("_");openBudget(p2[0],p2.slice(1).join("_"));return}
+  if(BGS.dd&&!t.closest(".bgdd")){BGS.dd="";render()}
+},true);
+document.addEventListener("change",function(e){
+  if(S.tab!=="budget")return;var t=e.target;if(!t||t.closest("#bgl"))return;
+  var k;
+  if((k=t.getAttribute("data-bgc"))){var f=bgFilter(),a=f[k];if(t.checked){if(a.indexOf(t.value)<0)a.push(t.value)}else f[k]=a.filter(function(v){return v!==t.value});render();return}
+  if((k=t.getAttribute("data-bgf"))&&k!=="q"){bgFilter()[k]=t.value;BGS.lim=200;render();return}
+  if(t.hasAttribute("data-bgsort-key")){BGS.sort={key:t.value,dir:BG_SORTS[t.value].str?"asc":"desc"};render();return}
+});
+document.addEventListener("input",function(e){
+  if(S.tab!=="budget"||!e.target||e.target.getAttribute("data-bgf")!=="q")return;bgFilter().q=e.target.value;clearTimeout(BGS.qt);
+  BGS.qt=setTimeout(function(){var el=document.querySelector('[data-bgf="q"]'),pos=el&&el.selectionStart;render();var n=document.querySelector('[data-bgf="q"]');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}},350);
 });
 /* ====================== 水道届の様式(アップロード)に記入して出力 ====================== */
 var WTF_KEYS=[["name","使用者氏名"],["kana","フリガナ"],["addr","使用場所の住所"],["tel","連絡先電話番号"],["custNo","お客様番号"],["pay","支払い方法"],["payer","支払者氏名"],["newAddr","転居先の住所"],["workplace","勤務先"],["occupants","世帯人数"],["sendTo","送付先"],
@@ -4767,14 +5095,14 @@ function repClick(e,t,d){
 
 /* ---------- 金額は管理者のみ ---------- */
 var MNY_RE=/金額|税別|税込|単価|見積|売上|請求|入金|概算|料金|部材代|消費税|支払|費用|合計|¥|円/;
-var MNY_SET=["prices","emfee","acprices","basic"];
+var MNY_SET=["prices","emfee","acprices","basic","acct"];
 function canMoney(){var m=ME();return !m||m.role==="admin"}
 function mnyRm(n){if(n&&n.parentNode)n.parentNode.removeChild(n)}
 function mnyMark(e,txt,cls){if(!e||e.getAttribute("data-mny"))return;e.setAttribute("data-mny","1");e.innerHTML='<span class="mnylock '+(cls||"")+'" title="管理者のみ表示">🔒'+(txt?" "+txt:"")+'</span>'}
 function moneyBadge(root){
   if(!canMoney())return;root=root||document;
   function b(e,pre){if(!e||e.getAttribute("data-mnyb"))return;e.setAttribute("data-mnyb","1");e.insertAdjacentHTML("afterbegin",'<span class="mnybadge" title="管理者のみ表示">🔒</span>'+(pre||""))}
-  [].slice.call(root.querySelectorAll('[data-tab="bill"],[data-tab="esum"],[data-stab="prices"],[data-stab="emfee"],[data-stab="acprices"],[data-stab="basic"]')).forEach(function(e){b(e," ")});
+  [].slice.call(root.querySelectorAll('[data-tab="bill"],[data-tab="esum"],[data-tab="budget"],[data-stab="acct"],[data-stab="prices"],[data-stab="emfee"],[data-stab="acprices"],[data-stab="basic"]')).forEach(function(e){b(e," ")});
   [].slice.call(root.querySelectorAll("table thead th")).forEach(function(th){if(MNY_RE.test(th.textContent))b(th)});
   [].slice.call(root.querySelectorAll(".kv>div,.stat,.card2")).forEach(function(e){if(MNY_RE.test(e.textContent)){var f=e.querySelector("span,h3")||e;b(f)}});
   [].slice.call(root.querySelectorAll(".sum")).forEach(function(e){b(e)});
@@ -4783,7 +5111,7 @@ function moneyBadge(root){
 }
 function moneyScrub(root){
   if(canMoney())return;root=root||document;
-  [].slice.call(root.querySelectorAll('[data-tab="bill"],[data-tab="esum"],[data-stab="prices"],[data-stab="emfee"],[data-stab="acprices"],[data-stab="basic"]')).forEach(function(e){
+  [].slice.call(root.querySelectorAll('[data-tab="bill"],[data-tab="esum"],[data-tab="budget"],[data-stab="acct"],[data-stab="prices"],[data-stab="emfee"],[data-stab="acprices"],[data-stab="basic"]')).forEach(function(e){
     e.removeAttribute("data-tab");e.removeAttribute("data-stab");e.setAttribute("aria-disabled","true");e.classList.add("mnydis");e.setAttribute("title","管理者のみ");
     if(!/🔒/.test(e.textContent))e.insertAdjacentHTML("afterbegin","🔒 ")});
   [].slice.call(root.querySelectorAll("#bk-pexp,#bk-pimp,#billall,[data-mnyx]")).forEach(mnyRm);
@@ -5010,11 +5338,11 @@ function boot(){
   render();
   claude_use("db").then(function(d){
     if(!d){
-      S.persist=false;wtfInit();acInit();phInit();
+      S.persist=false;wtfInit();acInit();phInit();bgInit();
       COLN.forEach(function(c){var v=lsGet(c);S[c]=(Array.isArray(v)?v:(c==="jobs"?sampleJobs():[])).map(function(o){return normDoc(c,String((o&&o.id)||nid("x")),o)});loaded[c]=true});
       var st=lsGet("settings");if(st&&st.prices)S.settings=st;normSettings();loaded.settings=true;ready();return;
     }
-    db=d;wtfInit();acInit();phInit();
+    db=d;wtfInit();acInit();phInit();bgInit();
     COLN.forEach(function(c){
       db.collection(c).onSnapshot(function(snap){PEND[c]=snap;if(!PTM[c])PTM[c]=setTimeout(function(){PTM[c]=0;var sn=PEND[c];PEND[c]=null;if(!sn)return;S[c]=sn.docs.map(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}return normDoc(c,x.id,d)});S.persist=true;loaded[c]=true;ready()},80)},function(){S.persist=false;loaded[c]=true;ready()});
     });
