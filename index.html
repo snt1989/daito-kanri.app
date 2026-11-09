@@ -366,6 +366,21 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .nt-tabs .tab{padding:9px 2px;font-size:13.5px;white-space:nowrap;text-align:center}
 .ntc{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:11px;line-height:18px;text-align:center}
 .nt-body{min-height:260px}
+.rpsum{padding:14px 16px}.rpstat{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.rpstat>div{display:flex;flex-direction:column;gap:2px}.rpstat b{font-size:22px}.rpstat small{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
+.rpbar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:12px 0}.rpbar i{display:block;height:100%;background:var(--ok,#1a7f37)}
+.rpact{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rpact>.sub{flex:1;min-width:200px}
+.rpcfg{padding:10px 14px}.rpcfg summary{display:flex;gap:10px;align-items:center;flex-wrap:wrap;cursor:pointer;list-style:none}.rpcfg summary::-webkit-details-marker{display:none}.rpcfg summary .sub{flex:1;min-width:0}.rpedit{font-size:12px;color:var(--accent);font-weight:700}
+.rpfil{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:12px 0 4px}.rpfil .chip2{padding:5px 12px;font-size:13px}.rpfil .chip2.on{background:var(--accent);border-color:var(--accent);color:#fff}.rpfil input{margin-left:auto;min-width:180px;flex:0 1 260px}
+.rpgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.rpcard{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fff);padding:0;overflow:hidden;cursor:pointer;text-align:left;font:inherit;color:inherit;transition:box-shadow .15s,transform .15s}
+.rpcard:hover{box-shadow:0 6px 18px rgba(0,0,0,.1);transform:translateY(-1px)}.rpcard.done{border-color:color-mix(in srgb,var(--ok,#1a7f37) 45%,var(--line))}
+.rpth{display:grid;place-items:center;aspect-ratio:4/3;background:#f1eeeb;overflow:hidden}.rpth img{width:100%;height:100%;object-fit:cover;display:block}
+.rpbadge{position:absolute;top:8px;left:8px;font-size:11.5px;font-weight:700;border-radius:99px;padding:2px 9px;background:rgba(255,255,255,.92);color:var(--muted)}.rpbadge.done{background:var(--ok,#1a7f37);color:#fff}.rpbadge.part{background:#b45309;color:#fff}
+.rpbody{display:flex;flex-direction:column;gap:3px;padding:10px 12px 12px}.rpbody b{font-size:14.5px;line-height:1.35}
+.rpdots{display:flex;gap:4px;margin:6px 0 2px}.rpdots i{width:16px;height:6px;border-radius:3px;background:var(--line)}.rpdots i.on.b{background:#1d4ed8}.rpdots i.on.p{background:#b45309}.rpdots i.on.a{background:var(--ok,#1a7f37)}
+.rpgo{margin-top:6px;font-size:12.5px;font-weight:700;color:var(--accent)}
+@media(max-width:720px){.rpstat{grid-template-columns:repeat(2,1fr)}.rpgrid{grid-template-columns:repeat(2,1fr);gap:8px}.rpbody{padding:8px 10px 10px}.rpbody b{font-size:13.5px}.rpfil input{margin-left:0;flex:1 1 100%}.rpact>.sub{flex:1 1 100%}.rpact .btn{flex:1 1 0;white-space:nowrap;justify-content:center}.rpstat b{font-size:20px}}
+
 .cstop{margin:-4px 0 14px}.csback{font-size:13px;font-weight:700;color:var(--accent);text-decoration:none}.cstitle{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 2px}.cstitle h2{margin:0;font-size:22px}
 .csgrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
 .cssec{margin-bottom:16px}.cshd{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:0 2px 6px}.cslegend{font-size:11px;color:var(--muted);margin-left:auto;margin-right:8px;white-space:nowrap}.cshd h3{margin:0;font-size:14px;display:flex;align-items:center;gap:6px}
@@ -3036,6 +3051,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-11-09",t:"報告書作成の画面を見やすく",d:"報告書作成の画面を、写真つきのカードを並べる形にしました。上に「完成・途中・未着手」の件数と進み具合、PDFの作成ボタンをまとめ、表紙の設定はたためるようにしました。完成・途中・未着手での絞り込みと検索もできます。"},
  {v:"2026-11-09",t:"案件の確認画面",d:"地図のピンを動かして位置を保存できます(航空写真で確認)。一覧で案件を押すと、現場管理アプリのような確認画面が開くようになりました。写真・予算管理・メモ・報告書・案件情報・地図・登録の記録と、案件メンバー(チャット)がまとまって見られます。編集は「✎ 編集」から行います。"},
  {v:"2026-11-09",t:"案件ごとのチャット",d:"メニューに「チャット」を追加しました。案件ごとに、参加している人(案件の担当者・チャットに追加した人・管理者)だけでメッセージ・写真・スタンプをやり取りできます。既読の表示、未読の件数(メニュー・ベル)、スマホ通知(通知の設定で「案件チャット」)にも対応しています。各案件の編集画面の「💬 チャット」からも開けます。"},
  {v:"2026-10-28",t:"予算管理ページ",d:"メニューに「予算管理」(管理者のみ)を追加しました。現場管理アプリと同じく、案件ごとに勘定科目別の予算の明細と実績(実際にかかった費用)を登録して、残り予算・消化率・予算上の粗利・現時点の粗利を確認できます。絞り込み・並び替え、CSVの入出力、まとめての予算追加・削除ができます。各案件の編集画面の「💴 予算・実績」からも開けます。勘定科目は設定→全体共通→「勘定科目」で編集します。"},
@@ -3750,6 +3766,10 @@ document.addEventListener("change",function(e){
   if(t.id==="pg-sort"){PG.sort=t.value;render();return}
   if(t.id==="pg-settag"){pgSetTag(t.value);return}
 });
+document.addEventListener("input",function(e){
+  if(S.tab==="mrep"&&e.target&&e.target.id==="rp-q"){S.repQ=e.target.value;clearTimeout(S.repQt);S.repQt=setTimeout(function(){var el=$("#rp-q"),p=el&&el.selectionStart;render();var n=$("#rp-q");if(n){n.focus();try{n.setSelectionRange(p,p)}catch(x){}}},300)}
+});
+document.addEventListener("toggle",function(e){if(e.target&&e.target.id==="rp-cfg")S.repCfgOpen=e.target.open},true);
 document.addEventListener("input",function(e){
   if(S.tab!=="photos"||!e.target||e.target.id!=="pg-q")return;PG.q=e.target.value;clearTimeout(PG.qt);PG.qt=setTimeout(function(){var el=$("#pg-q"),pos=el&&el.selectionStart;render();var n=$("#pg-q");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}},300);
 });
@@ -5277,17 +5297,33 @@ function repUrl(m,i){var key=m.id+":"+i,b=REPB[m.id]&&REPB[m.id][i];if(!b)return
 function repUrlOf(key){var v=RPV[key];return v&&v.u?v.u:""}
 /* ---- 画面 ---- */
 function vMrep(){
-  var M=S.maint.filter(function(j){return j.month===S.mMonth}),cfg=repSet(),ready=M.filter(function(m){return repCnt(m)>0});
+  var All=S.maint.filter(function(j){return j.month===S.mMonth}),cfg=repSet(),ready=All.filter(function(m){return repCnt(m)>0});
+  var st=function(m){var n=repCnt(m);return n>=7?"done":n?"part":"none"};
+  var cnt={all:All.length,none:0,part:0,done:0};All.forEach(function(m){cnt[st(m)]++});
+  var f=S.repF||"all",q=String(S.repQ||"").trim().toLowerCase();
+  var M=All.filter(function(m){return (f==="all"||st(m)===f)&&(!q||((m.bldgName||"")+" "+(m.bldgCd||"")+" "+(m.item||"")).toLowerCase().indexOf(q)>=0)})
+    .sort(function(a,b){var o={part:0,none:1,done:2};return o[st(a)]-o[st(b)]||String(a.bldgName||"").localeCompare(String(b.bldgName||""),"ja")});
+  var pct=All.length?Math.round(cnt.done/All.length*100):0;
   var h='<div class="bar"><div class="mon"><button class="btn sm" data-mmon="-1">◀</button><h2 class="sec">'+S.mMonth.replace("-","年")+'月の報告書</h2><button class="btn sm" data-mmon="1">▶</button><button class="btn sm" data-mmon="0">今月</button></div></div>';
-  h+='<div class="panel" style="padding:12px 14px"><b>表紙の設定</b><div class="sub">「作業完了報告書【写真版(表紙)】」に入る内容です。表紙は1か月につき1枚です。</div>'+
-   '<div class="repcfg"><label>営業所<input type="text" data-repcfg="off" value="'+esc(cfg.off)+'"></label><label>施工業者(会社名)<input type="text" data-repcfg="co" value="'+esc(cfg.co)+'"></label></div>'+
-   '<label class="repfree">フリースペース<textarea data-repcfg="free" rows="2" placeholder="連絡事項など(空欄でもかまいません)">'+esc(cfg.free)+'</textarea></label></div>';
-  h+='<div class="sub" style="margin:10px 2px">各建物の「写真シート」に7枚の写真(①建物 ②〜④作業前 ⑤〜⑦作業後)を入れると、表紙つきの1つのPDFにまとめられます。</div>';
-  if(!M.length)h+='<div class="empty">この月の維持管理がありません。「作業一覧」で登録してください。</div>';
-  else h+='<div class="vcards">'+M.map(function(m){var n=repCnt(m),ok=n===7,it=(m.rep&&m.rep.item)||repItemFor(m);
-    return '<div class="vcard"><button type="button" class="vth" data-repth="'+m.id+'" data-rep="open" data-id="'+m.id+'" aria-label="写真シートを開く"><span class="vsph">'+(n?"":"写真なし")+'</span></button><div class="vbody"><b>'+esc(m.bldgName||"(建物名なし)")+'</b><div class="sub">'+esc(m.bldgCd||"")+' '+esc(it?it.split(":")[1]:m.item||"")+'</div><div class="sub">作業日 '+esc(m.doneDate||"未入力")+'</div><div class="sub" style="color:'+(ok?"var(--ok,#1a7f37)":"var(--sub)")+'">写真 '+n+' / 7枚'+(ok?" ✔":"")+'</div><button type="button" class="btn sm pri vbtn" data-rep="open" data-id="'+m.id+'">📷 写真シートを作成</button></div></div>'}).join("")+'</div>';
-  h+='<div class="panel" style="padding:12px 14px;margin-top:12px"><b>報告書PDF(表紙＋写真シート)</b><div class="sub">写真が1枚以上ある建物 '+ready.length+'件 が対象です。写真シート '+ready.length+'枚＋表紙1枚のPDFになります。</div>'+
-   '<div style="margin-top:8px"><button type="button" class="btn" data-rep="prevall"'+(ready.length&&!REP.busy?"":" disabled")+'>👁 プレビュー</button> <button type="button" class="btn pri" data-rep="pdfall"'+(ready.length&&!REP.busy?"":" disabled")+'>'+(REP.busy?"作成中…":"📄 報告書PDFを作成")+'</button> <span class="sub">'+esc(REP.msg||"")+'</span></div></div>';
+  // まとめ(進み具合とPDF)
+  h+='<div class="panel rpsum"><div class="rpstat"><div><span class="sub">対象の建物</span><b>'+All.length+'<small>件</small></b></div><div><span class="sub">写真シート完成(7枚)</span><b>'+cnt.done+'<small>/ '+All.length+'件</small></b></div><div><span class="sub">途中</span><b>'+cnt.part+'<small>件</small></b></div><div><span class="sub">未着手</span><b>'+cnt.none+'<small>件</small></b></div></div>'+
+    '<div class="rpbar"><i style="width:'+pct+'%"></i></div>'+
+    '<div class="rpact"><span class="sub">写真が1枚以上ある <b>'+ready.length+'件</b> の写真シート＋表紙1枚を、1つのPDFにまとめます。'+(REP.msg?" "+esc(REP.msg):"")+'</span><button type="button" class="btn" data-rep="prevall"'+(ready.length&&!REP.busy?"":" disabled")+'>👁 プレビュー</button><button type="button" class="btn pri" data-rep="pdfall"'+(ready.length&&!REP.busy?"":" disabled")+'>'+(REP.busy?"作成中…":"📄 報告書PDFを作成")+"</button></div></div>";
+  // 表紙の設定(たたむ)
+  h+='<details class="panel rpcfg"'+(S.repCfgOpen?" open":"")+' id="rp-cfg"><summary><b>表紙の設定</b><span class="sub">営業所: '+esc(cfg.off||"未入力")+' ／ 施工業者: '+esc(cfg.co||"未入力")+(cfg.free?" ／ フリースペースあり":"")+'</span><span class="rpedit">変更 ▾</span></summary>'+
+    '<div class="sub" style="margin-top:6px">「作業完了報告書【写真版(表紙)】」に入る内容です。表紙は1か月につき1枚です。</div>'+
+    '<div class="repcfg"><label>営業所<input type="text" data-repcfg="off" value="'+esc(cfg.off)+'"></label><label>施工業者(会社名)<input type="text" data-repcfg="co" value="'+esc(cfg.co)+'"></label></div>'+
+    '<label class="repfree">フリースペース<textarea data-repcfg="free" rows="2" placeholder="連絡事項など(空欄でもかまいません)">'+esc(cfg.free)+"</textarea></label></details>";
+  if(!All.length)return h+'<div class="empty">この月の維持管理がありません。「作業一覧」で登録してください。</div>';
+  // 絞り込み
+  h+='<div class="rpfil">'+[["all","すべて"],["part","途中"],["none","未着手"],["done","完成"]].map(function(x){return '<button type="button" class="chip2'+(f===x[0]?" on":"")+'" data-repf="'+x[0]+'">'+x[1]+" "+cnt[x[0]]+"</button>"}).join("")+'<input type="search" id="rp-q" value="'+esc(S.repQ||"")+'" placeholder="建物名・建物CDで検索"></div>';
+  h+='<div class="sub" style="margin:4px 2px 10px">写真シートには7枚(①建物 ②〜④作業前 ⑤〜⑦作業後)を入れます。カードを押すと写真シートが開きます。</div>';
+  if(!M.length)return h+'<div class="empty">条件に合う建物はありません</div>';
+  h+='<div class="rpgrid">'+M.map(function(m){var n=repCnt(m),s=st(m),it=(m.rep&&m.rep.item)||repItemFor(m),dots="";
+    for(var i=0;i<7;i++)dots+='<i class="'+(repHas(m,i)?"on":"")+(i===0?" b":i<4?" p":" a")+'" title="'+["①建物","②作業前","③作業前","④作業前","⑤作業後","⑥作業後","⑦作業後"][i]+'"></i>';
+    return '<button type="button" class="rpcard '+s+'" data-rep="open" data-id="'+m.id+'"><span class="rpth" data-repth="'+m.id+'">'+(n?"":'<span class="sub">📷 写真なし</span>')+'</span>'+
+      '<span class="rpbadge '+s+'">'+(s==="done"?"✔ 完成":s==="part"?"途中 "+n+"/7":"未着手")+"</span>"+
+      '<span class="rpbody"><b>'+esc(m.bldgName||"(建物名なし)")+'</b><span class="sub">'+esc(m.bldgCd||"")+" "+esc(it?String(it).split(":")[1]||it:m.item||"")+'</span><span class="sub">作業日 '+esc(m.doneDate||"未入力")+'</span><span class="rpdots">'+dots+'</span><span class="rpgo">'+(n?"写真シートを開く ›":"＋ 写真を入れる ›")+"</span></span></button>"}).join("")+"</div>";
   setTimeout(repThumbs,0);
   return h;
 }
@@ -5460,6 +5496,7 @@ function repClick(e,t,d){
   if(d.rep==="prevall"){repPrevAll();return true}
   if(d.rep==="pvback"){repModal();return true}
   if(d.rep==="open"){openRep(d.id);return true}
+  if(d.repf){S.repF=d.repf;render();return true}
   if(d.rep==="close"){$("#modal").innerHTML="";REP.id=null;render();return true}
   if(d.rep==="save"){repSave();return true}
   if(d.rep==="pdf1"){repPdf1();return true}
