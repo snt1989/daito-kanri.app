@@ -366,6 +366,31 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .nt-tabs .tab{padding:9px 2px;font-size:13.5px;white-space:nowrap;text-align:center}
 .ntc{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:11px;line-height:18px;text-align:center}
 .nt-body{min-height:260px}
+.chmask{z-index:97}
+.chdlg{width:min(720px,100%);height:min(88vh,900px);display:flex;flex-direction:column;padding:0;overflow:hidden}
+.chhead{display:flex;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}.chtt{flex:1;min-width:0;display:flex;flex-direction:column}.chtt b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chtt .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chlist{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 12px;background:var(--bg,#f6f4f2)}
+.chday{text-align:center;margin:12px 0 6px}.chday span{background:rgba(0,0,0,.08);border-radius:99px;padding:2px 10px;font-size:11.5px;color:var(--muted)}
+.chm{margin:6px 0;display:flex;flex-direction:column;align-items:flex-start;max-width:100%}.chm.me{align-items:flex-end}
+.chwho{font-size:11.5px;color:var(--muted);margin:0 0 2px 4px}
+.chrow{display:flex;gap:6px;align-items:flex-end;max-width:86%;min-width:0}
+.chb{background:var(--surface,#fff);border:1px solid var(--line);border-radius:16px 16px 16px 4px;padding:8px 12px;min-width:0;overflow-wrap:anywhere;word-break:break-word;font-size:14px;line-height:1.55}
+.chm.me .chb{background:var(--accent);color:#fff;border-color:var(--accent);border-radius:16px 16px 4px 16px}.chm.me .chb a{color:#fff}
+.chb.st,.chb.im{background:none!important;border:0!important;padding:0}.chb.im .chimg{margin:0}
+.chstamp{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border:2px solid var(--line);border-radius:16px;background:var(--surface,#fff);color:var(--ink)}.chstamp span{font-size:38px;line-height:1.1}.chstamp b{font-size:13px}
+.chmeta{font-size:10.5px;color:var(--muted);white-space:nowrap;text-align:right;line-height:1.3}
+.chimg{display:block;border:0;padding:0;background:none;cursor:pointer;margin:-2px -6px 4px}.chimg span{display:block;width:220px;max-width:60vw;aspect-ratio:4/3;background:#ddd center/cover no-repeat;border-radius:10px}
+.chdel{border:0;background:none;color:var(--muted);font-size:11px;cursor:pointer;padding:2px 4px;opacity:.6}.chdel:hover{opacity:1}
+.chstamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;padding:8px 10px;border-top:1px solid var(--line);max-height:200px;overflow:auto;background:var(--surface,#fff)}
+.chstamps button{border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff);padding:6px 4px;font:inherit;font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink)}.chstamps span{font-size:24px}
+.chin{display:flex;gap:6px;align-items:flex-end;padding:8px 10px;border-top:1px solid var(--line);background:var(--surface,#fff)}
+.chin textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:15px;line-height:1.45;padding:8px 10px;border:1px solid var(--line);border-radius:12px;max-height:140px}
+.chic{cursor:pointer;font-size:17px;padding:6px 9px}.chic.on{background:var(--accent-soft)}
+.chrows{padding:0}.chrowi{display:flex;gap:12px;align-items:center;width:100%;padding:12px 14px;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}.chrowi:last-child{border-bottom:0}
+.chav{flex:none;width:40px;height:40px;border-radius:50%;background:var(--accent-soft);display:grid;place-items:center;font-size:19px}
+.chrb{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.chr1,.chr2{display:flex;gap:8px;justify-content:space-between;align-items:center;min-width:0}.chr1 b,.chr2>.sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.chr1>.sub{flex:none}
+@media(max-width:720px){.chdlg{width:100%;height:100%;max-height:none;border-radius:0}.chmask{padding:0!important;align-items:stretch}}
+
 .bgmask{z-index:96}
 .bgtiles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .bgtile{flex:1;min-width:140px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}.bgtile b{display:block;font-size:17px;margin-top:2px;font-variant-numeric:tabular-nums}
@@ -569,6 +594,7 @@ function counts(){
   });return c;
 }
 var ICONS={
+ chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/>',
  image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
  home:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
  list:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
@@ -588,7 +614,7 @@ var ICONS={
  menu:'<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
  tool:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'};
 function ic(n,sz){sz=sz||20;return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[n]+"</svg>"}
-var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"docs",label:"書類ボックス",ic:"book"},{tab:"photos",label:"画像管理",ic:"image"},{tab:"budget",label:"予算管理",ic:"yen"},{tab:"qa",label:"Q&A",ic:"help"},
+var NAV=[{tab:"home",label:"ホーム",ic:"home"},{tab:"chat",label:"チャット",ic:"chat"},{tab:"docs",label:"書類ボックス",ic:"book"},{tab:"photos",label:"画像管理",ic:"image"},{tab:"budget",label:"予算管理",ic:"yen"},{tab:"qa",label:"Q&A",ic:"help"},
  {g:"原状回復工事"},{tab:"jobs",label:"工事一覧",ic:"list",d:"genkyo"},{tab:"sched",label:"施工予定",ic:"calendar",d:"genkyo"},{tab:"report",label:"価値観共有チェックシート",ic:"check",d:"genkyo"},{tab:"bill",label:"請求・入金",ic:"yen",d:"genkyo"},{tab:"water",label:"水道開始・中止届",ic:"drop",d:"genkyo"},
  {g:"緊急対応"},{tab:"elog",label:"出動一覧",ic:"alert",d:"emerg"},{tab:"esum",label:"月次集計",ic:"chart",d:"emerg"},
  {g:"建物維持管理"},{tab:"mmonth",label:"作業一覧",ic:"building",d:"maint"},{tab:"mplan",label:"年間予定",ic:"grid",d:"maint"},{tab:"mrep",label:"報告書作成",ic:"list",d:"maint"},
@@ -641,7 +667,7 @@ try{matchMedia("(max-width:720px)").addEventListener("change",function(){if(S.re
 var BRANDSVG='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V8l7-5 7 5v13"/><path d="M3 21h18"/><path d="M9 10h1.5M13.5 10H15M9 13.5h1.5M13.5 13.5H15"/><path d="M10.5 21v-3.5h3V21"/></svg>';
 function renderTabs(){
   var c=counts(),eAct=S.emerg.filter(function(x){return x.status<2}).length,mSei=S.maint.filter(function(x){return x.status===1}).length;
-  var B={aclist:S.ac.filter(function(r){return r.status===0&&mineOk(r)}).length,jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
+  var B={chat:(function(){try{return chUnreadTotal()}catch(e){return 0}})(),aclist:S.ac.filter(function(r){return r.status===0&&mineOk(r)}).length,jobs:c.over,report:c.wait,elog:eAct,mmonth:mSei,water:S.water.filter(function(w){return wtSoon(w)||wtLate(w)}).length};
   var sd=$("#side"),sTop=sd.scrollTop;
   sd.innerHTML='<div class="brand">'+brandLogoHtml()+'<span>'+esc(brandName())+'</span></div>'+NAV.filter(function(n){return n.tab!=="docs"||window.dsFiles}).map(function(n){
     if(n.g!==undefined)return n.g.trim()?'<div class="nv-g">'+n.g+"</div>":'<div class="nv-g" style="padding:6px"></div>';
@@ -652,7 +678,7 @@ function renderTabs(){
   if(cur&&sd.scrollHeight>sd.clientHeight){var cr=cur.getBoundingClientRect(),sr=sd.getBoundingClientRect();if(cr.bottom>sr.bottom-8)sd.scrollTop+=cr.bottom-sr.bottom+16;else if(cr.top<sr.top+8)sd.scrollTop-=sr.top-cr.top+16}
   $("#menu").innerHTML=ic("menu");renderBnav(B);
   var uc=userChipHtml();if(uc!==null){var ue=document.querySelector(".user");if(ue&&ue.dataset.c!==uc){ue.innerHTML=uc;ue.dataset.c=uc}}
-  var tn=todos().length+infoBadge();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn);try{pnCheck()}catch(e){};try{brandApply()}catch(e){};
+  var tn=todos().length+infoBadge()+(function(){try{return chUnreadTotal()}catch(e){return 0}})();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn);try{pnCheck()}catch(e){};try{brandApply()}catch(e){};
 }
 function pageHead(){
   var n=NAV.find(function(x){return x.tab===S.tab})||NAV[0],act="";
@@ -662,7 +688,7 @@ function pageHead(){
   else if(S.tab==="aclist")act='<button class="btn out" id="ac-imp">📄 書類から取り込む</button><input type="file" id="ac-file" accept="application/pdf,image/*" style="display:none"><button class="btn pri" id="add">＋ エアコン案件を追加</button>';
   else if(S.tab==="water")act='<button class="btn out" id="w-job">案件から作成</button><button class="btn pri" id="add">＋ 届出を追加</button>';
   else if(S.tab==="budget")act=bgPageAct();
-  else if(S.tab!=="set"&&S.tab!=="mscope"&&S.tab!=="photos")act='<button class="btn pri" id="add">'+({genkyo:"＋ 案件を登録",emerg:"＋ 緊急出動を記録",maint:S.tab==="mplan"?"＋ 年間計画を追加":"＋ 維持管理を追加"}[S.div]||"＋ 追加")+"</button>";
+  else if(S.tab!=="set"&&S.tab!=="mscope"&&S.tab!=="photos"&&S.tab!=="chat")act='<button class="btn pri" id="add">'+({genkyo:"＋ 案件を登録",emerg:"＋ 緊急出動を記録",maint:S.tab==="mplan"?"＋ 年間計画を追加":"＋ 維持管理を追加"}[S.div]||"＋ 追加")+"</button>";
   if(S.tab==="jobs")act='<button class="btn out" id="vs-open">📎 価値観共有チェックシートを取り込む</button>'+act;
   return '<div class="pghead"><h2 class="pt">'+n.label+'</h2><div class="pgact">'+act+"</div></div>";
 }
@@ -703,7 +729,7 @@ function render0(){
   var m=$("#main"),h="";
   if(!S.persist)h+='<div class="banner">共有保存が使えない表示です。入力内容はこのブラウザにだけ保存されます。</div>';
   h+=pageHead();
-  h+=({home:vHome,photos:vPhotos,budget:vBudget,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,mrep:vMrep,water:vWater}[S.tab]||vJobs)();
+  h+=({home:vHome,chat:vChat,photos:vPhotos,budget:vBudget,docs:vDocs,qa:vQa,aclist:vAc,jobs:vJobs,sched:vSched,report:vReport,bill:vBill,set:vSet,elog:vElog,eguide:vEguide,esum:vEsum,mmonth:vMwork,mplan:vMplan,mscope:vMscope,mrep:vMrep,water:vWater}[S.tab]||vJobs)();
   m.innerHTML=h;
   moneyScrub(document);moneyBadge(document);
   decorate();mobTables();
@@ -2988,6 +3014,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-11-09",t:"案件ごとのチャット",d:"メニューに「チャット」を追加しました。案件ごとに、担当者と管理者でメッセージ・写真・スタンプをやり取りできます。既読の表示、未読の件数(メニュー・ベル)、スマホ通知(通知の設定で「案件チャット」)にも対応しています。各案件の編集画面の「💬 チャット」からも開けます。"},
  {v:"2026-10-28",t:"予算管理ページ",d:"メニューに「予算管理」(管理者のみ)を追加しました。現場管理アプリと同じく、案件ごとに勘定科目別の予算の明細と実績(実際にかかった費用)を登録して、残り予算・消化率・予算上の粗利・現時点の粗利を確認できます。絞り込み・並び替え、CSVの入出力、まとめての予算追加・削除ができます。各案件の編集画面の「💴 予算・実績」からも開けます。勘定科目は設定→全体共通→「勘定科目」で編集します。"},
  {v:"2026-10-28",t:"画像管理ページ",d:"メニューに「画像管理」を追加しました。すべての案件の写真を、種類・分類・検索で絞り込んで一覧できます。案件ごとにまとまって表示され、まとめて分類の変更・ZIPでのダウンロード・削除ができます。"},
  {v:"2026-10-28",t:"案件ごとに写真を保存",d:"工事・緊急出動・維持管理・エアコンの各案件の編集画面に「📷 写真」を追加しました。写真は作業前・作業中・作業後・その他に分けて、メモ付きで保存できます。保存時に自動で縮小・圧縮します。画質は設定→全体共通→「写真の画質」で一括管理し、保存済みの写真もまとめて軽量化できます。"},
@@ -3032,7 +3059,7 @@ function infoNew(){return infoUnseen().length}
 function infoMarkSeen(){lsSet("infoSeenK",ckey(CHANGELOG[0]));lsSet("infoSeen",CHANGELOG[0].v)}
 /* ---------- スマホ通知(Web Push。Web版のみ) ---------- */
 var PU={status:null,sub:null,prefs:null,busy:false,msg:"",failed:false,loading:false};
-var PUSH_KINDS=[["job","新規案件","新しい案件が登録されたとき"],["emerg","緊急出動","緊急出動が登録されたとき"],["status","案件の進捗","案件・緊急出動の進捗が変わったとき"]];
+var PUSH_KINDS=[["chat","案件チャット","担当している案件のチャットに新しいメッセージが届いたとき"],["job","新規案件","新しい案件が登録されたとき"],["emerg","緊急出動","緊急出動が登録されたとき"],["status","案件の進捗","案件・緊急出動の進捗が変わったとき"]];
 function pushSupported(){return !!(window.dsApi&&/^https?:$/.test(location.protocol)&&"serviceWorker" in navigator&&"PushManager" in window&&typeof Notification!=="undefined")}
 function pushCall(action,extra){return window.dsApi("/api/push",Object.assign({action:action},extra||{})).then(function(j){if(!j||j.error||(j.status&&j.status>=400))throw new Error((j&&j.error)||"サーバーエラー");return j})}
 function pushLoad(){
@@ -3193,10 +3220,12 @@ function openNotices(tab){
   var T=todos(),M=ntUnread(),U=infoUnseen(),h="",MAX=60;
   var row=function(attr,icon,title,sub,urgent){return '<button type="button" class="nrow'+(urgent?" urgent":"")+'" '+attr+'><span class="ni">'+icon+'</span><span class="nb"><b>'+esc(title)+'</b><span class="sub">'+esc(sub)+"</span></span></button>"};
   var empty=function(t){return '<div class="empty" style="padding:30px 6px;text-align:center">'+t+"</div>"};
-  var TABS=[["todo","対応",T.length],["mail","メール",M.length],["rel","更新",U.length],["hist","履歴",0],["set","設定",0]];
+  var CU=[];try{var cbk=chByKey();Object.keys(cbk).forEach(function(k){if(!chMember(k)||!chRec(k))return;var u=chUnread(k,cbk[k]);if(u){var lm=cbk[k][cbk[k].length-1];CU.push({k:k,u:u,m:lm})}});CU.sort(function(a,b){return String(b.m.at).localeCompare(String(a.m.at))})}catch(e){}
+  var TABS=[["todo","対応",T.length+CU.reduce(function(a,x){return a+x.u},0)],["mail","メール",M.length],["rel","更新",U.length],["hist","履歴",0],["set","設定",0]];
   var bar='<div class="tabs nt-tabs" role="tablist">'+TABS.map(function(x){return '<button type="button" role="tab" class="tab'+(x[0]===tab?" on":"")+'" data-ntab="'+x[0]+'">'+x[1]+(x[2]?' <span class="ntc">'+(x[2]>99?"99+":x[2])+"</span>":"")+"</button>"}).join("")+"</div>";
   if(tab==="todo"){
-    h=T.length?T.slice(0,MAX).map(function(t){return row('data-todo="'+t.kind+":"+esc(t.id)+'"',({j:"🏗",e:"🚨",m:"🏢",d:"⚠",w:"💧",a:"❄"})[t.kind]||"✓",t.title,t.tag+(t.note?" ／ "+t.note:""),false)}).join("")+(T.length>MAX?'<div class="sub" style="padding:8px 2px">ほか '+(T.length-MAX)+" 件はホームで確認できます。</div>":""):empty("対応が必要な案件はありません");
+    h=CU.map(function(x){return row('data-chopen="'+esc(x.k)+'"',"💬",chTitle(x.k)+"(未読 "+x.u+")",(x.m.by||"")+": "+(x.m.stamp?"スタンプ":x.m.img&&!x.m.text?"写真":String(x.m.text||"").slice(0,60)),true)}).join("")+(T.length||!CU.length?"":"<div></div>");
+    h+=T.length?T.slice(0,MAX).map(function(t){return row('data-todo="'+t.kind+":"+esc(t.id)+'"',({j:"🏗",e:"🚨",m:"🏢",d:"⚠",w:"💧",a:"❄"})[t.kind]||"✓",t.title,t.tag+(t.note?" ／ "+t.note:""),false)}).join("")+(T.length>MAX?'<div class="sub" style="padding:8px 2px">ほか '+(T.length-MAX)+" 件はホームで確認できます。</div>":""):(CU.length?"":empty("対応が必要な案件はありません"));
   }else if(tab==="mail"){
     if(NT.state==="off")h=empty("大東建託からのメールは、Claude版(Gmail連携)でのみ表示されます。");
     else if(NT.state==="load"||NT.state==="idle")h=empty("読み込み中…");
@@ -3443,7 +3472,7 @@ function phSaveList(key,list){
 }
 function phRec(col,id){var a={jobs:S.jobs,emerg:S.emerg,maint:S.maint,ac:S.ac}[col]||[];return a.find(function(x){return x.id===id})||null}
 function phTitle(col,id){var r=phRec(col,id)||{};return [r.site||r.bldgName||r.name||r.client||"",r.room||r.item||""].filter(Boolean).join(" ")||"(未保存の案件)"}
-function phBtnHtml(col,id){var n=phCount(col,id);return '<div class="phbar"><button type="button" class="btn sm" data-phopen="'+col+"|"+esc(id)+'">📷 写真'+(n?" <b>"+n+"</b>枚":"を追加")+'</button>'+bgBtnHtml(col,id)+'<span class="sub">現場写真を案件ごとに保存できます(軽量化して保存)</span></div>'}
+function phBtnHtml(col,id){var n=phCount(col,id);return '<div class="phbar"><button type="button" class="btn sm" data-phopen="'+col+"|"+esc(id)+'">📷 写真'+(n?" <b>"+n+"</b>枚":"を追加")+'</button>'+chBtnHtml(col,id)+bgBtnHtml(col,id)+'<span class="sub">現場写真を案件ごとに保存できます(軽量化して保存)</span></div>'}
 function phSize(n){n=Number(n)||0;return n>=1048576?(n/1048576).toFixed(1)+"MB":Math.max(1,Math.round(n/1024))+"KB"}
 async function phEncode(src,max,q,lim){
   var bm=src.width?src:await createImageBitmap(src,{imageOrientation:"from-image"}).catch(function(){return createImageBitmap(src)});
@@ -4009,6 +4038,149 @@ document.addEventListener("input",function(e){
   if(S.tab!=="budget"||!e.target||e.target.getAttribute("data-bgf")!=="q")return;bgFilter().q=e.target.value;clearTimeout(BGS.qt);
   BGS.qt=setTimeout(function(){var el=document.querySelector('[data-bgf="q"]'),pos=el&&el.selectionStart;render();var n=document.querySelector('[data-bgf="q"]');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}},350);
 });
+/* ====================== 案件チャット ====================== */
+// メッセージは chatmsg(1件ずつ。ID=メッセージID)、既読は chatrd(ID=案件キー~名前)に保存。参加者=案件の担当者+管理者
+var CHM={},CHR={},CHS={key:"",stamp:false,busy:false,q:"",all:false,tmr:0,draft:{}};
+var CH_STAMPS=[["ryokai","👍","了解"],["arigato","🙏","ありがとう"],["otsukare","🍵","お疲れ様"],["onegai","🙇","お願いします"],["ok","🆗","OK"],["kakunin","👀","確認します"],["shochi","🫡","承知しました"],["sumimasen","🙏","すみません"],["kanryo","✅","完了"],["tasukaru","😊","助かります"],["shikyu","🚨","至急"],["kaishi","🛠️","作業開始"],["toucyaku","🚚","到着"],["kyukei","☕","休憩中"],["ame","☔","雨で中止"],["modoru","🏃","戻ります"],["ganbaro","💪","頑張ろう"],["naruhodo","💡","なるほど"]];
+function chMe(){var m=ME();return m?(m.role==="admin"?(m.name||"管理者"):m.name):"管理者"}
+function chIsAdmin(){var m=ME();return !m||m.role==="admin"}
+function chInit(){
+  if(!db){var v=lsGet("chatmsg");CHM=v&&typeof v==="object"?v:{};var r=lsGet("chatrd");CHR=r&&typeof r==="object"?r:{};return}
+  var re=function(){if(CHS.key)chDraw(true);if(S.tab==="chat")render();else try{renderTabs()}catch(e){}};
+  db.collection("chatmsg").onSnapshot(function(snap){var o={};snap.docs.forEach(function(x){o[x.id]=x.data()});CHM=o;re()},function(){});
+  db.collection("chatrd").onSnapshot(function(snap){var o={};snap.docs.forEach(function(x){o[x.id]=x.data()});CHR=o;if(CHS.key)chDraw(true)},function(){});
+}
+function chRec(key){var i=key.indexOf("_");return i<0?null:phRec(key.slice(0,i),key.slice(i+1))}
+function chTitle(key){var i=key.indexOf("_");return phTitle(key.slice(0,i),key.slice(i+1))}
+function chMsgs(key){return Object.keys(CHM).map(function(k){return CHM[k]}).filter(function(m){return m&&m.key===key}).sort(function(a,b){return String(a.at).localeCompare(String(b.at))})}
+function chByKey(){var o={};Object.keys(CHM).forEach(function(k){var m=CHM[k];if(!m||!m.key)return;(o[m.key]=o[m.key]||[]).push(m)});Object.keys(o).forEach(function(k){o[k].sort(function(a,b){return String(a.at).localeCompare(String(b.at))})});return o}
+function chMember(key){if(chIsAdmin())return true;var r=chRec(key),me=chMe();return !!(r&&Array.isArray(r.staff)&&r.staff.indexOf(me)>=0)}
+function chReadAt(key,name){var r=CHR[key+"~"+(name||chMe())];return r&&r.at||""}
+function chUnread(key,L){var me=chMe(),rd=chReadAt(key);return (L||chMsgs(key)).filter(function(m){return m.by!==me&&String(m.at)>rd}).length}
+function chUnreadTotal(){var o=chByKey(),n=0;Object.keys(o).forEach(function(k){if(chMember(k)&&chRec(k))n+=chUnread(k,o[k])});return n}
+function chMarkRead(key){
+  var L=chMsgs(key);if(!L.length)return;var last=L[L.length-1].at,me=chMe(),id=key+"~"+me;
+  if(chReadAt(key)>=last)return;
+  CHR[id]={key:key,name:me,at:last};
+  if(db)db.doc("chatrd/"+id).set(CHR[id]).catch(function(){});else lsSet("chatrd",CHR);
+  try{renderTabs()}catch(e){}
+}
+function chBtnHtml(col,id){var key=col+"_"+id,n=chMsgs(key).length,u=chUnread(key);return '<button type="button" class="btn sm" data-chopen="'+esc(key)+'">💬 チャット'+(n?" <b>"+n+"</b>":"")+(u?' <span class="ntc">'+u+"</span>":"")+"</button>"}
+function chSend(o){
+  var key=CHS.key;if(!key)return;var r=chRec(key);
+  var m=Object.assign({id:"cm"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),key:key,at:new Date().toISOString(),by:chMe(),role:chIsAdmin()?"admin":"staff",name:chTitle(key)},o);
+  CHM[m.id]=m;
+  if(db)db.doc("chatmsg/"+m.id).set(m).catch(function(){toast("送信できませんでした");delete CHM[m.id];chDraw(true)});else lsSet("chatmsg",CHM);
+  CHR[key+"~"+m.by]={key:key,name:m.by,at:m.at};if(db)db.doc("chatrd/"+key+"~"+m.by).set(CHR[key+"~"+m.by]).catch(function(){});
+  chDraw(true);
+}
+function chDel(id){var m=CHM[id];if(!m||m.by!==chMe())return;delete CHM[id];if(db&&db.doc("chatmsg/"+id).delete)db.doc("chatmsg/"+id).delete().catch(function(){});else lsSet("chatmsg",CHM);if(m.img&&window.dsFiles&&window.dsFiles.del){try{window.dsFiles.del(m.img.id);window.dsFiles.del(m.img.tid)}catch(e){}}chDraw(true)}
+function chOpen(key){
+  if(!chRec(key)){toast("先に案件を保存してください");return}
+  CHS.key=key;CHS.stamp=false;chDraw();
+  clearInterval(CHS.tmr);CHS.tmr=setInterval(function(){if(!CHS.key){clearInterval(CHS.tmr);return}if(window.dsDbRefresh&&!document.hidden){window.dsDbRefresh("chatmsg");window.dsDbRefresh("chatrd")}},4000);
+}
+function chClose(){
+  var ta=$("#ch-ta");if(ta&&CHS.key)CHS.draft[CHS.key]=ta.value;
+  CHS.key="";clearInterval(CHS.tmr);var o=$("#chl");if(o)o.innerHTML="";
+  var b=document.querySelector("[data-chopen]");if(b){var k=b.getAttribute("data-chopen"),i=k.indexOf("_");b.outerHTML=chBtnHtml(k.slice(0,i),k.slice(i+1))}
+  if(S.tab==="chat"||!$("#modal").innerHTML)render();else try{renderTabs()}catch(e){}
+}
+function chFmtDay(s){var d=new Date(s);if(isNaN(d))return "";var t=new Date(),y=new Date(t-86400000),f=function(x){return x.toDateString()};return f(d)===f(t)?"今日":f(d)===f(y)?"昨日":(d.getMonth()+1)+"月"+d.getDate()+"日("+"日月火水木金土"[d.getDay()]+")"}
+function chHm(s){var d=new Date(s);return isNaN(d)?"":pad(d.getHours())+":"+pad(d.getMinutes())}
+function chDraw(keep){
+  var o=$("#chl");if(!o){o=document.createElement("div");o.id="chl";document.body.appendChild(o)}
+  var key=CHS.key;if(!key){o.innerHTML="";return}
+  var L=chMsgs(key),me=chMe(),r=chRec(key)||{},i=key.indexOf("_"),col=key.slice(0,i),T=BG_T[col]||{n:"",ic:""};
+  var staff=Array.isArray(r.staff)?r.staff:[];
+  var readers=Object.keys(CHR).map(function(k){return CHR[k]}).filter(function(x){return x&&x.key===key});
+  var last="",h=L.map(function(m){
+    var day=chFmtDay(m.at),sep=day!==last?'<div class="chday"><span>'+day+"</span></div>":"";last=day;
+    var mine=m.by===me,rd=mine?readers.filter(function(x){return x.name!==me&&String(x.at)>=String(m.at)}).length:0;
+    var body=m.stamp?(function(){var st=CH_STAMPS.find(function(s){return s[0]===m.stamp})||[m.stamp,"💬",m.stamp];return '<div class="chstamp"><span>'+st[1]+"</span><b>"+esc(st[2])+"</b></div>"})():
+      (m.img?'<button type="button" class="chimg" data-chimg="'+esc(m.id)+'"><span data-chth="'+esc(m.id)+'"></span></button>':"")+(m.text?'<div class="chtx">'+esc(m.text).replace(/\n/g,"<br>").replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>')+"</div>":"");
+    return sep+'<div class="chm'+(mine?" me":"")+'">'+(mine?"":'<div class="chwho">'+esc(m.by||"")+(m.role==="admin"&&m.by!=="管理者"?' <span class="tag">管理者</span>':"")+"</div>")+'<div class="chrow">'+(mine?'<span class="chmeta">'+(rd?"既読"+(rd>1?rd:"")+"<br>":"")+chHm(m.at)+"</span>":"")+'<div class="chb'+(m.stamp?" st":"")+(m.img&&!m.text?" im":"")+'">'+body+"</div>"+(mine?"":'<span class="chmeta">'+chHm(m.at)+"</span>")+"</div>"+(mine?'<button type="button" class="chdel" data-chdel="'+esc(m.id)+'" title="送信を取り消す">取消</button>':"")+"</div>"}).join("");
+  var listEl=$("#ch-list"),atBottom=listEl?listEl.scrollHeight-listEl.scrollTop-listEl.clientHeight<80:true,ta=$("#ch-ta"),draft=ta?ta.value:(CHS.draft[key]||""),focus=ta&&document.activeElement===ta;
+  if(keep&&listEl){listEl.innerHTML=h||chEmpty();$("#ch-mem").textContent=chMemTxt(staff);if(atBottom)listEl.scrollTop=listEl.scrollHeight;chThumbs();chMarkRead(key);return}
+  o.innerHTML='<div class="mask chmask"><div class="dlg chdlg"><div class="chhead"><button type="button" class="btn sm" id="ch-x" aria-label="閉じる">‹ 戻る</button><div class="chtt"><b>'+esc(chTitle(key))+'</b><span class="sub"><span class="tag">'+T.ic+" "+T.n+'</span> <span id="ch-mem">'+esc(chMemTxt(staff))+'</span></span></div><button type="button" class="btn sm" id="ch-case">案件を開く</button></div>'+
+    '<div class="chlist" id="ch-list">'+(h||chEmpty())+"</div>"+
+    (CHS.stamp?'<div class="chstamps">'+CH_STAMPS.map(function(s){return '<button type="button" data-chst="'+s[0]+'"><span>'+s[1]+"</span>"+esc(s[2])+"</button>"}).join("")+"</div>":"")+
+    '<div class="chin"><label class="btn sm chic" title="写真を送る">📷<input type="file" accept="image/*" id="ch-file" style="display:none"></label><button type="button" class="btn sm chic'+(CHS.stamp?" on":"")+'" id="ch-stb" title="スタンプ">😊</button><textarea id="ch-ta" rows="1" placeholder="メッセージを入力">'+esc(draft)+'</textarea><button type="button" class="btn primary" id="ch-send"'+(CHS.busy?" disabled":"")+">送信</button></div></div></div>";
+  var le=$("#ch-list");le.scrollTop=le.scrollHeight;chThumbs();chMarkRead(key);chGrow();
+  if(focus||!/iPhone|Android/i.test(navigator.userAgent)){var t2=$("#ch-ta");if(t2){t2.focus();t2.selectionStart=t2.selectionEnd=t2.value.length}}
+}
+function chEmpty(){return '<div class="empty" style="padding:40px 10px;text-align:center">まだメッセージはありません。<br>この案件の担当者と管理者でやり取りできます。</div>'}
+function chMemTxt(staff){return "参加: "+(staff.length?staff.join("・")+"・":"")+"管理者"}
+function chGrow(){var t=$("#ch-ta");if(!t)return;t.style.height="auto";t.style.height=Math.min(140,t.scrollHeight)+"px"}
+async function chThumbs(){
+  var els=[].slice.call(document.querySelectorAll("#chl [data-chth]"));
+  for(var i=0;i<els.length;i++){var el=els[i],m=CHM[el.getAttribute("data-chth")];if(!m||!m.img||el.style.backgroundImage)continue;var b=await phBlob(m.img,true);if(b&&document.body.contains(el)){el.style.backgroundImage="url("+phUrl(b)+")";var w=m.img.w||4,h2=m.img.h||3;el.style.aspectRatio=w+"/"+h2}}
+}
+async function chSendImg(file){
+  if(!file||CHS.busy)return;CHS.busy=true;toast("写真を送信中…");
+  try{
+    var r=await phShrink(file,phQ()),id="chimg_"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),tid=id+"_t";
+    if(window.dsFiles){var j=await window.dsFiles.put(id,r.blob,{name:"chat.jpg",mime:"image/jpeg",type:"photo",typeName:"チャット写真",summary:chTitle(CHS.key)});if(!j||j.ok===false||j.error)throw new Error("保存できませんでした");await window.dsFiles.put(tid,r.thumb,{name:"thumb.jpg",mime:"image/jpeg",type:"photot",typeName:"写真サムネイル",summary:""})}
+    PHB["f:"+id]=r.blob;PHB["t:"+id]=r.thumb;
+    var ta=$("#ch-ta"),tx=ta?ta.value.trim():"";if(ta)ta.value="";
+    chSend({img:{id:id,tid:tid,w:r.w,h:r.h,size:r.blob.size},text:tx});
+  }catch(e){toast("写真を送れませんでした: "+e.message)}
+  CHS.busy=false;
+}
+function chViewImg(id){
+  var m=CHM[id];if(!m||!m.img)return;
+  var o=document.createElement("div");o.className="mask chmask";o.style.zIndex=99;o.id="ch-iv";o.innerHTML='<div class="dlg lg"><div class="phbig"><img id="ch-ivimg" alt=""><span class="sub">読み込み中…</span></div><div class="acts"><span></span><span><button type="button" class="btn" id="ch-ivdl">ダウンロード</button><button type="button" class="btn primary" id="ch-ivx">閉じる</button></span></div></div>';
+  document.body.appendChild(o);
+  phBlob(m.img,false).then(function(b){var im=$("#ch-ivimg");if(!im)return;if(b){im.src=phUrl(b);var s=im.nextSibling;if(s)s.remove()}});
+  o.addEventListener("click",function(e){var t=e.target;if(t.id==="ch-ivx"||t===o){o.remove()}else if(t.id==="ch-ivdl"){phBlob(m.img,false).then(function(b){if(!b)return;var a=document.createElement("a");a.href=phUrl(b);a.download="チャット写真_"+String(m.at).slice(0,10)+".jpg";document.body.appendChild(a);a.click();a.remove()})}});
+}
+function chDoSend(){var ta=$("#ch-ta");if(!ta)return;var v=ta.value.replace(/\s+$/,"");if(!v.trim())return;ta.value="";CHS.draft[CHS.key]="";chSend({text:v.slice(0,2000)});chGrow()}
+/* ---- チャット一覧ページ ---- */
+function vChat(){
+  var o=chByKey(),me=chMe(),adm=chIsAdmin(),q=CHS.q.trim().toLowerCase();
+  var keys=Object.keys(o).filter(function(k){return chRec(k)&&(adm?(CHS.all||chMember(k)):chMember(k))});
+  var rows=keys.map(function(k){var L=o[k],m=L[L.length-1];return {k:k,m:m,n:L.length,u:chUnread(k,L),t:chTitle(k)}}).filter(function(x){return !q||(x.t+" "+x.m.text).toLowerCase().indexOf(q)>=0}).sort(function(a,b){return String(b.m.at).localeCompare(String(a.m.at))});
+  var tot=rows.reduce(function(a,x){return a+x.u},0);
+  var h='<div class="panel pgbar"><input type="search" id="ch-q" value="'+esc(CHS.q)+'" placeholder="案件名・メッセージで検索"><button type="button" class="btn sm pri" id="ch-new">＋ 案件を選んでチャット</button>'+(adm?'<span class="sub" style="margin-left:auto">管理者はすべての案件のチャットを確認できます</span>':"")+"</div>";
+  h+='<div class="sub" style="margin:4px 2px 8px">'+rows.length+"件のチャット"+(tot?"・未読 <b>"+tot+"</b>件":"")+"。案件の担当者と管理者でやり取りできます。新しいメッセージはスマホ通知でも届きます(通知の設定で「案件チャット」をオン)。</div>";
+  if(!rows.length)return h+'<div class="empty" style="padding:40px 10px;text-align:center">まだチャットはありません。<br>「＋ 案件を選んでチャット」か、各案件の編集画面の「💬 チャット」から始められます。</div>';
+  h+='<div class="panel chrows">'+rows.map(function(x){var i=x.k.indexOf("_"),T=BG_T[x.k.slice(0,i)]||{ic:"",n:""},m=x.m,prev=m.stamp?"スタンプ":m.img&&!m.text?"📷 写真":String(m.text||"").replace(/\s+/g," ");
+    return '<button type="button" class="chrowi" data-chopen="'+esc(x.k)+'"><span class="chav">'+T.ic+'</span><span class="chrb"><span class="chr1"><b>'+esc(x.t)+'</b><span class="sub">'+chFmtDay(m.at)+" "+chHm(m.at)+'</span></span><span class="chr2"><span class="sub">'+esc((m.by===me?"自分":m.by)+": "+prev).slice(0,80)+"</span>"+(x.u?'<span class="ntc">'+x.u+"</span>":"")+"</span></span></button>"}).join("")+"</div>";
+  return h;
+}
+function chPickCase(){
+  var cand=[];Object.keys(BG_T).forEach(function(col){(BG_T[col].arr()||[]).forEach(function(r){if(!r||r.sample)return;var k=col+"_"+r.id;if(chMember(k))cand.push({k:k,col:col,t:phTitle(col,r.id),d:BG_T[col].date(r)})})});
+  cand.sort(function(a,b){return String(b.d).localeCompare(String(a.d))});
+  var draw=function(q){q=(q||"").trim().toLowerCase();var L=cand.filter(function(c){return !q||c.t.toLowerCase().indexOf(q)>=0}).slice(0,60);
+    return L.map(function(c){return '<button type="button" class="nrow" data-chpick="'+esc(c.k)+'"><span class="ni">'+BG_T[c.col].ic+'</span><span class="nb"><b>'+esc(c.t)+'</b><span class="sub">'+BG_T[c.col].n+(c.d?" ／ "+esc(String(c.d).slice(0,10)):"")+"</span></span></button>"}).join("")||'<div class="empty" style="padding:20px;text-align:center">該当する案件がありません</div>'};
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(560px,100%)"><h2>チャットする案件を選ぶ</h2><input type="search" id="chp-q" placeholder="案件名で検索" style="width:100%;margin-bottom:8px"><div id="chp-list" style="max-height:55vh;overflow:auto">'+draw("")+'</div><div class="acts"><span></span><span><button type="button" class="btn primary" id="nf-x">閉じる</button></span></div></div></div>';
+  $("#chp-q").addEventListener("input",function(e){$("#chp-list").innerHTML=draw(e.target.value)});
+}
+document.addEventListener("click",function(e){
+  var t=e.target&&e.target.closest?e.target:null;if(!t)return;var x;
+  if((x=t.closest("[data-chopen]"))){e.preventDefault();e.stopPropagation();chOpen(x.getAttribute("data-chopen"));return}
+  if((x=t.closest("[data-chpick]"))){e.preventDefault();e.stopPropagation();$("#modal").innerHTML="";chOpen(x.getAttribute("data-chpick"));return}
+  if(t.closest("#chl")){
+    var id=(t.closest("button")||{}).id||"";
+    if(id==="ch-x"||(t.classList&&t.classList.contains("chmask"))){chClose();return}
+    if(id==="ch-case"){var k=CHS.key,i=k.indexOf("_");chClose();if(!$("#modal").innerHTML&&BG_T[k.slice(0,i)])BG_T[k.slice(0,i)].open(k.slice(i+1));return}
+    if(id==="ch-send"){chDoSend();return}
+    if(id==="ch-stb"){var ta=$("#ch-ta");if(ta)CHS.draft[CHS.key]=ta.value;CHS.stamp=!CHS.stamp;chDraw();return}
+    if((x=t.closest("[data-chst]"))){CHS.stamp=false;var ta2=$("#ch-ta");if(ta2)CHS.draft[CHS.key]=ta2.value;var sid=x.getAttribute("data-chst"),so=CH_STAMPS.find(function(z){return z[0]===sid});chSend({stamp:sid,stampT:so?so[2]:""});chDraw();return}
+    if((x=t.closest("[data-chimg]"))){chViewImg(x.getAttribute("data-chimg"));return}
+    if((x=t.closest("[data-chdel]"))){if(!x.dataset.sure){x.dataset.sure="1";x.textContent="本当に取り消す";return}chDel(x.getAttribute("data-chdel"));return}
+    return;
+  }
+  if(S.tab==="chat"&&(t.closest("button")||{}).id==="ch-new"){chPickCase();return}
+},true);
+document.addEventListener("keydown",function(e){
+  if(e.target&&e.target.id==="ch-ta"&&e.key==="Enter"&&!e.shiftKey&&!e.isComposing&&!/iPhone|Android/i.test(navigator.userAgent)){e.preventDefault();chDoSend()}
+});
+document.addEventListener("input",function(e){
+  if(e.target&&e.target.id==="ch-ta"){chGrow();return}
+  if(S.tab==="chat"&&e.target&&e.target.id==="ch-q"){CHS.q=e.target.value;clearTimeout(CHS.qt);CHS.qt=setTimeout(function(){var el=$("#ch-q"),p=el&&el.selectionStart;render();var n=$("#ch-q");if(n){n.focus();try{n.setSelectionRange(p,p)}catch(x){}}},300)}
+});
+document.addEventListener("change",function(e){if(e.target&&e.target.id==="ch-file"){var f=e.target.files&&e.target.files[0];e.target.value="";chSendImg(f)}});
 /* ====================== 水道届の様式(アップロード)に記入して出力 ====================== */
 var WTF_KEYS=[["name","使用者氏名"],["kana","フリガナ"],["addr","使用場所の住所"],["tel","連絡先電話番号"],["custNo","お客様番号"],["pay","支払い方法"],["payer","支払者氏名"],["newAddr","転居先の住所"],["workplace","勤務先"],["occupants","世帯人数"],["sendTo","送付先"],
  ["site","物件名"],["room","号室"],["office","窓口名"],["memo","備考"],
@@ -5338,11 +5510,11 @@ function boot(){
   render();
   claude_use("db").then(function(d){
     if(!d){
-      S.persist=false;wtfInit();acInit();phInit();bgInit();
+      S.persist=false;wtfInit();acInit();phInit();bgInit();chInit();
       COLN.forEach(function(c){var v=lsGet(c);S[c]=(Array.isArray(v)?v:(c==="jobs"?sampleJobs():[])).map(function(o){return normDoc(c,String((o&&o.id)||nid("x")),o)});loaded[c]=true});
       var st=lsGet("settings");if(st&&st.prices)S.settings=st;normSettings();loaded.settings=true;ready();return;
     }
-    db=d;wtfInit();acInit();phInit();bgInit();
+    db=d;wtfInit();acInit();phInit();bgInit();chInit();
     COLN.forEach(function(c){
       db.collection(c).onSnapshot(function(snap){PEND[c]=snap;if(!PTM[c])PTM[c]=setTimeout(function(){PTM[c]=0;var sn=PEND[c];PEND[c]=null;if(!sn)return;S[c]=sn.docs.map(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}return normDoc(c,x.id,d)});S.persist=true;loaded[c]=true;ready()},80)},function(){S.persist=false;loaded[c]=true;ready()});
     });

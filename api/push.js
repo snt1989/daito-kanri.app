@@ -4,15 +4,15 @@ const crypto = require("crypto");
 const { authed, pipeline, body } = require("./_lib");
 const webpush = require("./_webpush");
 const SUBS = "daito:push", LOG = "daito:notiflog";
-const KINDS = ["job", "emerg", "status", "report"];
-const LABEL = { job: "新規案件", emerg: "緊急出動", status: "案件の進捗", report: "報告書" };
+const KINDS = ["job", "emerg", "status", "report", "chat"];
+const LABEL = { job: "新規案件", emerg: "緊急出動", status: "案件の進捗", report: "報告書", chat: "案件チャット" };
 const configured = () => !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
 const keyOf = (ep) => "s_" + crypto.createHash("sha1").update(String(ep)).digest("hex").slice(0, 24);
 const norm = (s) => String(s || "").normalize("NFKC").replace(/[\s　]+/g, "");
 const cleanPrefs = (p) => { const o = {}; KINDS.forEach((k) => (o[k] = !(p && p[k] === false))); return o; };
 
 // 通知を出す。names=担当(スタッフ)の名前。管理者には常に届く。actor は自分の操作で自分に出さないため
-async function notify(kind, title, text, names, actor) {
+async function notify(kind, title, text, names, actor, skipSelf) {
   if (!configured() || KINDS.indexOf(kind) < 0) return 0;
   const want = {}; (names || []).forEach((n) => { if (norm(n)) want[norm(n)] = 1; });
   const flat = (await pipeline([["HGETALL", SUBS]]))[0] || [];
@@ -24,6 +24,7 @@ async function notify(kind, title, text, names, actor) {
     const isAdm = e.role === "admin";
     if (!isAdm && !want[norm(e.name)]) continue;
     if (!isAdm && actor && actor.role === "staff" && norm(actor.name) === norm(e.name)) continue;
+    if (skipSelf && actor && e.role === actor.role && norm(e.name) === norm(actor.name)) continue;
     if (e.prefs && e.prefs[kind] === false) continue;
     to[isAdm ? "admin" : "n:" + norm(e.name)] = 1;
     const k = flat[i];

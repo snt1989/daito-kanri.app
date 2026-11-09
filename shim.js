@@ -2,7 +2,7 @@
    アーティファクトの中で動いているとき(window.claude が既にある)は何もしない。 */
 (function () {
   if (window.claude || location.protocol === "file:") return;
-  var COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform", "ac", "photo", "budget"];
+  var COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform", "ac", "photo", "budget", "chatmsg", "chatrd"];
 
   function post(path, data, signal) {
     return fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", body: JSON.stringify(data || {}), signal: signal });
@@ -155,6 +155,10 @@
       } catch (e) {}
     }, 20000);
   }
+  // 1つのコレクションだけ、すぐに最新へ更新する(チャットを開いている間など)
+  window.dsDbRefresh = async function (col) {
+    try { var j = await call("/api/db", { op: "ver" }); if (cache[col] && j.ver[col] !== ver[col] && pending === 0) { await loadCol(col); notify(col); } } catch (e) {}
+  };
   function docRef(path) {
     var p = path.split("/"), col = p[0], id = p[1];
     return {

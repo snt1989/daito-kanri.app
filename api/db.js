@@ -2,7 +2,7 @@
 const { authed, pipeline, body } = require("./_lib");
 const { maybeDaily } = require("./_backup");
 const { notify } = require("./push");
-const COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform", "ac", "photo", "budget"];
+const COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform", "ac", "photo", "budget", "chatmsg", "chatrd"];
 const key = (c) => "daito:" + c;
 const vkey = (c) => "daito:ver:" + c;
 
@@ -21,6 +21,19 @@ async function pushEvents(col, o, n, actor) {
   const nm = [n.site, n.room].filter(Boolean).join(" ") || "(名称なし)", st = col === "jobs" ? JOB_ST : EM_ST, who = actor && actor.name ? "(" + actor.name + ")" : "";
   if (!o) return void (await notify(col === "jobs" ? "job" : "emerg", nm, (col === "jobs" ? "新しい案件が登録されました" : "緊急出動が登録されました") + who, n.staff, actor));
   if (o.status !== n.status && typeof n.status === "number") await notify("status", nm, (col === "emerg" ? "緊急出動: " : "") + (st[o.status] || "") + " → " + (st[n.status] || "") + who, n.staff, actor);
+}
+
+// 案件チャットの新着を、管理者と案件の担当者にスマホ通知する(送った本人を除く)
+async function chatPush(m, actor) {
+  if (!m || !m.key) return;
+  const i = String(m.key).indexOf("_"), col = String(m.key).slice(0, i), id = String(m.key).slice(i + 1);
+  if (["jobs", "emerg", "maint", "ac"].indexOf(col) < 0) return;
+  let rec = {};
+  try { const o = (await pipeline([["HGET", key(col), id]]))[0]; rec = o ? JSON.parse(o) : {}; } catch (e) {}
+  const nm = [rec.site || rec.bldgName || rec.name, rec.room || rec.item].filter(Boolean).join(" ") || m.name || "案件";
+  const who = m.by || (actor && actor.role === "admin" ? "管理者" : "");
+  const body = m.stamp ? "スタンプ「" + (m.stampT || m.stamp) + "」" : m.img && !m.text ? "写真を送りました" : String(m.text || "");
+  await notify("chat", nm, (who ? who + ": " : "") + body, rec.staff, actor, true);
 }
 
 module.exports = async (req, res) => {
@@ -44,13 +57,14 @@ module.exports = async (req, res) => {
       const p = split(b.path);
       if (!p) return res.status(400).json({ error: { code: "bad_request" } });
       let before = null;
-      if (b.op === "set" && (p.col === "jobs" || p.col === "emerg")) { try { const o = (await pipeline([["HGET", key(p.col), p.id]]))[0]; before = o ? JSON.parse(o) : null; } catch (e) {} }
+      if (b.op === "set" && (p.col === "jobs" || p.col === "emerg" || p.col === "chatmsg")) { try { const o = (await pipeline([["HGET", key(p.col), p.id]]))[0]; before = o ? JSON.parse(o) : null; } catch (e) {} }
       const cmds = b.op === "set"
         ? [["HSET", key(p.col), p.id, JSON.stringify(b.data == null ? {} : b.data)], ["INCR", vkey(p.col)]]
         : [["HDEL", key(p.col), p.id], ["INCR", vkey(p.col)]];
       const r = await pipeline(cmds);
       await maybeDaily();
       if (b.op === "set" && b.data && (p.col === "jobs" || p.col === "emerg")) { try { await pushEvents(p.col, before, b.data, authed(req)); } catch (e) {} }
+      if (b.op === "set" && b.data && p.col === "chatmsg" && !before) { try { await chatPush(b.data, authed(req)); } catch (e) {} }
       return res.json({ ok: true, ver: Number(r[1]) });
     }
     if (b.op === "import") {
