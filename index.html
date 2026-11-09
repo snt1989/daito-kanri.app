@@ -376,7 +376,9 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .csadm{font-size:11px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:1px 8px;margin-left:4px}
 .csstat{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:4px}.cschip{background:var(--accent);color:#fff;border-radius:99px;padding:3px 12px;font-size:12px;font-weight:700}
 .cstbl{width:100%!important;min-width:0!important;border-collapse:collapse;table-layout:fixed}.cstbl td,.cstbl th{overflow-wrap:anywhere;word-break:break-word}.cstbl th,.cstbl td{white-space:normal!important}.cstbl th{padding-right:10px!important}.csquick{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.cstbl th,.cstbl td{text-align:left;padding:10px 4px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}.cstbl th{width:34%;color:var(--muted);font-weight:400}.cstbl tr:last-child th,.cstbl tr:last-child td{border-bottom:0}
-.csmap{width:100%;height:300px;border:0;border-radius:10px;background:#eee}
+.csmapmode{display:flex;margin-bottom:8px}.csmapmode button{border:1px solid var(--line);background:var(--surface,#fff);padding:7px 14px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}.csmapmode button:first-child{border-radius:10px 0 0 10px}.csmapmode button:last-child{border-radius:0 10px 10px 0;border-left:0}.csmapmode button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.csmapbox{border-radius:10px;overflow:hidden;position:relative;z-index:0;isolation:isolate;background:#eee}
+.csmap{width:100%;height:min(420px,60vh);border:0;border-radius:10px;background:#eee}
 .csmemo{border-top:1px solid var(--line);padding:10px 0;line-height:1.6;font-size:13.5px}.csmemo:first-child{border-top:0;padding-top:0}.csx{border:0;background:none;color:var(--muted);font-size:11px;cursor:pointer;float:right}
 .csmemoin textarea{width:100%;font:inherit;border:1px solid var(--line);border-radius:10px;padding:8px 10px;box-sizing:border-box}.csmemoin{margin-bottom:10px}
 .csmem{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}.csmem:last-of-type{border-bottom:0}.csav{flex:none;width:36px;height:36px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700}
@@ -3034,7 +3036,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
- {v:"2026-11-09",t:"案件の確認画面",d:"一覧で案件を押すと、現場管理アプリのような確認画面が開くようになりました。写真・予算管理・メモ・報告書・案件情報・地図・登録の記録と、案件メンバー(チャット)がまとまって見られます。編集は「✎ 編集」から行います。"},
+ {v:"2026-11-09",t:"案件の確認画面",d:"地図のピンを動かして位置を保存できます(航空写真で確認)。一覧で案件を押すと、現場管理アプリのような確認画面が開くようになりました。写真・予算管理・メモ・報告書・案件情報・地図・登録の記録と、案件メンバー(チャット)がまとまって見られます。編集は「✎ 編集」から行います。"},
  {v:"2026-11-09",t:"案件ごとのチャット",d:"メニューに「チャット」を追加しました。案件ごとに、参加している人(案件の担当者・チャットに追加した人・管理者)だけでメッセージ・写真・スタンプをやり取りできます。既読の表示、未読の件数(メニュー・ベル)、スマホ通知(通知の設定で「案件チャット」)にも対応しています。各案件の編集画面の「💬 チャット」からも開けます。"},
  {v:"2026-10-28",t:"予算管理ページ",d:"メニューに「予算管理」(管理者のみ)を追加しました。現場管理アプリと同じく、案件ごとに勘定科目別の予算の明細と実績(実際にかかった費用)を登録して、残り予算・消化率・予算上の粗利・現時点の粗利を確認できます。絞り込み・並び替え、CSVの入出力、まとめての予算追加・削除ができます。各案件の編集画面の「💴 予算・実績」からも開けます。勘定科目は設定→全体共通→「勘定科目」で編集します。"},
  {v:"2026-10-28",t:"画像管理ページ",d:"メニューに「画像管理」を追加しました。すべての案件の写真を、種類・分類・検索で絞り込んで一覧できます。案件ごとにまとまって表示され、まとめて分類の変更・ZIPでのダウンロード・削除ができます。"},
@@ -4274,7 +4276,7 @@ function vCase(){
   var F=csFields(col,r).filter(function(f){return money||!MNY_RE.test(f.label||"")}),addr=r.address||"";
   var rows=F.map(function(f){var v=csVal(f,r);if(f.k==="address"&&v)v=esc(v)+' <a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(v)+'" target="_blank" rel="noopener">🗺 Googleマップで見る</a>';else v=v?esc(v).replace(/\n/g,"<br>"):'<span class="sub">—</span>';return "<tr><th>"+esc(f.label)+(MNY_RE.test(f.label||"")?' '+CS_LK:"")+"</th><td>"+v+"</td></tr>"}).join("");
   h+=sec("案件情報",(money?'<span class="cslegend">'+CS_LK+' = 管理者のみ表示</span>':"")+'<button type="button" class="btn sm" id="cs-edit">✎ 編集</button>','<div class="csstat"><span class="cschip">'+esc(st.n||"")+"</span>"+(money?"<b>"+bgYen(csAmt(col,r))+'</b><span class="sub">(税別)</span>'+CS_LK:'<span class="mnylock">🔒 金額は管理者のみ</span>')+'</div><table class="cstbl">'+rows+"</table>");
-  if(addr)h+=sec("地図","",'<iframe class="csmap" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q='+encodeURIComponent(addr)+'&z=16&output=embed"></iframe><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><a class="btn sm" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(addr)+'" target="_blank" rel="noopener">🗺 Googleマップで開く</a><a class="btn sm" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(addr)+'" target="_blank" rel="noopener">🚗 経路を調べる</a></div>');
+  if(addr)h+=sec("地図","",csMapHtml(col,id,addr));
   h+=sec("登録・編集の記録","",'<div class="sub" style="line-height:1.8">'+(r.createdAt?"作成: "+esc(String(r.createdAt).replace("T"," ").slice(0,16))+(r.createdBy?" ／ "+esc(r.createdBy):"")+"<br>":"")+(r.updatedAt?"最終編集: "+esc(String(r.updatedAt).replace("T"," ").slice(0,16))+(r.updatedBy?" ／ "+esc(r.updatedBy):""):"記録はまだありません(次に保存したときから記録されます)")+"</div>");
   h+="</div>";
   // 右側
@@ -4285,8 +4287,82 @@ function vCase(){
     (mb||chIsAdmin()?'<div style="margin-top:10px"><button type="button" class="btn sm pri" data-chopen="'+esc(key)+'" style="width:100%">💬 チャットする'+(mb&&chUnread(key)?' <span class="ntc">'+chUnread(key)+"</span>":"")+"</button></div>":"")+"</div></section>";
   if(mb&&lm)h+='<section class="cssec"><div class="cshd"><h3>最新のチャット</h3></div><div class="csbox"><div class="sub">'+esc(chFmtDay(lm.at)+" "+chHm(lm.at)+" ／ "+(lm.by||""))+'</div><div style="margin-top:4px">'+esc(lm.stamp?"スタンプ":lm.img&&!lm.text?"📷 写真":String(lm.text||"").slice(0,80))+"</div></div></section>";
   h+='<div class="csacts"><button type="button" class="btn" id="cs-edit3">✎ 案件を編集</button><button type="button" class="btn" id="cs-copy">⧉ 案件情報をコピー</button>'+(addr?'<a class="btn" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(addr)+'" target="_blank" rel="noopener">🚗 経路を調べる</a>':"")+"</div></aside></div>";
-  setTimeout(function(){csThumbs(col,id)},0);
+  setTimeout(function(){csThumbs(col,id);try{csMapInit()}catch(e){}},0);
   return h;
+}
+/* ---- 地図(ピンを動かせる。航空写真=国土地理院) ---- */
+var LFP=null,GEOC={};
+function loadLeaflet(){
+  if(window.L)return Promise.resolve();if(LFP)return LFP;
+  LFP=new Promise(function(res,rej){var l=document.createElement("link");l.rel="stylesheet";l.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";document.head.appendChild(l);
+    var sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";sc.onload=function(){window.L?res():rej()};sc.onerror=function(){LFP=null;rej()};document.head.appendChild(sc);setTimeout(function(){if(!window.L)rej()},8000)});
+  return LFP;
+}
+function geoNorm(t){
+  var kn={"一":1,"二":2,"三":3,"四":4,"五":5,"六":6,"七":7,"八":8,"九":9};
+  t=String(t||"").replace(/([一二三四五六七八九]?十?[一二三四五六七八九]?)丁目/g,function(m,k){if(!k)return m;var n=0;if(k.indexOf("十")>-1){var pr=k.split("十");n=(pr[0]?kn[pr[0]]:1)*10+(pr[1]?kn[pr[1]]:0)}else n=kn[k];return n+"丁目"});
+  return t.normalize("NFKC").replace(/[\s　]+/g,"").replace(/[ー－−‐–—―]/g,"-").replace(/(\d)丁目/g,"$1-").replace(/(\d)番地?/g,"$1-").replace(/(\d)号/g,"$1").replace(/地割/g,"-").replace(/の(?=\d)/g,"-").replace(/-+/g,"-").replace(/-$/,"");
+}
+function geocodeJp(q){
+  if(GEOC[q])return Promise.resolve(GEOC[q]);
+  var nq=geoNorm(q),vs=[q];if(nq!==q)vs.push(nq);var nl=nq.replace(/-\d+$/,"");if(nl!==nq&&/\d/.test(nl))vs.push(nl);
+  var best=null,run=function(k){if(k>=vs.length||(best&&best.level==="exact"))return Promise.resolve(best);
+    return fetch("https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(vs[k])).then(function(r){return r.json()}).catch(function(){return []}).then(function(a){
+      (a||[]).forEach(function(x){var c=x.geometry&&x.geometry.coordinates;if(!c)return;var title=(x.properties||{}).title||"",b=geoNorm(title),n=0;while(n<nq.length&&n<b.length&&nq[n]===b[n])n++;
+        var cand={lat:c[1],lng:c[0],title:title,score:n,level:n>=nq.length?"exact":"coarse"};if(!best||cand.score>best.score)best=cand});return run(k+1)})};
+  return run(0).then(function(b){if(b)GEOC[q]=b;return b});
+}
+function csMapHtml(col,id,addr){
+  var g=CS.mapMode==="google";
+  return '<div class="csmapmode"><button type="button" class="'+(g?"":"on")+'" data-csmap="pin">📍 ピン付き地図(位置を調整)</button><button type="button" class="'+(g?"on":"")+'" data-csmap="google">Googleマップ</button></div>'+
+    '<div id="cs-map" class="csmapbox" data-col="'+col+'" data-id="'+esc(id)+'">'+(g?"":'<div class="sub" style="padding:20px;text-align:center">地図を読み込み中…</div>')+'</div><div id="cs-mapctl"></div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><a class="btn sm" id="cs-gopen" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(addr)+'" target="_blank" rel="noopener">🗺 Googleマップで開く(経路・ストリートビュー)</a><a class="btn sm" id="cs-groute" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(addr)+'" target="_blank" rel="noopener">🚗 経路を調べる</a></div>';
+}
+function csMapInit(){
+  var box=$("#cs-map");if(!box||box._init)return;box._init=true;
+  var col=box.getAttribute("data-col"),id=box.getAttribute("data-id"),r=phRec(col,id);if(!r)return;
+  var addr=r.address||"",has=typeof r.mapLat==="number"&&typeof r.mapLng==="number";
+  var setLinks=function(ll){var q=ll?ll.lat+","+ll.lng:encodeURIComponent(addr),a=$("#cs-gopen"),b=$("#cs-groute");if(a)a.href="https://www.google.com/maps/search/?api=1&query="+q;if(b)b.href="https://www.google.com/maps/dir/?api=1&destination="+q};
+  var gFrame=function(q){return '<iframe class="csmap" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q='+q+'&z=18&t=h&hl=ja&output=embed"></iframe>'};
+  if(has)setLinks({lat:r.mapLat,lng:r.mapLng});
+  if(CS.mapMode==="google"){
+    box.innerHTML=gFrame(has?r.mapLat+","+r.mapLng:encodeURIComponent(addr));
+    $("#cs-mapctl").innerHTML='<div class="sub" style="margin-top:6px">ピンの位置を直すときは「📍 ピン付き地図」に切り替えて、ピンを動かしてください。</div>';
+    if(!has)geocodeJp(addr).then(function(g){if(g&&document.body.contains(box)&&CS.mapMode==="google"){box.innerHTML=gFrame(g.lat+","+g.lng);setLinks(g)}}).catch(function(){});
+    return;
+  }
+  loadLeaflet().then(function(){
+    var saved=has?{lat:r.mapLat,lng:r.mapLng}:null;
+    return (saved?Promise.resolve(saved):geocodeJp(addr).catch(function(){return null})).then(function(pos){
+      if(!document.body.contains(box))return;
+      box.innerHTML='<div id="cs-mapc" style="height:min(420px,60vh);width:100%"></div>';
+      var found=!!pos,cur=pos||{lat:39.70,lng:141.15},dirty=false,info=saved?null:pos;
+      if(!saved&&pos)setLinks(pos);
+      var map=L.map("cs-mapc",{scrollWheelZoom:false}).setView([cur.lat,cur.lng],found?18:10);
+      var air=L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg",{maxZoom:19,maxNativeZoom:18,attribution:"地理院タイル(空中写真)"});
+      var std=L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",{maxZoom:19,maxNativeZoom:18,attribution:"地理院タイル"});
+      var road=L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",{maxZoom:19,maxNativeZoom:18,opacity:0.35,attribution:"地理院タイル"});
+      var bases={"航空写真":air,"地図":std};(bases[CS.mapLayer]||air).addTo(map);
+      L.control.layers(bases,{"道路・地名を重ねる":road},{collapsed:true}).addTo(map);map.on("baselayerchange",function(e){CS.mapLayer=e.name});
+      L.control.scale({imperial:false}).addTo(map);
+      var icon=L.divIcon({className:"",iconSize:[30,40],iconAnchor:[15,38],html:'<svg width="30" height="40" viewBox="0 0 30 40"><path d="M15 1C7.8 1 2 6.8 2 14c0 9.5 13 25 13 25s13-15.5 13-25C28 6.8 22.2 1 15 1z" fill="#d93025" stroke="#fff" stroke-width="2"/><circle cx="15" cy="14" r="5" fill="#fff"/></svg>'});
+      var mk=L.marker([cur.lat,cur.lng],{icon:icon,draggable:true}).addTo(map),ctl=$("#cs-mapctl");
+      var save=function(ll){var rr=JSON.parse(JSON.stringify(phRec(col,id)||r));rr.mapLat=ll?ll.lat:null;rr.mapLng=ll?ll.lng:null;if(!ll){delete rr.mapLat;delete rr.mapLng}CS.noRender=true;saveDoc(col,rr,true);CS.noRender=false};
+      var paint=function(){
+        var msg=dirty?'<b style="color:var(--danger,#c0392b)">ピンの位置を変更しました。「この位置で保存」を押してください。</b>':saved?"ピンの位置は保存済みです。ずれている場合はピンを動かして保存し直せます。":
+          found&&info&&info.level==="coarse"?'<b style="color:var(--danger,#c0392b)">番地までは特定できず、「'+esc(info.title||"")+'」付近を表示しています。</b>航空写真を見ながらピンを正しい場所に動かして、保存してください。':
+          found?"住所から位置を自動で表示しています"+(info&&info.title?"(照合:"+esc(info.title)+")":"")+"。ずれている場合はピンを動かしてください(地図をタップしても移動できます)。":'<b style="color:var(--danger,#c0392b)">住所から場所を特定できませんでした。</b>地図をタップするか、ピンを動かして位置を指定してください。';
+        ctl.innerHTML='<div class="sub" style="margin-top:8px;line-height:1.6">'+msg+'</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'+(dirty?'<button type="button" class="btn sm pri" id="pm-save">この位置で保存</button><button type="button" class="btn sm" id="pm-cancel">元に戻す</button>':"")+(saved&&!dirty?'<button type="button" class="btn sm" id="pm-reset">保存した位置を解除(住所から再検索)</button>':"")+"</div>";
+        var b;
+        if((b=$("#pm-save")))b.onclick=function(){var ll=mk.getLatLng(),p2={lat:Math.round(ll.lat*1e6)/1e6,lng:Math.round(ll.lng*1e6)/1e6};save(p2);saved=p2;cur=p2;dirty=false;setLinks(p2);paint();toast("ピンの位置を保存しました")};
+        if((b=$("#pm-cancel")))b.onclick=function(){mk.setLatLng([cur.lat,cur.lng]);map.panTo([cur.lat,cur.lng]);dirty=false;paint()};
+        if((b=$("#pm-reset")))b.onclick=function(){save(null);saved=null;geocodeJp(addr).catch(function(){return null}).then(function(g){found=!!g;info=g;if(g){cur=g;mk.setLatLng([g.lat,g.lng]);map.setView([g.lat,g.lng],17)}setLinks(g);paint();toast("保存した位置を解除しました")})};
+      };
+      mk.on("dragend",function(){dirty=true;paint()});
+      map.on("click",function(e){mk.setLatLng(e.latlng);dirty=true;paint()});
+      paint();setTimeout(function(){map.invalidateSize()},200);
+    });
+  }).catch(function(){if(document.body.contains(box)){box.innerHTML=gFrame(encodeURIComponent(addr));$("#cs-mapctl").innerHTML='<div class="sub" style="margin-top:6px">ピン付き地図を読み込めなかったため、Googleマップで表示しています。</div>'}});
 }
 async function csThumbs(col,id){var L=phList(col,id),els=[].slice.call(document.querySelectorAll("[data-csth]"));for(var i=0;i<els.length;i++){var el=els[i],p=L[+el.getAttribute("data-csth")];if(!p)continue;var b=await phBlob(p,true);if(b&&document.body.contains(el))el.style.backgroundImage="url("+phUrl(b)+")"}}
 function csRec(){var key=S.caseKey||"",i=key.indexOf("_");return {col:key.slice(0,i),id:key.slice(i+1),r:phRec(key.slice(0,i),key.slice(i+1))}}
@@ -4296,6 +4372,7 @@ document.addEventListener("click",function(e){
   var id=(t.closest("button,a")||{}).id||"",c=csRec(),x;
   if(id==="cs-back"){e.preventDefault();S.tab=S.caseBack||"home";render();return}
   if(!c.r)return;
+  if((x=t.closest("[data-csmap]"))){CS.mapMode=x.getAttribute("data-csmap");render();return}
   if(id==="cs-edit"||id==="cs-edit2"||id==="cs-edit3"||id==="cs-edit4"){csEdit(c.col,c.id);return}
   if(id==="cs-memo-add"){CS.memo=true;render();var ta=$("#cs-memo-ta");if(ta)ta.focus();return}
   if(id==="cs-memo-x"){CS.memo=false;render();return}
