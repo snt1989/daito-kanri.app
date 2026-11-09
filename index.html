@@ -386,6 +386,7 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .chin{display:flex;gap:6px;align-items:flex-end;padding:8px 10px;border-top:1px solid var(--line);background:var(--surface,#fff)}
 .chin textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:15px;line-height:1.45;padding:8px 10px;border:1px solid var(--line);border-radius:12px;max-height:140px}
 .chic{cursor:pointer;font-size:17px;padding:6px 9px}.chic.on{background:var(--accent-soft)}
+.chmempanel{display:flex;flex-direction:column;gap:4px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface,#fff);max-height:45vh;overflow:auto}
 .chrows{padding:0}.chrowi{display:flex;gap:12px;align-items:center;width:100%;padding:12px 14px;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}.chrowi:last-child{border-bottom:0}
 .chav{flex:none;width:40px;height:40px;border-radius:50%;background:var(--accent-soft);display:grid;place-items:center;font-size:19px}
 .chrb{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.chr1,.chr2{display:flex;gap:8px;justify-content:space-between;align-items:center;min-width:0}.chr1 b,.chr2>.sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.chr1>.sub{flex:none}
@@ -3014,7 +3015,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
- {v:"2026-11-09",t:"案件ごとのチャット",d:"メニューに「チャット」を追加しました。案件ごとに、担当者と管理者でメッセージ・写真・スタンプをやり取りできます。既読の表示、未読の件数(メニュー・ベル)、スマホ通知(通知の設定で「案件チャット」)にも対応しています。各案件の編集画面の「💬 チャット」からも開けます。"},
+ {v:"2026-11-09",t:"案件ごとのチャット",d:"メニューに「チャット」を追加しました。案件ごとに、参加している人(案件の担当者・チャットに追加した人・管理者)だけでメッセージ・写真・スタンプをやり取りできます。既読の表示、未読の件数(メニュー・ベル)、スマホ通知(通知の設定で「案件チャット」)にも対応しています。各案件の編集画面の「💬 チャット」からも開けます。"},
  {v:"2026-10-28",t:"予算管理ページ",d:"メニューに「予算管理」(管理者のみ)を追加しました。現場管理アプリと同じく、案件ごとに勘定科目別の予算の明細と実績(実際にかかった費用)を登録して、残り予算・消化率・予算上の粗利・現時点の粗利を確認できます。絞り込み・並び替え、CSVの入出力、まとめての予算追加・削除ができます。各案件の編集画面の「💴 予算・実績」からも開けます。勘定科目は設定→全体共通→「勘定科目」で編集します。"},
  {v:"2026-10-28",t:"画像管理ページ",d:"メニューに「画像管理」を追加しました。すべての案件の写真を、種類・分類・検索で絞り込んで一覧できます。案件ごとにまとまって表示され、まとめて分類の変更・ZIPでのダウンロード・削除ができます。"},
  {v:"2026-10-28",t:"案件ごとに写真を保存",d:"工事・緊急出動・維持管理・エアコンの各案件の編集画面に「📷 写真」を追加しました。写真は作業前・作業中・作業後・その他に分けて、メモ付きで保存できます。保存時に自動で縮小・圧縮します。画質は設定→全体共通→「写真の画質」で一括管理し、保存済みの写真もまとめて軽量化できます。"},
@@ -4054,20 +4055,25 @@ function chRec(key){var i=key.indexOf("_");return i<0?null:phRec(key.slice(0,i),
 function chTitle(key){var i=key.indexOf("_");return phTitle(key.slice(0,i),key.slice(i+1))}
 function chMsgs(key){return Object.keys(CHM).map(function(k){return CHM[k]}).filter(function(m){return m&&m.key===key}).sort(function(a,b){return String(a.at).localeCompare(String(b.at))})}
 function chByKey(){var o={};Object.keys(CHM).forEach(function(k){var m=CHM[k];if(!m||!m.key)return;(o[m.key]=o[m.key]||[]).push(m)});Object.keys(o).forEach(function(k){o[k].sort(function(a,b){return String(a.at).localeCompare(String(b.at))})});return o}
-function chMember(key){if(chIsAdmin())return true;var r=chRec(key),me=chMe();return !!(r&&Array.isArray(r.staff)&&r.staff.indexOf(me)>=0)}
+function chMem(key){var m=CHR[key+"~#members"];return {admin:!(m&&m.admin===false),extra:m&&Array.isArray(m.extra)?m.extra:[]}}
+function chStaff(key){var r=chRec(key);return r&&Array.isArray(r.staff)?r.staff.filter(Boolean):[]}
+function chPeople(key){var a=chStaff(key).slice();chMem(key).extra.forEach(function(n){if(a.indexOf(n)<0)a.push(n)});return a}
+// 参加している人だけが見られる: 案件の担当者+チャットに追加された人(+管理者を含める設定のとき管理者)
+function chMember(key){if(chIsAdmin())return chMem(key).admin;return chPeople(key).indexOf(chMe())>=0}
+function chSetMem(key,mem){var id=key+"~#members",d={key:key,kind:"members",admin:mem.admin!==false,extra:mem.extra||[],at:new Date().toISOString(),by:chMe()};CHR[id]=d;if(db)db.doc("chatrd/"+id).set(d).catch(function(){toast("参加者を保存できませんでした")});else lsSet("chatrd",CHR)}
 function chReadAt(key,name){var r=CHR[key+"~"+(name||chMe())];return r&&r.at||""}
 function chUnread(key,L){var me=chMe(),rd=chReadAt(key);return (L||chMsgs(key)).filter(function(m){return m.by!==me&&String(m.at)>rd}).length}
 function chUnreadTotal(){var o=chByKey(),n=0;Object.keys(o).forEach(function(k){if(chMember(k)&&chRec(k))n+=chUnread(k,o[k])});return n}
 function chMarkRead(key){
-  var L=chMsgs(key);if(!L.length)return;var last=L[L.length-1].at,me=chMe(),id=key+"~"+me;
+  if(!chMember(key))return;var L=chMsgs(key);if(!L.length)return;var last=L[L.length-1].at,me=chMe(),id=key+"~"+me;
   if(chReadAt(key)>=last)return;
   CHR[id]={key:key,name:me,at:last};
   if(db)db.doc("chatrd/"+id).set(CHR[id]).catch(function(){});else lsSet("chatrd",CHR);
   try{renderTabs()}catch(e){}
 }
-function chBtnHtml(col,id){var key=col+"_"+id,n=chMsgs(key).length,u=chUnread(key);return '<button type="button" class="btn sm" data-chopen="'+esc(key)+'">💬 チャット'+(n?" <b>"+n+"</b>":"")+(u?' <span class="ntc">'+u+"</span>":"")+"</button>"}
+function chBtnHtml(col,id){var key=col+"_"+id,mb=chMember(key);if(!mb&&!chIsAdmin())return "";var n=chMsgs(key).length,u=mb?chUnread(key):0;if(!mb)return '<button type="button" class="btn sm" data-chopen="'+esc(key)+'" title="管理者は参加していません(閲覧のみ)">💬 チャット(不参加)</button>';return '<button type="button" class="btn sm" data-chopen="'+esc(key)+'">💬 チャット'+(n?" <b>"+n+"</b>":"")+(u?' <span class="ntc">'+u+"</span>":"")+"</button>"}
 function chSend(o){
-  var key=CHS.key;if(!key)return;var r=chRec(key);
+  var key=CHS.key;if(!key)return;if(!chMember(key)){toast("このチャットに参加していないため送信できません");return}var r=chRec(key);
   var m=Object.assign({id:"cm"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),key:key,at:new Date().toISOString(),by:chMe(),role:chIsAdmin()?"admin":"staff",name:chTitle(key)},o);
   CHM[m.id]=m;
   if(db)db.doc("chatmsg/"+m.id).set(m).catch(function(){toast("送信できませんでした");delete CHM[m.id];chDraw(true)});else lsSet("chatmsg",CHM);
@@ -4077,6 +4083,8 @@ function chSend(o){
 function chDel(id){var m=CHM[id];if(!m||m.by!==chMe())return;delete CHM[id];if(db&&db.doc("chatmsg/"+id).delete)db.doc("chatmsg/"+id).delete().catch(function(){});else lsSet("chatmsg",CHM);if(m.img&&window.dsFiles&&window.dsFiles.del){try{window.dsFiles.del(m.img.id);window.dsFiles.del(m.img.tid)}catch(e){}}chDraw(true)}
 function chOpen(key){
   if(!chRec(key)){toast("先に案件を保存してください");return}
+  if(!chMember(key)&&!chIsAdmin()){toast("このチャットには参加していません。案件の担当者か、参加者に追加された人だけが見られます");return}
+  CHS.mem=false;
   CHS.key=key;CHS.stamp=false;chDraw();
   clearInterval(CHS.tmr);CHS.tmr=setInterval(function(){if(!CHS.key){clearInterval(CHS.tmr);return}if(window.dsDbRefresh&&!document.hidden){window.dsDbRefresh("chatmsg");window.dsDbRefresh("chatrd")}},4000);
 }
@@ -4093,7 +4101,7 @@ function chDraw(keep){
   var key=CHS.key;if(!key){o.innerHTML="";return}
   var L=chMsgs(key),me=chMe(),r=chRec(key)||{},i=key.indexOf("_"),col=key.slice(0,i),T=BG_T[col]||{n:"",ic:""};
   var staff=Array.isArray(r.staff)?r.staff:[];
-  var readers=Object.keys(CHR).map(function(k){return CHR[k]}).filter(function(x){return x&&x.key===key});
+  var readers=Object.keys(CHR).map(function(k){return CHR[k]}).filter(function(x){return x&&x.key===key&&x.name&&x.kind!=="members"});
   var last="",h=L.map(function(m){
     var day=chFmtDay(m.at),sep=day!==last?'<div class="chday"><span>'+day+"</span></div>":"";last=day;
     var mine=m.by===me,rd=mine?readers.filter(function(x){return x.name!==me&&String(x.at)>=String(m.at)}).length:0;
@@ -4101,16 +4109,25 @@ function chDraw(keep){
       (m.img?'<button type="button" class="chimg" data-chimg="'+esc(m.id)+'"><span data-chth="'+esc(m.id)+'"></span></button>':"")+(m.text?'<div class="chtx">'+esc(m.text).replace(/\n/g,"<br>").replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>')+"</div>":"");
     return sep+'<div class="chm'+(mine?" me":"")+'">'+(mine?"":'<div class="chwho">'+esc(m.by||"")+(m.role==="admin"&&m.by!=="管理者"?' <span class="tag">管理者</span>':"")+"</div>")+'<div class="chrow">'+(mine?'<span class="chmeta">'+(rd?"既読"+(rd>1?rd:"")+"<br>":"")+chHm(m.at)+"</span>":"")+'<div class="chb'+(m.stamp?" st":"")+(m.img&&!m.text?" im":"")+'">'+body+"</div>"+(mine?"":'<span class="chmeta">'+chHm(m.at)+"</span>")+"</div>"+(mine?'<button type="button" class="chdel" data-chdel="'+esc(m.id)+'" title="送信を取り消す">取消</button>':"")+"</div>"}).join("");
   var listEl=$("#ch-list"),atBottom=listEl?listEl.scrollHeight-listEl.scrollTop-listEl.clientHeight<80:true,ta=$("#ch-ta"),draft=ta?ta.value:(CHS.draft[key]||""),focus=ta&&document.activeElement===ta;
-  if(keep&&listEl){listEl.innerHTML=h||chEmpty();$("#ch-mem").textContent=chMemTxt(staff);if(atBottom)listEl.scrollTop=listEl.scrollHeight;chThumbs();chMarkRead(key);return}
-  o.innerHTML='<div class="mask chmask"><div class="dlg chdlg"><div class="chhead"><button type="button" class="btn sm" id="ch-x" aria-label="閉じる">‹ 戻る</button><div class="chtt"><b>'+esc(chTitle(key))+'</b><span class="sub"><span class="tag">'+T.ic+" "+T.n+'</span> <span id="ch-mem">'+esc(chMemTxt(staff))+'</span></span></div><button type="button" class="btn sm" id="ch-case">案件を開く</button></div>'+
+  if(keep&&listEl&&!CHS.mem){listEl.innerHTML=h||chEmpty();$("#ch-mem").textContent=chMemTxt(key);if(atBottom)listEl.scrollTop=listEl.scrollHeight;chThumbs();chMarkRead(key);return}
+  o.innerHTML='<div class="mask chmask"><div class="dlg chdlg"><div class="chhead"><button type="button" class="btn sm" id="ch-x" aria-label="閉じる">‹ 戻る</button><div class="chtt"><b>'+esc(chTitle(key))+'</b><span class="sub"><span class="tag">'+T.ic+" "+T.n+'</span> <span id="ch-mem">'+esc(chMemTxt(key))+'</span></span></div><button type="button" class="btn sm" id="ch-memb" title="参加者">👥 '+(chPeople(key).length+(chMem(key).admin?1:0))+'</button><button type="button" class="btn sm" id="ch-case">案件を開く</button></div>'+
+    (CHS.mem?chMemPanel(key):"")+(chMember(key)?"":'<div class="banner" style="margin:0;border-radius:0">管理者はこのチャットに参加していません(閲覧のみ)。<button type="button" class="btn sm pri" id="ch-join" style="margin-left:6px">参加する</button></div>')+
     '<div class="chlist" id="ch-list">'+(h||chEmpty())+"</div>"+
     (CHS.stamp?'<div class="chstamps">'+CH_STAMPS.map(function(s){return '<button type="button" data-chst="'+s[0]+'"><span>'+s[1]+"</span>"+esc(s[2])+"</button>"}).join("")+"</div>":"")+
-    '<div class="chin"><label class="btn sm chic" title="写真を送る">📷<input type="file" accept="image/*" id="ch-file" style="display:none"></label><button type="button" class="btn sm chic'+(CHS.stamp?" on":"")+'" id="ch-stb" title="スタンプ">😊</button><textarea id="ch-ta" rows="1" placeholder="メッセージを入力">'+esc(draft)+'</textarea><button type="button" class="btn primary" id="ch-send"'+(CHS.busy?" disabled":"")+">送信</button></div></div></div>";
+    (chMember(key)?'':'<div style="display:none">')+'<div class="chin"><label class="btn sm chic" title="写真を送る">📷<input type="file" accept="image/*" id="ch-file" style="display:none"></label><button type="button" class="btn sm chic'+(CHS.stamp?" on":"")+'" id="ch-stb" title="スタンプ">😊</button><textarea id="ch-ta" rows="1" placeholder="メッセージを入力">'+esc(draft)+'</textarea><button type="button" class="btn primary" id="ch-send"'+(CHS.busy?" disabled":"")+">送信</button></div>"+(chMember(key)?"":"</div>")+"</div></div>";
   var le=$("#ch-list");le.scrollTop=le.scrollHeight;chThumbs();chMarkRead(key);chGrow();
   if(focus||!/iPhone|Android/i.test(navigator.userAgent)){var t2=$("#ch-ta");if(t2){t2.focus();t2.selectionStart=t2.selectionEnd=t2.value.length}}
 }
+function confirmLeave(){return true}
 function chEmpty(){return '<div class="empty" style="padding:40px 10px;text-align:center">まだメッセージはありません。<br>この案件の担当者と管理者でやり取りできます。</div>'}
-function chMemTxt(staff){return "参加: "+(staff.length?staff.join("・")+"・":"")+"管理者"}
+function chMemTxt(key){var p=chPeople(key),a=chMem(key).admin;return "参加: "+(p.concat(a?["管理者"]:[]).join("・")||"なし")}
+function chMemPanel(key){
+  var st=chStaff(key),m=chMem(key),all=(S.settings.staff||[]).map(function(x){return typeof x==="string"?x:(x&&x.name)}).filter(Boolean),can=chMember(key)||chIsAdmin();
+  return '<div class="chmempanel"><b>参加者</b><span class="sub">このチャットは、参加している人だけが見られます(スマホ通知も参加者だけに届きます)。</span>'+
+    '<label class="bgopt"><input type="checkbox" data-chm="@admin"'+(m.admin?" checked":"")+(can?"":" disabled")+'> 管理者</label>'+
+    all.map(function(n){var fixed=st.indexOf(n)>=0;return '<label class="bgopt"><input type="checkbox" data-chm="'+esc(n)+'"'+(fixed||m.extra.indexOf(n)>=0?" checked":"")+(fixed||!can?" disabled":"")+"> "+esc(n)+(fixed?' <span class="sub">(案件の担当者)</span>':"")+"</label>"}).join("")+
+    '<div class="sub">案件の担当者は自動で参加します(外す場合は案件の担当を変更してください)。</div><div><button type="button" class="btn sm" id="ch-memx">閉じる</button></div></div>';
+}
 function chGrow(){var t=$("#ch-ta");if(!t)return;t.style.height="auto";t.style.height=Math.min(140,t.scrollHeight)+"px"}
 async function chThumbs(){
   var els=[].slice.call(document.querySelectorAll("#chl [data-chth]"));
@@ -4138,18 +4155,18 @@ function chDoSend(){var ta=$("#ch-ta");if(!ta)return;var v=ta.value.replace(/\s+
 /* ---- チャット一覧ページ ---- */
 function vChat(){
   var o=chByKey(),me=chMe(),adm=chIsAdmin(),q=CHS.q.trim().toLowerCase();
-  var keys=Object.keys(o).filter(function(k){return chRec(k)&&(adm?(CHS.all||chMember(k)):chMember(k))});
-  var rows=keys.map(function(k){var L=o[k],m=L[L.length-1];return {k:k,m:m,n:L.length,u:chUnread(k,L),t:chTitle(k)}}).filter(function(x){return !q||(x.t+" "+x.m.text).toLowerCase().indexOf(q)>=0}).sort(function(a,b){return String(b.m.at).localeCompare(String(a.m.at))});
+  var keys=Object.keys(o).filter(function(k){return chRec(k)&&(chMember(k)||(adm&&CHS.all))});
+  var rows=keys.map(function(k){var L=o[k],m=L[L.length-1];return {k:k,m:m,n:L.length,u:chMember(k)?chUnread(k,L):0,t:chTitle(k)}}).filter(function(x){return !q||(x.t+" "+x.m.text).toLowerCase().indexOf(q)>=0}).sort(function(a,b){return String(b.m.at).localeCompare(String(a.m.at))});
   var tot=rows.reduce(function(a,x){return a+x.u},0);
-  var h='<div class="panel pgbar"><input type="search" id="ch-q" value="'+esc(CHS.q)+'" placeholder="案件名・メッセージで検索"><button type="button" class="btn sm pri" id="ch-new">＋ 案件を選んでチャット</button>'+(adm?'<span class="sub" style="margin-left:auto">管理者はすべての案件のチャットを確認できます</span>':"")+"</div>";
-  h+='<div class="sub" style="margin:4px 2px 8px">'+rows.length+"件のチャット"+(tot?"・未読 <b>"+tot+"</b>件":"")+"。案件の担当者と管理者でやり取りできます。新しいメッセージはスマホ通知でも届きます(通知の設定で「案件チャット」をオン)。</div>";
+  var h='<div class="panel pgbar"><input type="search" id="ch-q" value="'+esc(CHS.q)+'" placeholder="案件名・メッセージで検索"><button type="button" class="btn sm pri" id="ch-new">＋ 案件を選んでチャット</button>'+(adm?'<button type="button" class="btn sm'+(CHS.all?" pri":"")+'" id="ch-all" style="margin-left:auto">'+(CHS.all?"すべてのチャットを表示中":"参加中のみ表示中")+"</button>":"")+"</div>";
+  h+='<div class="sub" style="margin:4px 2px 8px">'+rows.length+"件のチャット"+(tot?"・未読 <b>"+tot+"</b>件":"")+"。参加している案件のチャットだけが表示されます(参加者=案件の担当者+チャットで追加された人+管理者)。新しいメッセージはスマホ通知でも届きます(通知の設定で「案件チャット」をオン)。</div>";
   if(!rows.length)return h+'<div class="empty" style="padding:40px 10px;text-align:center">まだチャットはありません。<br>「＋ 案件を選んでチャット」か、各案件の編集画面の「💬 チャット」から始められます。</div>';
   h+='<div class="panel chrows">'+rows.map(function(x){var i=x.k.indexOf("_"),T=BG_T[x.k.slice(0,i)]||{ic:"",n:""},m=x.m,prev=m.stamp?"スタンプ":m.img&&!m.text?"📷 写真":String(m.text||"").replace(/\s+/g," ");
-    return '<button type="button" class="chrowi" data-chopen="'+esc(x.k)+'"><span class="chav">'+T.ic+'</span><span class="chrb"><span class="chr1"><b>'+esc(x.t)+'</b><span class="sub">'+chFmtDay(m.at)+" "+chHm(m.at)+'</span></span><span class="chr2"><span class="sub">'+esc((m.by===me?"自分":m.by)+": "+prev).slice(0,80)+"</span>"+(x.u?'<span class="ntc">'+x.u+"</span>":"")+"</span></span></button>"}).join("")+"</div>";
+    var nm2=chMember(x.k);return '<button type="button" class="chrowi" data-chopen="'+esc(x.k)+'"><span class="chav">'+T.ic+'</span><span class="chrb"><span class="chr1"><b>'+esc(x.t)+(nm2?"":' <span class="tag">不参加</span>')+'</b><span class="sub">'+chFmtDay(m.at)+" "+chHm(m.at)+'</span></span><span class="chr2"><span class="sub">'+esc((m.by===me?"自分":m.by)+": "+prev).slice(0,80)+"</span>"+(x.u?'<span class="ntc">'+x.u+"</span>":"")+"</span></span></button>"}).join("")+"</div>";
   return h;
 }
 function chPickCase(){
-  var cand=[];Object.keys(BG_T).forEach(function(col){(BG_T[col].arr()||[]).forEach(function(r){if(!r||r.sample)return;var k=col+"_"+r.id;if(chMember(k))cand.push({k:k,col:col,t:phTitle(col,r.id),d:BG_T[col].date(r)})})});
+  var cand=[];Object.keys(BG_T).forEach(function(col){(BG_T[col].arr()||[]).forEach(function(r){if(!r||r.sample)return;var k=col+"_"+r.id;if(chIsAdmin()||chPeople(k).indexOf(chMe())>=0)cand.push({k:k,col:col,t:phTitle(col,r.id),d:BG_T[col].date(r)})})});
   cand.sort(function(a,b){return String(b.d).localeCompare(String(a.d))});
   var draw=function(q){q=(q||"").trim().toLowerCase();var L=cand.filter(function(c){return !q||c.t.toLowerCase().indexOf(q)>=0}).slice(0,60);
     return L.map(function(c){return '<button type="button" class="nrow" data-chpick="'+esc(c.k)+'"><span class="ni">'+BG_T[c.col].ic+'</span><span class="nb"><b>'+esc(c.t)+'</b><span class="sub">'+BG_T[c.col].n+(c.d?" ／ "+esc(String(c.d).slice(0,10)):"")+"</span></span></button>"}).join("")||'<div class="empty" style="padding:20px;text-align:center">該当する案件がありません</div>'};
@@ -4165,6 +4182,8 @@ document.addEventListener("click",function(e){
     if(id==="ch-x"||(t.classList&&t.classList.contains("chmask"))){chClose();return}
     if(id==="ch-case"){var k=CHS.key,i=k.indexOf("_");chClose();if(!$("#modal").innerHTML&&BG_T[k.slice(0,i)])BG_T[k.slice(0,i)].open(k.slice(i+1));return}
     if(id==="ch-send"){chDoSend();return}
+    if(id==="ch-memb"||id==="ch-memx"){var tq=$("#ch-ta");if(tq)CHS.draft[CHS.key]=tq.value;CHS.mem=!CHS.mem&&id==="ch-memb";chDraw();return}
+    if(id==="ch-join"){var mm=chMem(CHS.key);mm.admin=true;chSetMem(CHS.key,mm);toast("このチャットに参加しました");chDraw();return}
     if(id==="ch-stb"){var ta=$("#ch-ta");if(ta)CHS.draft[CHS.key]=ta.value;CHS.stamp=!CHS.stamp;chDraw();return}
     if((x=t.closest("[data-chst]"))){CHS.stamp=false;var ta2=$("#ch-ta");if(ta2)CHS.draft[CHS.key]=ta2.value;var sid=x.getAttribute("data-chst"),so=CH_STAMPS.find(function(z){return z[0]===sid});chSend({stamp:sid,stampT:so?so[2]:""});chDraw();return}
     if((x=t.closest("[data-chimg]"))){chViewImg(x.getAttribute("data-chimg"));return}
@@ -4172,6 +4191,7 @@ document.addEventListener("click",function(e){
     return;
   }
   if(S.tab==="chat"&&(t.closest("button")||{}).id==="ch-new"){chPickCase();return}
+  if(S.tab==="chat"&&(t.closest("button")||{}).id==="ch-all"){CHS.all=!CHS.all;render();return}
 },true);
 document.addEventListener("keydown",function(e){
   if(e.target&&e.target.id==="ch-ta"&&e.key==="Enter"&&!e.shiftKey&&!e.isComposing&&!/iPhone|Android/i.test(navigator.userAgent)){e.preventDefault();chDoSend()}
@@ -4180,7 +4200,10 @@ document.addEventListener("input",function(e){
   if(e.target&&e.target.id==="ch-ta"){chGrow();return}
   if(S.tab==="chat"&&e.target&&e.target.id==="ch-q"){CHS.q=e.target.value;clearTimeout(CHS.qt);CHS.qt=setTimeout(function(){var el=$("#ch-q"),p=el&&el.selectionStart;render();var n=$("#ch-q");if(n){n.focus();try{n.setSelectionRange(p,p)}catch(x){}}},300)}
 });
-document.addEventListener("change",function(e){if(e.target&&e.target.id==="ch-file"){var f=e.target.files&&e.target.files[0];e.target.value="";chSendImg(f)}});
+document.addEventListener("change",function(e){
+  var cm=e.target&&e.target.getAttribute&&e.target.getAttribute("data-chm");
+  if(cm&&CHS.key){var mm=chMem(CHS.key);if(cm==="@admin"){if(!e.target.checked&&chIsAdmin()&&!confirmLeave())return;mm.admin=e.target.checked}else{mm.extra=mm.extra.filter(function(n){return n!==cm});if(e.target.checked)mm.extra.push(cm)}chSetMem(CHS.key,mm);chDraw();return}
+  if(e.target&&e.target.id==="ch-file"){var f=e.target.files&&e.target.files[0];e.target.value="";chSendImg(f)}});
 /* ====================== 水道届の様式(アップロード)に記入して出力 ====================== */
 var WTF_KEYS=[["name","使用者氏名"],["kana","フリガナ"],["addr","使用場所の住所"],["tel","連絡先電話番号"],["custNo","お客様番号"],["pay","支払い方法"],["payer","支払者氏名"],["newAddr","転居先の住所"],["workplace","勤務先"],["occupants","世帯人数"],["sendTo","送付先"],
  ["site","物件名"],["room","号室"],["office","窓口名"],["memo","備考"],

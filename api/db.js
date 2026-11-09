@@ -33,7 +33,11 @@ async function chatPush(m, actor) {
   const nm = [rec.site || rec.bldgName || rec.name, rec.room || rec.item].filter(Boolean).join(" ") || m.name || "案件";
   const who = m.by || (actor && actor.role === "admin" ? "管理者" : "");
   const body = m.stamp ? "スタンプ「" + (m.stampT || m.stamp) + "」" : m.img && !m.text ? "写真を送りました" : String(m.text || "");
-  await notify("chat", nm, (who ? who + ": " : "") + body, rec.staff, actor, true);
+  // 参加者: 案件の担当者+チャットで追加された人。管理者は「参加者に管理者を含める」ときだけ
+  let mem = {};
+  try { const o = (await pipeline([["HGET", key("chatrd"), m.key + "~#members"]]))[0]; mem = o ? JSON.parse(o) : {}; } catch (e) {}
+  const names = (Array.isArray(rec.staff) ? rec.staff : []).concat(Array.isArray(mem.extra) ? mem.extra : []);
+  await notify("chat", nm, (who ? who + ": " : "") + body, names, actor, true, mem.admin === false);
 }
 
 module.exports = async (req, res) => {

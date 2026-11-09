@@ -12,7 +12,7 @@ const norm = (s) => String(s || "").normalize("NFKC").replace(/[\s　]+/g, "");
 const cleanPrefs = (p) => { const o = {}; KINDS.forEach((k) => (o[k] = !(p && p[k] === false))); return o; };
 
 // 通知を出す。names=担当(スタッフ)の名前。管理者には常に届く。actor は自分の操作で自分に出さないため
-async function notify(kind, title, text, names, actor, skipSelf) {
+async function notify(kind, title, text, names, actor, skipSelf, noAdmin) {
   if (!configured() || KINDS.indexOf(kind) < 0) return 0;
   const want = {}; (names || []).forEach((n) => { if (norm(n)) want[norm(n)] = 1; });
   const flat = (await pipeline([["HGETALL", SUBS]]))[0] || [];
@@ -22,6 +22,7 @@ async function notify(kind, title, text, names, actor, skipSelf) {
   for (let i = 0; i + 1 < flat.length; i += 2) {
     let e; try { e = JSON.parse(flat[i + 1]); } catch (x) { continue; }
     const isAdm = e.role === "admin";
+    if (isAdm && noAdmin) continue;
     if (!isAdm && !want[norm(e.name)]) continue;
     if (!isAdm && actor && actor.role === "staff" && norm(actor.name) === norm(e.name)) continue;
     if (skipSelf && actor && e.role === actor.role && norm(e.name) === norm(actor.name)) continue;
