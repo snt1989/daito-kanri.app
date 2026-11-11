@@ -19,8 +19,8 @@ module.exports = async (req, res) => {
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
         model: process.env.ANTHROPIC_MODEL || MODELS[b.tier] || MODELS.default,
-        max_tokens: 8000,
-        system: "あなたは書類の読み取り担当です。指示された形式の出力だけを返し、前置きや説明は書かないでください。",
+        max_tokens: b.mode === "assistant" ? 3000 : 8000,
+        system: b.mode === "assistant" ? "あなたは業務アプリのAIアシスタントです。指示に従い、指定されたJSON形式だけで答えてください。" : "あなたは書類の読み取り担当です。指示された形式の出力だけを返し、前置きや説明は書かないでください。",
         messages: [{ role: "user", content }],
       }),
     });

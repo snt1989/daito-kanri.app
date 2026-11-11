@@ -198,7 +198,7 @@
     opts = opts || {};
     var imgs = [];
     for (var i = 0; i < (opts.images || []).length; i++) imgs.push(await blobB64(opts.images[i]));
-    var j = await call("/api/ai", { prompt: String(prompt), images: imgs, tier: opts.modelTier || "default" }, opts.signal);
+    var j = await call("/api/ai", { prompt: String(prompt), images: imgs, tier: opts.modelTier || "default", mode: opts.mode || "" }, opts.signal);
     return { text: j.text || "", truncated: !!j.truncated };
   }
   function pickJson(t) {

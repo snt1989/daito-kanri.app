@@ -366,6 +366,23 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .nt-tabs .tab{padding:9px 2px;font-size:13.5px;white-space:nowrap;text-align:center}
 .ntc{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:11px;line-height:18px;text-align:center}
 .nt-body{min-height:260px}
+#ai-fab{position:fixed;right:16px;bottom:18px;border:none;background:none;padding:0;cursor:pointer;z-index:80;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 4px 6px rgba(0,0,0,.22));animation:ai-bob 2.6s ease-in-out infinite}
+#ai-fab .ai-tag{margin-top:-2px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:2px 9px;border-radius:99px;border:2px solid #fff;letter-spacing:.05em}
+#ai-fab:hover{animation-play-state:paused;transform:scale(1.08)}
+@keyframes ai-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes ai-blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}@keyframes ai-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-22deg)}}
+.ai-eyes{transform-box:fill-box;transform-origin:center;animation:ai-blink 4.2s infinite}.ai-arm-r{transform-box:fill-box;transform-origin:20% 90%;animation:ai-wave 1.8s ease-in-out infinite}
+#ai-panel{position:fixed;right:16px;bottom:84px;width:400px;max-width:calc(100vw - 24px);height:min(620px,calc(100vh - 110px));background:var(--surface,#fff);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 34px rgba(0,0,0,.28);z-index:81;display:flex;flex-direction:column;overflow:hidden}
+.ai-hd{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.ai-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg,#f6f4f2)}
+.ai-b{max-width:90%;padding:9px 12px;border-radius:14px;font-size:13.5px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.ai-u{align-self:flex-end;background:var(--accent);color:#fff;border-radius:14px 14px 4px 14px}.ai-a{align-self:flex-start;background:var(--surface,#fff);border:1px solid var(--line);border-radius:14px 14px 14px 4px}
+.ai-act{border-style:dashed}.ai-copy{align-self:flex-start;border:0;background:none;color:var(--muted);font-size:11.5px;cursor:pointer;margin-top:-4px;padding:2px 4px}
+.ai-chips{display:flex;flex-wrap:wrap;gap:6px}.ai-chips .chip2{font-size:12.5px;padding:5px 10px;text-align:left}
+.ai-ft{padding:8px 10px;border-top:1px solid var(--line)}.ai-ft textarea{flex:1;resize:none;font:inherit;font-size:15px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.ai-note{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+@media(max-width:760px){#ai-fab{bottom:calc(82px + env(safe-area-inset-bottom));right:10px}#ai-fab svg{width:44px;height:48px}#ai-panel{right:0;left:0;bottom:0;width:100%;max-width:100%;height:88vh;border-radius:16px 16px 0 0;z-index:120}}
+@media print{#ai-fab,#ai-panel{display:none!important}}
+
 .rpsum{padding:14px 16px}.rpstat{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.rpstat>div{display:flex;flex-direction:column;gap:2px}.rpstat b{font-size:22px}.rpstat small{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
 .rpbar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:12px 0}.rpbar i{display:block;height:100%;background:var(--ok,#1a7f37)}
 .rpact{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rpact>.sub{flex:1;min-width:200px}
@@ -713,7 +730,7 @@ function renderTabs(){
   if(cur&&sd.scrollHeight>sd.clientHeight){var cr=cur.getBoundingClientRect(),sr=sd.getBoundingClientRect();if(cr.bottom>sr.bottom-8)sd.scrollTop+=cr.bottom-sr.bottom+16;else if(cr.top<sr.top+8)sd.scrollTop-=sr.top-cr.top+16}
   $("#menu").innerHTML=ic("menu");renderBnav(B);
   var uc=userChipHtml();if(uc!==null){var ue=document.querySelector(".user");if(ue&&ue.dataset.c!==uc){ue.innerHTML=uc;ue.dataset.c=uc}}
-  var tn=todos().length+infoBadge()+(function(){try{return chUnreadTotal()}catch(e){return 0}})();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn);try{pnCheck()}catch(e){};try{brandApply()}catch(e){};
+  var tn=todos().length+infoBadge()+(function(){try{return chUnreadTotal()}catch(e){return 0}})();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn);try{pnCheck()}catch(e){};try{brandApply()}catch(e){};try{aiRender()}catch(e){};
 }
 function pageHead(){
   if(S.tab==="case")return "";
@@ -3051,6 +3068,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-11-11",t:"AIアシスタント(AIロボ)",d:"画面右下のAIロボから、案件・予定・お知らせについての質問、入居者様や大東建託への連絡文の下書き、アプリの使い方の質問ができます。案件を開く・メモを追加する操作も、確認してから実行できます。金額は管理者のときだけ答えます。"},
  {v:"2026-11-09",t:"報告書作成の画面を見やすく",d:"報告書作成の画面を、写真つきのカードを並べる形にしました。上に「完成・途中・未着手」の件数と進み具合、PDFの作成ボタンをまとめ、表紙の設定はたためるようにしました。完成・途中・未着手での絞り込みと検索もできます。"},
  {v:"2026-11-09",t:"案件の確認画面",d:"地図のピンを動かして位置を保存できます(航空写真で確認)。一覧で案件を押すと、現場管理アプリのような確認画面が開くようになりました。写真・予算管理・メモ・報告書・案件情報・地図・登録の記録と、案件メンバー(チャット)がまとまって見られます。編集は「✎ 編集」から行います。"},
  {v:"2026-11-09",t:"案件ごとのチャット",d:"メニューに「チャット」を追加しました。案件ごとに、参加している人(案件の担当者・チャットに追加した人・管理者)だけでメッセージ・写真・スタンプをやり取りできます。既読の表示、未読の件数(メニュー・ベル)、スマホ通知(通知の設定で「案件チャット」)にも対応しています。各案件の編集画面の「💬 チャット」からも開けます。"},
@@ -4403,6 +4421,124 @@ document.addEventListener("click",function(e){
   if(id==="cs-copy"){var T=BG_T[c.col],txt=["【"+T.n+"】"+T.name(c.r).trim(),"進捗: "+((T.st()[+c.r.status||0]||{}).n||"")].concat(csFields(c.col,c.r).filter(function(f){return canMoney()||!MNY_RE.test(f.label||"")}).map(function(f){var v=csVal(f,c.r);return v?f.label+": "+v:""}).filter(Boolean)).join("\n");
     (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){toast("案件情報をコピーしました")},function(){var ta2=document.createElement("textarea");ta2.value=txt;document.body.appendChild(ta2);ta2.select();try{document.execCommand("copy");toast("案件情報をコピーしました")}catch(er){toast("コピーできませんでした")}ta2.remove()});return}
 },true);
+/* ====================== AIアシスタント(画面右下) ====================== */
+// アプリのデータ(見られる範囲)と使い方をもとに、質問への回答・文章の下書き・操作の提案をする。
+// 入居者名・電話番号などの個人の連絡先は送らない。金額は管理者のときだけ送る。操作は本人が確認してから実行する。
+var AI={open:false,msgs:[],busy:false,ctl:null};
+function aiKunSvg(sz){
+  return '<svg viewBox="0 0 64 70" width="'+sz+'" height="'+(sz*70/64)+'" aria-hidden="true" style="overflow:visible"><ellipse cx="32" cy="67" rx="16" ry="2.6" fill="rgba(0,0,0,.18)"/><line x1="32" y1="9" x2="32" y2="15" stroke="#6b5a5a" stroke-width="2.6" stroke-linecap="round"/><circle class="ai-ant" cx="32" cy="6.5" r="4.6" fill="#ffc93c" stroke="#fff" stroke-width="1.6"/>'+
+    '<g><ellipse cx="7.5" cy="40" rx="5" ry="7" fill="#f6b8c2" stroke="#fff" stroke-width="1.6" transform="rotate(18 7.5 40)"/></g><g class="ai-arm-r"><ellipse cx="56.5" cy="38" rx="5" ry="7" fill="#f6b8c2" stroke="#fff" stroke-width="1.6" transform="rotate(-28 56.5 38)"/></g>'+
+    '<rect x="20" y="56" width="9" height="8" rx="4" fill="#e9909f" stroke="#fff" stroke-width="1.4"/><rect x="35" y="56" width="9" height="8" rx="4" fill="#e9909f" stroke="#fff" stroke-width="1.4"/>'+
+    '<rect x="9" y="14" width="46" height="45" rx="22" fill="#fde4e8" stroke="#fff" stroke-width="2.4"/><rect x="14" y="21" width="36" height="25" rx="12.5" fill="#3a2328"/>'+
+    '<g class="ai-eyes"><ellipse cx="24.5" cy="32.5" rx="4.2" ry="5.2" fill="#ffd1da"/><ellipse cx="39.5" cy="32.5" rx="4.2" ry="5.2" fill="#ffd1da"/><circle cx="26" cy="30.5" r="1.5" fill="#fff"/><circle cx="41" cy="30.5" r="1.5" fill="#fff"/></g>'+
+    '<path d="M28 40.5q4 3.6 8 0" stroke="#ffd1da" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="17" cy="42" rx="3.2" ry="2" fill="#ff8fa6" opacity=".85"/><ellipse cx="47" cy="42" rx="3.2" ry="2" fill="#ff8fa6" opacity=".85"/>'+
+    '<text x="32" y="55.5" text-anchor="middle" font-size="7.5" font-weight="800" fill="#c8102e" font-family="sans-serif">AI</text></svg>';
+}
+function aiCl(x,n){return String(x==null?"":x).replace(/[\r\n|]+/g," ").slice(0,n)}
+function aiContext(){
+  var adm=canMoney(),L=[],me=(function(){try{return chMe()}catch(e){return ""}})(),today=TODAY();
+  L.push("【今日】"+today+"　【使っている人】"+(me||"管理者")+(adm?"(管理者)":"(担当者)"));
+  var rows=function(col,limit,pre){var T=BG_T[col],st=T.st(),arr=(T.arr()||[]).filter(function(r){return r&&!r.sample});
+    arr=arr.slice().sort(function(a,b){return (st.length-1<=+a.status?1:0)-(st.length-1<=+b.status?1:0)||String(T.date(b)).localeCompare(String(T.date(a)))}).slice(0,limit);
+    L.push(pre+"(ID|名前|進捗|日付|担当"+(adm?"|金額(税別)":"")+"|住所|最新メモ)");
+    arr.forEach(function(r){var m=(Array.isArray(r.memos)?r.memos:[]).slice(-1)[0];
+      L.push([col+"_"+r.id,aiCl(T.name(r),40),(st[+r.status||0]||{}).n||"",T.date(r)||"",(Array.isArray(r.staff)?r.staff:[]).join("、"),adm?(T.amt(r)||0):null,aiCl(r.address,40),m?aiCl(m.text,60):""].filter(function(x){return x!==null}).join("|"))});
+    L.push("　→ "+pre.replace(/[【】]/g,"")+"の全件数: "+(T.arr()||[]).length+"件(進捗ごと: "+st.map(function(s,i){return s.n+" "+(T.arr()||[]).filter(function(r){return (+r.status||0)===i}).length}).join("、")+")");
+  };
+  L.push("【進捗の段階】工事: "+STAT.map(function(s){return s.n}).join("→")+" ／ 緊急: "+EM_STAT.map(function(s){return s.n}).join("→")+" ／ 維持管理: "+MT_STAT.map(function(s){return s.n}).join("→")+" ／ エアコン: "+AC_STAT.map(function(s){return s.n}).join("→"));
+  rows("jobs",150,"【工事(原状回復)】");rows("emerg",80,"【緊急出動】");rows("ac",60,"【エアコン案件】");
+  var mm=S.maint.filter(function(m){return m.month===S.mMonth});
+  L.push("【維持管理 "+S.mMonth+"】"+mm.length+"件(進捗ごと: "+MT_STAT.map(function(s,i){return s.n+" "+mm.filter(function(r){return (+r.status||0)===i}).length}).join("、")+")");
+  mm.filter(function(r){return (+r.status||0)<MT_STAT.length-1}).slice(0,80).forEach(function(r){L.push(["maint_"+r.id,aiCl(r.bldgName,30),aiCl(r.item,20),(MT_STAT[+r.status||0]||{}).n||"",r.doneDate||""].join("|"))});
+  try{L.push("【対応が必要(お知らせ)】"+todos().slice(0,40).map(function(t){return t.tag+":"+aiCl(t.title,30)}).join(" ／ "))}catch(e){}
+  try{var o=chByKey(),u=[];Object.keys(o).forEach(function(k){if(chMember(k)&&chRec(k)){var n=chUnread(k,o[k]);if(n)u.push(chTitle(k)+" "+n+"件")}});if(u.length)L.push("【未読のチャット】"+u.join("、"))}catch(e){}
+  L.push("【担当者(スタッフ)】"+(S.settings.staff||[]).join("、"));
+  return L.join("\n").slice(0,60000);
+}
+var AI_HELP="【アプリの使い方(要点)】\n"+
+  "・ホーム: 今日の予定と、対応が必要なもの。ベル(お知らせ)は「対応・メール・更新・履歴・設定」のタブ。スマホ通知はベル→設定でオン。\n"+
+  "・工事一覧(原状回復): 工事予定書・指示書から登録。行を押すと案件の確認画面(写真・予算・メモ・案件情報・地図・チャット)。編集は「✎ 編集」。施工予定でカレンダー表示。請求・入金(管理者)。水道開始・中止届。価値観共有チェックシート。\n"+
+  "・緊急対応: 出動一覧に記録(出動要請書をFAX取込で読み取り可)。月次集計(管理者)。\n"+
+  "・建物維持管理: 作業一覧(月ごと)、年間予定、報告書作成(建物ごとに写真7枚の写真シート＋表紙→PDF)。\n"+
+  "・エアコン: 案件一覧(見積依頼書をFAX取込で読み取り)。\n"+
+  "・FAX取込(画面上部): FAXのPDF・画像を読み取って書類の種類を判別し、そのまま案件に登録。複数の書類が混ざったFAXはページごとに分けられる。読み取った書類は書類ボックスに保存。\n"+
+  "・チャット: 案件ごと。参加者(案件の担当者・追加した人・管理者)だけが見られる。写真・スタンプ・既読あり。\n"+
+  "・画像管理: 全案件の写真の一覧・絞り込み・ZIP・削除。写真の画質は設定→全体共通→写真の画質で一括管理。\n"+
+  "・予算管理(管理者): 案件ごとの予算明細と実績、粗利。勘定科目は設定→勘定科目。CSV入出力。\n"+
+  "・設定: 担当者、単価(管理者)、ロゴ・アイコン、バックアップなど。アプリはホーム画面に追加(インストール)できる。\n"+
+  "・金額に関する項目は管理者だけが見られる(🔒マーク)。";
+function aiPrompt(){
+  var hist=AI.msgs.filter(function(m){return m.text}).slice(-12).map(function(m){return (m.role==="user"?"ユーザー: ":"アシスタント: ")+m.text}).join("\n\n");
+  return "あなたは株式会社三桜の業務アプリ「"+brandName()+"」のAIアシスタント「AIロボ」です。大東建託パートナーズから受注する原状回復工事・緊急出動・建物維持管理・エアコン工事を管理するアプリです。\n"+
+   "次の【データ】と【アプリの使い方】だけを根拠に、日本語で、短く分かりやすく答えてください。データにないことは推測せず「アプリのデータでは分かりません」と答えます。"+(canMoney()?"":"金額・単価・売上などのお金の情報は、この人(担当者)には答えないでください。")+"\n"+
+   "文章の下書き(お客様・大東建託の担当者・社内への連絡など)を頼まれたら、そのまま使える丁寧な文章を書いてください。\n"+
+   "ユーザーがはっきり頼んだときだけ、次の操作を提案できます(実行はユーザーが確認してから行われます):\n"+
+   " - open_case: 案件の確認画面を開く {\"tool\":\"open_case\",\"key\":\"jobs_xxxx などデータのID\"}\n"+
+   " - add_memo: 案件にメモを追加 {\"tool\":\"add_memo\",\"key\":\"ID\",\"text\":\"メモの内容\"}\n"+
+   "回答は必ず次のJSONだけで返してください(前後に説明を書かない): {\"text\":\"回答の本文(改行は\\n)\",\"actions\":[操作の提案。なければ空]}\n\n"+
+   AI_HELP+"\n\n【データ】\n"+aiContext()+"\n\n【会話】\n"+hist+"\n\nアシスタント:";
+}
+function aiActInfo(a){
+  var k=String(a.key||""),i=k.indexOf("_"),col=k.slice(0,i),id=k.slice(i+1),r=BG_T[col]?phRec(col,id):null;
+  if(a.tool==="open_case")return r?{label:"案件を開く",lines:[BG_T[col].n+": "+BG_T[col].name(r)]}:{err:"案件が見つかりません"};
+  if(a.tool==="add_memo"){if(!r)return {err:"案件が見つかりません"};if(!a.text)return {err:"メモの内容がありません"};return {label:"メモを追加",lines:["案件: "+BG_T[col].name(r),"内容: "+String(a.text).slice(0,300)]}}
+  return {err:"未対応の操作です"};
+}
+function aiRun(a){
+  var k=String(a.key||""),i=k.indexOf("_"),col=k.slice(0,i),id=k.slice(i+1),r=phRec(col,id);if(!r)return false;
+  if(a.tool==="open_case"){if(window.innerWidth<=760){AI.open=false;aiRender()}openCase(col,id);return true}
+  if(a.tool==="add_memo"){var rr=JSON.parse(JSON.stringify(r));rr.memos=(Array.isArray(rr.memos)?rr.memos:[]).concat([{id:"mm"+Date.now().toString(36),at:new Date().toISOString(),by:(function(){try{return chMe()}catch(e){return ""}})(),text:String(a.text).slice(0,2000)}]);saveDoc(col,rr,true);toast("メモを追加しました");if(S.tab==="case")render();return true}
+  return false;
+}
+function aiRender(){
+  var fab=$("#ai-fab"),box=$("#ai-panel");
+  if(!S.ready||S.loginNeeded){if(fab)fab.style.display="none";if(box)box.style.display="none";return}
+  if(!fab){fab=document.createElement("button");fab.id="ai-fab";fab.type="button";fab.title="AIアシスタント";fab.innerHTML=aiKunSvg(52)+'<span class="ai-tag">AIロボ</span>';
+    fab.addEventListener("click",function(){AI.open=!AI.open;aiRender()});document.body.appendChild(fab)}
+  fab.style.display=AI.open&&window.innerWidth<=760?"none":"flex";
+  if(!AI.open){if(box)box.style.display="none";return}
+  if(!box){box=document.createElement("div");box.id="ai-panel";document.body.appendChild(box)}
+  box.style.display="flex";
+  var chips=["今日やることを教えて","施工日が決まっていない工事は？","今月の維持管理で終わっていない作業は？","入居者様への訪問日のお知らせ文を下書きして","FAX取込の使い方は？"];
+  var body=AI.msgs.map(function(m,mi){var h=m.text?'<div class="ai-b '+(m.role==="user"?"ai-u":"ai-a")+'">'+esc(m.text)+"</div>":"";
+    (m.actions||[]).forEach(function(a,ai){var inf=aiActInfo(a);h+='<div class="ai-b ai-a ai-act">'+(inf.err?'<span style="color:var(--danger,#c0392b)">実行できません: '+esc(inf.err)+"</span>":"<b>"+esc(inf.label)+'(提案)</b><div class="sub" style="margin-top:4px">'+inf.lines.map(esc).join("<br>")+'</div><div style="margin-top:8px;display:flex;gap:6px">'+(a.state==="done"?'<span class="sub">実行しました</span>':a.state==="skip"?'<span class="sub">やめました</span>':'<button type="button" class="btn sm pri" data-ai-run="'+mi+":"+ai+'">実行する</button><button type="button" class="btn sm" data-ai-skip="'+mi+":"+ai+'">やめる</button>')+"</div>")+"</div>"});
+    if(m.role!=="user"&&m.text&&!m.err)h+='<button type="button" class="ai-copy" data-ai-copy="'+mi+'">⧉ コピー</button>';
+    return h}).join("");
+  if(AI.busy)body+='<div class="ai-b ai-a sub">考えています…</div>';
+  if(!AI.msgs.length)body='<div class="ai-b ai-a">こんにちは、AIロボです！案件・予定・お知らせについての質問、連絡文の下書き、アプリの使い方の質問ができます。メモの追加や案件を開く操作も、確認してから実行します。</div><div class="ai-chips">'+chips.map(function(c){return '<button type="button" class="chip2" data-ai-chip="'+esc(c)+'">'+esc(c)+"</button>"}).join("")+"</div>";
+  var keep=$("#ai-in")?$("#ai-in").value:"";
+  box.innerHTML='<div class="ai-hd"><span style="display:inline-flex">'+aiKunSvg(28)+'</span><b style="flex:1">AIロボ(アシスタント)</b><button type="button" class="btn sm" id="ai-clear">新しい会話</button><button type="button" class="btn sm" id="ai-close">閉じる</button></div>'+
+    '<div class="ai-msgs" id="ai-msgs">'+body+'</div><div class="ai-ft"><div style="display:flex;gap:6px;align-items:flex-end"><textarea id="ai-in" rows="2" placeholder="AIロボに質問や依頼を入力(Ctrl+Enterで送信)"></textarea>'+(AI.busy?'<button type="button" class="btn" id="ai-stop">止める</button>':'<button type="button" class="btn pri" id="ai-send">送信</button>')+'</div><div class="ai-note">入居者様の氏名・電話番号は送信しません。AIの回答は間違うことがあります。重要な内容は画面で確認してください。</div></div>';
+  var inp=$("#ai-in");inp.value=keep;var ms=$("#ai-msgs");ms.scrollTop=ms.scrollHeight;
+}
+async function aiSend(txt){
+  txt=String(txt||"").trim();if(!txt||AI.busy)return;
+  AI.msgs.push({role:"user",text:txt});AI.busy=true;var inp=$("#ai-in");if(inp)inp.value="";aiRender();
+  try{
+    var sample=await claude_use("sample");if(!sample)throw {code:"capability_disabled"};
+    AI.ctl=new AbortController();
+    var r=await sample.json(aiPrompt(),{signal:AI.ctl.signal,modelTier:"default",mode:"assistant"});
+    if(!r||typeof r!=="object")throw {code:"bad_answer"};
+    var acts=(Array.isArray(r.actions)?r.actions:[]).filter(function(a){return a&&(a.tool==="open_case"||a.tool==="add_memo")}).slice(0,3);
+    AI.msgs.push({role:"assistant",text:String(r.text||"").trim()||"(回答がありませんでした)",actions:acts});
+  }catch(e){
+    var c=e&&e.code;
+    AI.msgs.push({role:"assistant",err:true,text:c==="cancelled"||(e&&e.name==="AbortError")?"止めました。":c==="capability_disabled"?"AIアシスタントはまだ使えません。Web版では、管理者がVercelの環境変数 ANTHROPIC_API_KEY を登録すると使えます。":c==="rate_limited"?"混み合っています。少し待ってから、もう一度お試しください。":c==="not_granted"?"AIの利用が許可されていません。":"うまく答えられませんでした。もう一度お試しください。"});
+  }
+  AI.busy=false;AI.ctl=null;aiRender();
+}
+document.addEventListener("click",function(e){
+  var t=e.target&&e.target.closest?e.target:null;if(!t||!t.closest("#ai-panel"))return;var x,id=(t.closest("button")||{}).id||"";
+  if(id==="ai-close"){AI.open=false;aiRender();return}
+  if(id==="ai-clear"){if(AI.ctl)AI.ctl.abort();AI.msgs=[];AI.busy=false;aiRender();return}
+  if(id==="ai-send"){aiSend($("#ai-in").value);return}
+  if(id==="ai-stop"){if(AI.ctl)AI.ctl.abort();return}
+  if((x=t.closest("[data-ai-chip]"))){aiSend(x.getAttribute("data-ai-chip"));return}
+  if((x=t.closest("[data-ai-run]"))){var q=x.getAttribute("data-ai-run").split(":"),a=AI.msgs[+q[0]].actions[+q[1]];if(aiRun(a)){a.state="done";aiRender()}return}
+  if((x=t.closest("[data-ai-skip]"))){var q2=x.getAttribute("data-ai-skip").split(":");AI.msgs[+q2[0]].actions[+q2[1]].state="skip";aiRender();return}
+  if((x=t.closest("[data-ai-copy]"))){var m=AI.msgs[+x.getAttribute("data-ai-copy")];if(m&&navigator.clipboard)navigator.clipboard.writeText(m.text).then(function(){toast("コピーしました")},function(){toast("コピーできませんでした")});return}
+});
+document.addEventListener("keydown",function(e){if(e.target&&e.target.id==="ai-in"&&e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();aiSend(e.target.value)}});
 /* ====================== 水道届の様式(アップロード)に記入して出力 ====================== */
 var WTF_KEYS=[["name","使用者氏名"],["kana","フリガナ"],["addr","使用場所の住所"],["tel","連絡先電話番号"],["custNo","お客様番号"],["pay","支払い方法"],["payer","支払者氏名"],["newAddr","転居先の住所"],["workplace","勤務先"],["occupants","世帯人数"],["sendTo","送付先"],
  ["site","物件名"],["room","号室"],["office","窓口名"],["memo","備考"],
