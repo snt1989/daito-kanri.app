@@ -3072,6 +3072,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-11-11",t:"価値観共有チェックシートを編集ごとにFAX送信",d:"価値観共有チェックシートの記入画面で「保存」「PDFで保存」を押すと、記入済みのシートを付けてFAX送信画面が開きます(宛先・枚数を確認してから送信)。「保存したらFAXで送る」のチェックを外すと開きません。「📠 保存してFAX」ボタンでも送れます。案件の確認画面の「FAX送信(eFax)」からも記入済みのシートを送れます。"},
  {v:"2026-11-11",t:"FAX送信はこちらで作成した書類だけに",d:"書類ボックス(受信したFAX)からの送信ボタンをなくしました。FAXで送れるのは、報告書作成で作ったPDFや、こちらで作成・記入して選んだファイルだけです。案件の確認画面の「FAX送信(eFax)」には、受信書類の代わりにその案件の報告書(写真シート)が出ます。"},
  {v:"2026-11-11",t:"アプリからFAXを送信",d:"「eFaxで送る」に「📠 アプリから送信」を追加しました。送付状付きのPDFを作り、確認画面で宛先・番号・枚数を確かめてから、eFaxの「メールでFAX送信」でそのまま送ります。案件の送信の記録から「結果を確認」で、送信完了したかを確かめられます。(初回のみ、GmailにFAX送信の許可を追加する操作が必要です)"},
  {v:"2026-11-11",t:"eFaxで送る",d:"請書・報告書・価値観共有チェックシートなどの書類を、送付状を付けて1つのPDFにまとめ、ボタン1つでeFaxアプリに渡せるようになりました(FAX番号は自動でコピー)。案件の確認画面の「FAX送信(eFax)」、報告書作成の「📠 eFaxで送る」から使えます。宛先は設定→全体共通→「FAX送信(eFax)」に登録します。"},
@@ -4318,7 +4319,7 @@ function vCase(){
     (M.length?M.slice().reverse().map(function(m){return '<div class="csmemo"><div class="sub">'+esc(String(m.at||"").replace("T"," ").slice(0,16))+" ／ "+esc(m.by||"")+'<button type="button" class="csx" data-csmemodel="'+esc(m.id)+'">削除</button></div><div>'+esc(m.text).replace(/\n/g,"<br>")+"</div></div>"}).join(""):(CS.memo?"":'<div class="sub">メモはまだありません。申し送り・注意点・連絡事項などを自由に残せます。</div>')));
   var FL=Array.isArray(r.faxLog)?r.faxLog:[];
   h+=sec("FAX送信(eFax)",'<label class="btn sm pri" style="cursor:pointer">📁 ファイルを選んで送る<input type="file" accept="application/pdf,image/*" multiple data-efpick="'+esc(key)+'" style="display:none"></label>',
-    '<div class="csfax"><div class="sub" style="margin-bottom:6px">こちらで作成・編集した書類だけを送ります(受信したFAXは送り返しません)。</div>'+(col==="maint"&&r.rep&&r.rep.ph&&r.rep.ph.length?'<div class="csfaxrow"><span>📄 <b>報告書</b> <span class="sub">写真シート '+r.rep.ph.length+'枚</span></span><button type="button" class="btn sm" data-efrep="1">📠 送る</button></div>':'<div class="sub">「ファイルを選んで送る」から、こちらで作成・記入した請書・報告書などのPDFや写真を送れます。</div>')+
+    '<div class="csfax"><div class="sub" style="margin-bottom:6px">こちらで作成・編集した書類だけを送ります(受信したFAXは送り返しません)。</div>'+(col==="maint"&&r.rep&&r.rep.ph&&r.rep.ph.length?'<div class="csfaxrow"><span>📄 <b>報告書</b> <span class="sub">写真シート '+r.rep.ph.length+'枚</span></span><button type="button" class="btn sm" data-efrep="1">📠 送る</button></div>':'')+((r.docs||[]).filter(function(d){return d&&d.id&&/記入済/.test((d.name||"")+(d.typeName||""))}).slice(-1).map(function(d){return '<div class="csfaxrow"><span>📄 <b>価値観共有チェックシート(記入済)</b> <span class="sub">'+esc(d.name||"")+'</span></span><button type="button" class="btn sm" data-efvs="'+esc(d.id)+'">📠 送る</button></div>'}).join(""))+'<div class="sub">「ファイルを選んで送る」から、こちらで作成・記入した請書などのPDFや写真を送れます。</div>'+
     (col==="jobs"&&(+r.status||0)<2?'<div class="sub">請書を送るときは、送信画面の「送ったら進捗を「'+esc(STAT[2].n)+'」にする」にチェックを入れると進捗も進みます。</div>':"")+
     (FL.length?'<div class="cssub" style="margin-top:8px">送信の記録</div>'+FL.slice().reverse().slice(0,10).map(function(x,xi){return '<div class="sub">'+esc((function(d){return isNaN(d)?"":d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())})(new Date(x.at)))+" ／ "+esc(x.subject||"")+" → "+esc(x.to||"")+" "+esc(efFmt(x.fax))+"("+(x.pages||"")+"枚)"+(x.by?" ／ "+esc(x.by):"")+(x.via==="app"?' <span class="tag">'+(x.state==="done"?"✔ 送信完了":x.state==="failed"?"✖ 失敗":"送信中")+"</span>"+(x.state!=="done"?' <button type="button" class="btn sm" data-efchk="'+(FL.length-1-xi)+'">結果を確認</button>':""):' <span class="sub">(eFaxアプリへ)</span>')+"</div>"}).join(""):"")+"</div>");
   if(col==="maint"){var rp=r.rep&&r.rep.ph&&r.rep.ph.length;h+=sec("報告書",'<button type="button" class="btn sm pri" id="cs-rep">＋ 報告書を作成</button>',rp?'<div>写真シート: '+r.rep.ph.length+"枚("+esc(r.rep.item||"")+")</div>":'<div class="sub">この案件の報告書はまだありません。「報告書を作成」から、写真シートと表紙を作れます。</div>')}
@@ -4431,6 +4432,7 @@ document.addEventListener("click",function(e){
   if((x=t.closest("[data-csph]"))){PHS={key:c.col+"_"+c.id,col:c.col,rid:c.id,tag:"all",view:+x.getAttribute("data-csph"),busy:false,msg:"",sel:{}};phDraw();return}
   if(id==="cs-rep"){openRep(c.id);return}
   if((x=t.closest("[data-efchk]"))){efCheck(c.col,c.id,+x.getAttribute("data-efchk"));return}
+  if((x=t.closest("[data-efvs]"))){var vd=(c.r.docs||[]).find(function(d){return d&&d.id===x.getAttribute("data-efvs")});if(vd)openEfax({subject:"価値観共有チェックシート "+BG_T[c.col].name(c.r).trim(),kind:"価値観共有チェックシート",items:[{name:"価値観共有チェックシート(記入済)",ref:vd}],key:c.col+"_"+c.id});return}
   if((x=t.closest("[data-efrep]"))){var mr=c.r;openEfax({subject:"作業完了報告書 "+BG_T[c.col].name(mr).trim(),kind:"報告書",items:[{name:"報告書(写真シート) "+(mr.bldgName||""),make:async function(){var m=S.maint.find(function(z){return z.id===mr.id})||mr,d={off:repSet().off,cd:m.bldgCd,name:m.bldgName,done:m.doneDate,item:(m.rep&&m.rep.item)||repItemFor(m)},cv=await repSheet(d,await repBlobs(m));return await wtfPdfMulti([{jpg:await repJpeg(cv),w:cv.width,h:cv.height}])}}],key:c.col+"_"+c.id});return}
   if(id==="cs-copy"){var T=BG_T[c.col],txt=["【"+T.n+"】"+T.name(c.r).trim(),"進捗: "+((T.st()[+c.r.status||0]||{}).n||"")].concat(csFields(c.col,c.r).filter(function(f){return canMoney()||!MNY_RE.test(f.label||"")}).map(function(f){var v=csVal(f,c.r);return v?f.label+": "+v:""}).filter(Boolean)).join("\n");
     (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){toast("案件情報をコピーしました")},function(){var ta2=document.createElement("textarea");ta2.value=txt;document.body.appendChild(ta2);ta2.select();try{document.execCommand("copy");toast("案件情報をコピーしました")}catch(er){toast("コピーできませんでした")}ta2.remove()});return}
@@ -5518,7 +5520,8 @@ function openVse(id){
    '<button type="button" class="btn sm" data-vsal="w-">横−</button><button type="button" class="btn sm" data-vsal="w+">横＋</button><button type="button" class="btn sm" data-vsal="h-">縦−</button><button type="button" class="btn sm" data-vsal="h+">縦＋</button><button type="button" class="btn sm" data-vsal="reset">戻す</button></div></details></div>'+
    '<div class="vwrap"><div id="vse-stage" class="vstage" style="width:'+VSE.z*100+'%"><div id="vse-empty" class="empty" style="padding:40px 10px">読み込み中…</div><div id="vse-ov" class="vov"></div></div></div>'+
    '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="vse-chk"'+((j.checks&&j.checks.value)?"":" checked")+'> 記入済にする</label>'+
-   '<div class="acts"><span class="sub" id="vse-msg"></span><span><button type="button" class="btn" id="vse-x">閉じる</button> <button type="button" class="btn" id="vse-save">保存</button> <button type="button" class="btn primary" id="vse-pdf">PDFで保存</button></span></div></div></div>';
+   '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="vse-fax"'+(lsGet("vseFax")!==false?" checked":"")+'> 保存したらFAXで送る(送信前に確認画面が出ます)</label>'+
+   '<div class="acts"><span class="sub" id="vse-msg"></span><span><button type="button" class="btn" id="vse-x">閉じる</button> <button type="button" class="btn" id="vse-save">保存</button> <button type="button" class="btn" id="vse-faxb">📠 保存してFAX</button> <button type="button" class="btn primary" id="vse-pdf">PDFで保存</button></span></div></div></div>';
   vseLoad(j);
 }
 async function vseSetBlob(blob,name,mime){
@@ -5589,10 +5592,17 @@ function vseRender(){
 function vseSnapshot(j){
   var v=Object.assign({},j.vsheet||{},VSE.f);v.chk2=VSE.chk;v.aft2=VSE.aft;v.al=VSE.al;j.vsheet=v;
 }
-async function vseDo(pdf){
-  if(VSE.busy)return;var j=S.jobs.find(function(x){return x.id===VSE.id});if(!j)return;var msg=$("#vse-msg");
+async function vseFax(j){
+  if(!VSE.ready){toast("シートを読み込んでからFAXで送れます");return}
+  try{var r=await vseRender(),nm=((j.site||"")+" "+(j.room||"")).trim();
+    openEfax({subject:"価値観共有チェックシート "+nm,kind:"価値観共有チェックシート",items:[{name:"価値観共有チェックシート(記入済) "+nm,make:async function(){return r.blob}}],key:"jobs_"+j.id})}
+  catch(e){toast("FAX用のシートを作れませんでした")}
+}
+function vseWantFax(){var f=$("#vse-fax");if(f)lsSet("vseFax",!!f.checked);return !!(f&&f.checked)}
+async function vseDo(pdf,fax){
+  if(VSE.busy)return;var wf=fax||vseWantFax();var j=S.jobs.find(function(x){return x.id===VSE.id});if(!j)return;var msg=$("#vse-msg");
   vseSnapshot(j);
-  if(!pdf){var w0=$("#vse-chk");if(w0&&w0.checked){if(!j.checks)j.checks={};j.checks.value=true}saveDoc("jobs",j,true);if(msg)msg.textContent="保存しました";toast("保存しました");render();return}
+  if(!pdf){var w0=$("#vse-chk");if(w0&&w0.checked){if(!j.checks)j.checks={};j.checks.value=true}saveDoc("jobs",j,true);if(msg)msg.textContent="保存しました";toast("保存しました");render();if(wf)await vseFax(j);return}
   if(!VSE.ready){if(msg)msg.textContent="先にシートを読み込んでください";return}
   VSE.busy=true;if(msg)msg.textContent="PDFを作成中…";
   try{
@@ -5609,6 +5619,7 @@ async function vseDo(pdf){
     var d=await claude_use("downloads");
     if(d){try{await d.save({filename:name,data:pdfb});toast("PDFを保存しました"+(ref?"(案件の書類にも保管)":""))}catch(e2){if(e2&&e2.code!=="declined")toast("PDFを保存できませんでした")}}
     else toast(ref?"案件の書類に保管しました(この表示ではダウンロードできません)":"この表示ではPDFを保存できません");
+    if(wf)await vseFax(j);
     $("#modal").innerHTML="";render();
   }catch(e){if(msg)msg.textContent="PDFを作成できませんでした"}
   finally{VSE.busy=false}
@@ -5919,6 +5930,7 @@ function modClick(e,t,d){
   if(d.vscol!==undefined){vseCol(+d.vscol);return true}
   if(t.id==="vse-x"){$("#modal").innerHTML="";return true}
   if(t.id==="vse-save"){vseDo(false);return true}
+  if(t.id==="vse-faxb"){vseDo(false,true);return true}
   if(t.id==="vse-pdf"){vseDo(true);return true}
   if(d.sb){openSb(d.sb);return true}
   if(t.id==="sb-x"){SB.cfg=null;$("#modal").innerHTML="";return true}
