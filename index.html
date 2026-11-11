@@ -3072,6 +3072,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-11-11",t:"アプリからFAXを送信",d:"「eFaxで送る」に「📠 アプリから送信」を追加しました。送付状付きのPDFを作り、確認画面で宛先・番号・枚数を確かめてから、eFaxの「メールでFAX送信」でそのまま送ります。案件の送信の記録から「結果を確認」で、送信完了したかを確かめられます。(初回のみ、GmailにFAX送信の許可を追加する操作が必要です)"},
  {v:"2026-11-11",t:"eFaxで送る",d:"請書・報告書・価値観共有チェックシートなどの書類を、送付状を付けて1つのPDFにまとめ、ボタン1つでeFaxアプリに渡せるようになりました(FAX番号は自動でコピー)。案件の確認画面の「FAX送信(eFax)」、書類ボックスの「📠」、報告書作成の「📠 eFaxで送る」から使えます。宛先は設定→全体共通→「FAX送信(eFax)」に登録します。"},
  {v:"2026-11-11",t:"AIアシスタント(AIロボ)",d:"画面右下のAIロボから、案件・予定・お知らせについての質問、入居者様や大東建託への連絡文の下書き、アプリの使い方の質問ができます。案件を開く・メモを追加する操作も、確認してから実行できます。金額は管理者のときだけ答えます。"},
  {v:"2026-11-09",t:"報告書作成の画面を見やすく",d:"報告書作成の画面を、写真つきのカードを並べる形にしました。上に「完成・途中・未着手」の件数と進み具合、PDFの作成ボタンをまとめ、表紙の設定はたためるようにしました。完成・途中・未着手での絞り込みと検索もできます。"},
@@ -4318,7 +4319,7 @@ function vCase(){
   h+=sec("FAX送信(eFax)",'<label class="btn sm pri" style="cursor:pointer">📁 ファイルを選んで送る<input type="file" accept="application/pdf,image/*" multiple data-efpick="'+esc(key)+'" style="display:none"></label>',
     '<div class="csfax">'+(DOCS.length?DOCS.map(function(d,di){return '<div class="csfaxrow"><span>📄 <b>'+esc(d.typeName||"書類")+'</b> <span class="sub">'+esc(d.name||"")+'</span></span><button type="button" class="btn sm" data-efdoc="'+di+'">📠 送る</button></div>'}).join(""):'<div class="sub">この案件に登録された書類はありません。「ファイルを選んで送る」から、請書・報告書などのPDFや写真を送れます。</div>')+
     (col==="jobs"&&(+r.status||0)<2?'<div class="sub">請書を送るときは、送信画面の「送ったら進捗を「'+esc(STAT[2].n)+'」にする」にチェックを入れると進捗も進みます。</div>':"")+
-    (FL.length?'<div class="cssub" style="margin-top:8px">送信の記録</div>'+FL.slice().reverse().slice(0,10).map(function(x){return '<div class="sub">'+esc((function(d){return isNaN(d)?"":d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())})(new Date(x.at)))+" ／ "+esc(x.subject||"")+" → "+esc(x.to||"")+" "+esc(efFmt(x.fax))+"("+(x.pages||"")+"枚)"+(x.by?" ／ "+esc(x.by):"")+"</div>"}).join(""):"")+"</div>");
+    (FL.length?'<div class="cssub" style="margin-top:8px">送信の記録</div>'+FL.slice().reverse().slice(0,10).map(function(x,xi){return '<div class="sub">'+esc((function(d){return isNaN(d)?"":d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())})(new Date(x.at)))+" ／ "+esc(x.subject||"")+" → "+esc(x.to||"")+" "+esc(efFmt(x.fax))+"("+(x.pages||"")+"枚)"+(x.by?" ／ "+esc(x.by):"")+(x.via==="app"?' <span class="tag">'+(x.state==="done"?"✔ 送信完了":x.state==="failed"?"✖ 失敗":"送信中")+"</span>"+(x.state!=="done"?' <button type="button" class="btn sm" data-efchk="'+(FL.length-1-xi)+'">結果を確認</button>':""):' <span class="sub">(eFaxアプリへ)</span>')+"</div>"}).join(""):"")+"</div>");
   if(col==="maint"){var rp=r.rep&&r.rep.ph&&r.rep.ph.length;h+=sec("報告書",'<button type="button" class="btn sm pri" id="cs-rep">＋ 報告書を作成</button>',rp?'<div>写真シート: '+r.rep.ph.length+"枚("+esc(r.rep.item||"")+")</div>":'<div class="sub">この案件の報告書はまだありません。「報告書を作成」から、写真シートと表紙を作れます。</div>')}
   // 案件情報
   var F=csFields(col,r).filter(function(f){return money||!MNY_RE.test(f.label||"")}),addr=r.address||"";
@@ -4428,6 +4429,7 @@ document.addEventListener("click",function(e){
   if((x=t.closest("[data-csmemodel]"))){if(!x.dataset.sure){x.dataset.sure="1";x.textContent="本当に削除";return}var mid=x.getAttribute("data-csmemodel"),r2=JSON.parse(JSON.stringify(c.r));r2.memos=csMemos(r2).filter(function(m){return m.id!==mid});csSaveRec(c.col,r2);render();return}
   if((x=t.closest("[data-csph]"))){PHS={key:c.col+"_"+c.id,col:c.col,rid:c.id,tag:"all",view:+x.getAttribute("data-csph"),busy:false,msg:"",sel:{}};phDraw();return}
   if(id==="cs-rep"){openRep(c.id);return}
+  if((x=t.closest("[data-efchk]"))){efCheck(c.col,c.id,+x.getAttribute("data-efchk"));return}
   if((x=t.closest("[data-efdoc]"))){var dd=(c.r.docs||[]).filter(function(d){return d&&d.id})[+x.getAttribute("data-efdoc")];if(dd)openEfax({subject:(dd.typeName||"書類")+" "+BG_T[c.col].name(c.r).trim(),kind:dd.typeName||"",items:[{name:(dd.typeName||"")+" "+(dd.name||""),ref:dd}],key:c.col+"_"+c.id});return}
   if(id==="cs-copy"){var T=BG_T[c.col],txt=["【"+T.n+"】"+T.name(c.r).trim(),"進捗: "+((T.st()[+c.r.status||0]||{}).n||"")].concat(csFields(c.col,c.r).filter(function(f){return canMoney()||!MNY_RE.test(f.label||"")}).map(function(f){var v=csVal(f,c.r);return v?f.label+": "+v:""}).filter(Boolean)).join("\n");
     (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){toast("案件情報をコピーしました")},function(){var ta2=document.createElement("textarea");ta2.value=txt;document.body.appendChild(ta2);ta2.select();try{document.execCommand("copy");toast("案件情報をコピーしました")}catch(er){toast("コピーできませんでした")}ta2.remove()});return}
@@ -4555,7 +4557,7 @@ document.addEventListener("keydown",function(e){if(e.target&&e.target.id==="ai-i
 // FAX番号はクリップボードにもコピーする。送信の記録は案件の faxLog に残す。
 var EF={};
 var EF_DEF=[{name:"大東建託パートナーズ 盛岡営業所",fax:"0196456210"},{name:"大東建託パートナーズ 北上営業所",fax:"0197643653"}];
-function efSet(){var s=S.settings.efax||{};return {dest:Array.isArray(s.dest)&&s.dest.length?s.dest:EF_DEF.slice(),co:s.co!=null?s.co:(repSet().co||"株式会社三桜"),tel:s.tel||"",fax:s.fax||"",cover:s.cover!==false,msg:s.msg!=null?s.msg:"いつもお世話になっております。\n下記の書類をお送りいたします。ご確認のほど、よろしくお願いいたします。"}}
+function efSet(){var s=S.settings.efax||{};return {dest:Array.isArray(s.dest)&&s.dest.length?s.dest:EF_DEF.slice(),co:s.co!=null?s.co:(repSet().co||"株式会社三桜"),tel:s.tel||"",fax:s.fax||"",from:s.from!=null?s.from:"info@sanoh-ltd.jp",cover:s.cover!==false,msg:s.msg!=null?s.msg:"いつもお世話になっております。\n下記の書類をお送りいたします。ご確認のほど、よろしくお願いいたします。"}}
 function efNum(v){return String(v||"").normalize("NFKC").replace(/[^\d]/g,"")}
 function efFmt(v){var n=efNum(v);if(/^81\d{9,10}$/.test(n))n="0"+n.slice(2);return n.length===10?(/^0197|^0198|^0194|^0195|^0192|^0193|^0191/.test(n)?n.replace(/^(\d{4})(\d{2})(\d{4})$/,"$1-$2-$3"):n.replace(/^(\d{2,3})(\d{3,4})(\d{4})$/,function(m,a,b,c){return a+"-"+b+"-"+c})):n.length===11?n.replace(/^(\d{3})(\d{4})(\d{4})$/,"$1-$2-$3"):n}
 // 送付状(A4縦)をキャンバスで作る
@@ -4598,6 +4600,10 @@ function openEfax(o){
 function efDraw(){
   var o=$("#efl");if(!o){o=document.createElement("div");o.id="efl";document.body.appendChild(o)}
   if(!EF.o){o.innerHTML="";return}
+  if(EF.confirm&&EF.ready){var R=EF.ready;
+    o.innerHTML='<div class="mask efmask"><div class="dlg" style="width:min(520px,100%)"><h2>📠 この内容でFAXを送信しますか？</h2><table class="cstbl"><tr><th>宛先</th><td><b>'+esc(EF.to||"")+'</b></td></tr><tr><th>FAX番号</th><td><b style="font-size:18px">'+esc(efFmt(EF.fax))+'</b></td></tr><tr><th>件名</th><td>'+esc(EF.subject||"")+'</td></tr><tr><th>枚数</th><td>'+R.n+"枚"+(EF.cover?"(送付状を含む)":"")+'</td></tr><tr><th>ファイル</th><td>PDF '+phSize(R.pdf.size)+'</td></tr></table>'+
+      '<div class="sub" style="margin-top:8px;line-height:1.6">eFaxの「メールでFAX送信」を使い、'+esc(efSet().from||"")+' から送ります。送信すると取り消せません。番号をもう一度確認してください。</div>'+(EF.msg?'<div class="banner" style="margin-top:8px">'+esc(EF.msg)+"</div>":"")+
+      '<div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn" id="ef-back"'+(EF.busy?" disabled":"")+'>戻る</button><button type="button" class="btn" id="ef-prev2"'+(EF.busy?" disabled":"")+'>👁 PDFを確認</button><button type="button" class="btn pri" id="ef-send"'+(EF.busy?" disabled":"")+">"+(EF.busy?"送信中…":"📠 送信する")+"</button></div></div></div>";return}
   var r=EF.id?phRec(EF.col,EF.id):null,jobQ=r&&EF.col==="jobs"&&/請書/.test(EF.o.kind||EF.subject)&&(+r.status||0)<2;
   o.innerHTML='<div class="mask efmask"><div class="dlg" style="width:min(600px,100%)"><h2>📠 eFaxで送る</h2>'+
    '<div class="sub" style="margin-bottom:8px">書類に送付状を付けて1つのPDFにまとめ、eFaxアプリで送ります。'+(r?"案件: <b>"+esc(BG_T[EF.col].name(r))+"</b>":"")+"</div>"+
@@ -4609,8 +4615,8 @@ function efDraw(){
    (EF.cover?'<label class="repfree">通信欄<textarea id="ef-text" rows="3">'+esc(EF.text)+"</textarea></label>":"")+
    (jobQ?'<label class="bgopt"><input type="checkbox" id="ef-st"'+(EF.st?" checked":"")+'> 送ったら進捗を「'+esc(STAT[2].n)+'」にする</label>':"")+
    (EF.msg?'<div class="banner" style="margin-top:8px">'+esc(EF.msg)+"</div>":"")+
-   '<div class="sub" style="margin-top:10px;line-height:1.6">「eFaxアプリで送る」を押すと、FAX番号がコピーされ、共有メニューが開きます。<b>eFax</b>を選び、宛先にFAX番号を貼り付けて送信してください。(パソコンではPDFを保存して、eFaxのサイトを開きます)</div>'+
-   '<div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn" id="ef-x">キャンセル</button><button type="button" class="btn" id="ef-prev"'+(EF.busy?" disabled":"")+'>👁 PDFを確認</button><button type="button" class="btn pri" id="ef-go"'+(EF.busy?" disabled":"")+">"+(EF.busy?"準備中…":"📠 eFaxアプリで送る")+"</button></div></div></div>";
+   '<div class="sub" style="margin-top:10px;line-height:1.6"><b>「アプリから送信」</b>: このアプリからeFaxで直接送ります(送る前に確認画面が出ます)。<br><b>「eFaxアプリで送る」</b>: PDFを作ってeFaxアプリに渡します。押すと、FAX番号がコピーされ、共有メニューが開きます。<b>eFax</b>を選び、宛先にFAX番号を貼り付けて送信してください。(パソコンではPDFを保存して、eFaxのサイトを開きます)</div>'+
+   '<div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn" id="ef-x">キャンセル</button><button type="button" class="btn" id="ef-prev"'+(EF.busy?" disabled":"")+'>👁 PDFを確認</button><button type="button" class="btn" id="ef-go"'+(EF.busy?" disabled":"")+'>📱 eFaxアプリで送る</button><button type="button" class="btn pri" id="ef-direct"'+(EF.busy||EF.done?" disabled":"")+">"+(EF.busy?"準備中…":"📠 アプリから送信")+"</button></div>"+(EF.reauth?'<div style="text-align:right;margin-top:8px"><a class="btn sm" href="/api/google?op=login" target="_blank" rel="noopener">Gmailを接続し直す(FAX送信を許可)</a></div>':"")+"</div></div>";
 }
 function efRead(){var g=function(i){var el=$(i);return el?el.value:null};var v;if((v=g("#ef-to"))!=null)EF.to=v.trim();if((v=g("#ef-fax"))!=null)EF.fax=v.trim();if((v=g("#ef-subj"))!=null)EF.subject=v.trim();if((v=g("#ef-text"))!=null)EF.text=v;var c=$("#ef-cover");if(c)EF.cover=c.checked;var s=$("#ef-st");if(s)EF.st=s.checked}
 async function efBuild(){
@@ -4640,11 +4646,64 @@ async function efGo(prev){
     var go=$("#ef-go");if(go){go.textContent="もう一度送る"}var x=$("#ef-x");if(x)x.textContent="閉じる";
   }catch(e){EF.busy=false;EF.msg="作成できませんでした: "+(e.message||e);efDraw()}
 }
-function efLog(num,n){
+function efLog(num,n,extra){
   if(!EF.id)return;var r=phRec(EF.col,EF.id);if(!r)return;var rr=JSON.parse(JSON.stringify(r));
-  rr.faxLog=(Array.isArray(rr.faxLog)?rr.faxLog:[]).concat([{at:new Date().toISOString(),to:EF.to,fax:num,subject:EF.subject,pages:n,by:(function(){try{return chMe()}catch(e){return ""}})()}]).slice(-50);
+  rr.faxLog=(Array.isArray(rr.faxLog)?rr.faxLog:[]).concat([Object.assign({at:new Date().toISOString(),to:EF.to,fax:num,subject:EF.subject,pages:n,by:(function(){try{return chMe()}catch(e){return ""}})()},extra||{})]).slice(-50);
   if(EF.st&&EF.col==="jobs"&&(+rr.status||0)<2)rr.status=2;
   saveDoc(EF.col,rr,true);if(S.tab==="case")render();
+}
+// ---- アプリから直接送信(eFaxの「メールでFAX送信」: 番号@efaxsend.com 宛てにGmailで送る) ----
+async function efSlim(pages){
+  var out=[];for(var i=0;i<pages.length;i++){var p=pages[i],im=await createImageBitmap(p.jpg),k=Math.min(1,1654/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+    var g=c.getContext("2d");g.filter="grayscale(1) contrast(1.15)";g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);
+    out.push({jpg:await new Promise(function(r){c.toBlob(r,"image/jpeg",0.6)}),w:c.width,h:c.height})}
+  return out;
+}
+function efAddr(fax){var n=efNum(fax);if(/^0\d{9,10}$/.test(n))n="81"+n.slice(1);return /^81\d{9,10}$/.test(n)?n+"@efaxsend.com":""}
+function efB64(blob){return new Promise(function(ok,ng){var fr=new FileReader();fr.onload=function(){ok(String(fr.result).split(",")[1]||"")};fr.onerror=ng;fr.readAsDataURL(blob)})}
+async function efDirectPrep(){
+  efRead();var addr=efAddr(EF.fax);
+  if(!addr){EF.msg="FAX番号を正しく入力してください(例: 019-645-6210)";efDraw();return}
+  EF.busy=true;EF.msg="送信するPDFを作っています…";efDraw();
+  try{
+    var items=[];for(var i=0;i<EF.o.items.length;i++){var it=EF.o.items[i],b=it.make?await it.make():await efDocBlob(it.ref||it);if(!b)throw new Error("「"+(it.name||"書類")+"」を読み込めませんでした");items.push({blob:b,name:it.name})}
+    var pages=await efPages(items);if(!pages.length)throw new Error("送るページがありません");
+    if(EF.cover){var cv=efCover({to:EF.to,fax:EF.fax,subject:EF.subject,msg:EF.text,pages:pages.length+1,co:efSet().co,by:(function(){try{var n=chMe();return n==="管理者"?"":n}catch(e){return ""}})()});pages.unshift({jpg:await canvasBlob(cv),w:cv.width,h:cv.height})}
+    pages=await efSlim(pages);
+    var pdf=await wtfPdfMulti(pages);
+    if(pdf.size>4*1024*1024)throw new Error("PDFが大きすぎます("+phSize(pdf.size)+")。ページを減らしてください");
+    EF.ready={pdf:pdf,n:pages.length,addr:addr};EF.busy=false;EF.msg="";EF.confirm=true;efDraw();
+  }catch(e){EF.busy=false;EF.msg="作成できませんでした: "+(e.message||e);efDraw()}
+}
+async function efDirectSend(){
+  var R=EF.ready;if(!R)return;EF.busy=true;EF.msg="送信しています…";efDraw();
+  try{
+    var mcp=await claude_use("mcp");if(!mcp)throw {code:"capability_disabled"};
+    var name=("FAX_"+(EF.subject||"書類")+"_"+TODAY()).replace(/[\\\/:*?"<>|\s]+/g,"_")+".pdf";
+    var r=await mcp.callTool("Gmail","send_message",{to:[R.addr],from:efSet().from,subject:"",body:"{nocoverpage}",attachments:[{content:await efB64(R.pdf),filename:name,mimeType:"application/pdf"}]});
+    var p=r&&(r.payload||r)||{};
+    efLog(efNum(R.addr),R.n,{via:"app",mailId:p.id||"",state:"sent"});
+    EF.busy=false;EF.confirm=false;EF.done=true;EF.msg="送信しました("+R.n+"枚)。eFaxが送り終わると、"+(efSet().from||"送信元のアドレス")+" に「送信完了」のメールが届きます(通常1〜数分)。";efDraw();
+  }catch(e){
+    EF.busy=false;var c=e&&e.code;
+    EF.msg=c==="needs_reauth"||c==="server_not_connected"?"FAXを送るには、GmailにFAX送信の許可を追加する必要があります。下の「Gmailを接続し直す」から許可してください。":c==="capability_disabled"||c==="not_in_manifest"?"この表示ではアプリから直接送れません。「eFaxアプリで送る」を使ってください。":"送信できませんでした: "+((e&&e.message)||e);
+    EF.reauth=c==="needs_reauth"||c==="server_not_connected";efDraw();
+  }
+}
+// 送信結果をGmail(eFaxの送信完了メール)で確かめる
+async function efCheck(col,id,idx){
+  var r=phRec(col,id);if(!r)return;var L=Array.isArray(r.faxLog)?r.faxLog:[],x=L[idx];if(!x)return;
+  try{
+    var mcp=await claude_use("mcp");if(!mcp)throw new Error("この表示では確認できません");
+    var num=efNum(x.fax);if(/^0/.test(num))num="81"+num.slice(1);
+    var res=await mcp.callTool("Gmail","search_threads",{query:"from:send@mail.efax.com "+num+" newer_than:7d",pageSize:10});
+    var th=((res&&(res.payload||res))||{}).threads||[],t0=Date.parse(x.at)-120000,hit=null;
+    th.forEach(function(t){(t.messages||[]).forEach(function(m){var d=Date.parse(m.date);if(d>=t0&&(!hit||d<Date.parse(hit.date)))hit=m})});
+    var st=hit?(/正常に送信|送信完了/.test((hit.subject||"")+(hit.snippet||""))?"ok":"ng"):"wait";
+    var rr=JSON.parse(JSON.stringify(r));rr.faxLog[idx].state=st==="ok"?"done":st==="ng"?"failed":"sent";rr.faxLog[idx].checkedAt=new Date().toISOString();saveDoc(col,rr,true);
+    toast(st==="ok"?"送信完了を確認しました":st==="ng"?"送信に失敗していました。eFaxからのメールを確認してください":"まだ送信完了のメールが届いていません");
+    if(S.tab==="case")render();
+  }catch(e){toast("確認できませんでした: "+((e&&e.message)||e))}
 }
 // 報告書(表紙+写真シート)のPDFを作る(eFax用)
 async function repBuildPdfBlob(){
@@ -4656,7 +4715,7 @@ async function repBuildPdfBlob(){
 function vEfaxTab(){
   var e=efSet();
   return '<div class="panel"><h3>FAXの送信先</h3><div class="sub" style="padding:0 12px 8px">eFaxで送るときに選べる宛先です。1行に「宛先名,FAX番号」で入力してください(例: 大東建託パートナーズ 盛岡営業所,019-000-0000)。エアコン案件など、案件に営業所のFAX番号があるときは自動で候補に出ます。</div><div class="set-row"><textarea id="ef-dest" rows="6" style="flex:1;font:inherit">'+esc(e.dest.map(function(d){return d.name+","+efFmt(d.fax)}).join("\n"))+'</textarea></div></div>'+
-   '<div class="panel"><h3>送付状</h3><div class="fields" style="padding:0 12px"><label>差出人(会社名)<input type="text" id="ef-co" value="'+esc(e.co)+'"></label><label>TEL<input type="tel" id="ef-tel" value="'+esc(e.tel)+'"></label><label>FAX<input type="tel" id="ef-fx" value="'+esc(e.fax)+'"></label></div>'+
+   '<div class="panel"><h3>送付状</h3><div class="fields" style="padding:0 12px"><label>差出人(会社名)<input type="text" id="ef-co" value="'+esc(e.co)+'"></label><label>TEL<input type="tel" id="ef-tel" value="'+esc(e.tel)+'"></label><label>FAX<input type="tel" id="ef-fx" value="'+esc(e.fax)+'"></label><label class="wide">送信元メールアドレス(eFaxに「送信用メールアドレス」として登録済みのもの)<input type="email" id="ef-from" value="'+esc(e.from)+'"></label></div>'+
    '<label class="bgopt" style="padding:8px 12px"><input type="checkbox" id="ef-cov"'+(e.cover?" checked":"")+'> 送付状を付ける(初期設定)</label><label class="repfree" style="padding:0 12px">通信欄の文面(初期設定)<textarea id="ef-msg" rows="3">'+esc(e.msg)+'</textarea></label><div class="set-row"><button type="button" class="btn pri" id="ef-save">保存</button></div></div>'+
    '<div class="panel"><h3>送り方</h3><div class="sub" style="padding:0 12px 12px;line-height:1.8">① 案件の確認画面の「📠 FAX送信」、書類ボックスの「📠」、報告書作成の「📠 eFaxで送る」を押す<br>② 宛先とFAX番号を確認して「eFaxアプリで送る」<br>③ スマホは共有メニューで「eFax」を選び、宛先にFAX番号を貼り付けて送信(番号は自動でコピーされます)<br>※スマホにeFaxアプリを入れておいてください。パソコンではPDFを保存して、eFaxのサイトから送ります。</div></div>';
 }
@@ -4666,10 +4725,14 @@ document.addEventListener("click",function(e){
     if(id==="ef-x"||(t.classList&&t.classList.contains("efmask"))){EF={};efDraw();return}
     if(id==="ef-go"){efGo(false);return}
     if(id==="ef-prev"){efGo(true);return}
+    if(id==="ef-direct"){efDirectPrep();return}
+    if(id==="ef-back"){EF.confirm=false;EF.msg="";efDraw();return}
+    if(id==="ef-prev2"){if(EF.ready)window.open(URL.createObjectURL(EF.ready.pdf),"_blank");return}
+    if(id==="ef-send"){efDirectSend();return}
     return;
   }
   if(id==="ef-save"){var dest=($("#ef-dest").value||"").split(/\r?\n/).map(function(l){var p=l.split(/[,，\t]/);return {name:(p[0]||"").trim(),fax:efNum(p.slice(1).join(""))}}).filter(function(d){return d.name&&d.fax.length>=10});
-    S.settings.efax={dest:dest,co:$("#ef-co").value.trim(),tel:$("#ef-tel").value.trim(),fax:$("#ef-fx").value.trim(),cover:$("#ef-cov").checked,msg:$("#ef-msg").value};saveSettings();toast("FAX送信の設定を保存しました("+dest.length+"件の宛先)");return}
+    S.settings.efax={dest:dest,co:$("#ef-co").value.trim(),tel:$("#ef-tel").value.trim(),fax:$("#ef-fx").value.trim(),from:($("#ef-from").value||"").trim(),cover:$("#ef-cov").checked,msg:$("#ef-msg").value};saveSettings();toast("FAX送信の設定を保存しました("+dest.length+"件の宛先)");return}
 },true);
 document.addEventListener("change",function(e){
   var pk=e.target&&e.target.getAttribute&&e.target.getAttribute("data-efpick");

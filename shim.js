@@ -232,6 +232,7 @@
       var sig = opts && opts.signal, j;
       if (tool === "search_threads") j = await call("/api/google", { op: "search", query: input.query, pageSize: input.pageSize }, sig);
       else if (tool === "get_message") j = await call("/api/google", { op: "message", messageId: input.messageId }, sig);
+      else if (tool === "send_message") j = await call("/api/google", { op: "send", to: input.to, from: input.from, subject: input.subject, body: input.body, attachments: input.attachments }, sig);
       else throw rej("not_in_manifest", "未対応のツールです");
       return { content: [], payload: j };
     },

@@ -1,6 +1,6 @@
-// Gmail 連携(読み取り専用)。Googleアカウントで一度だけ許可し、更新トークンを Redis に保存する
+// Gmail 連携(読み取り＋eFaxへのFAX送信メール)。Googleアカウントで一度だけ許可し、更新トークンを Redis に保存する
 const { authed, origin, redis, body, sign } = require("./_lib");
-const SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
+const SCOPE = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send";
 const RK = "daito:google:refresh";
 let cached = { token: "", exp: 0 };
 
@@ -91,6 +91,31 @@ module.exports = async (req, res) => {
       if (!/^[A-Za-z0-9]+$/.test(String(b.messageId || ""))) return fail(res, 400, "bad_request", "messageId");
       const m = await gget("messages/" + b.messageId + "?format=raw", tok);
       return res.json({ id: m.id, raw: m.raw });
+    }
+    if (op === "send") {
+      // eFaxの「メールでFAX送信」専用。宛先は 番号@efaxsend.com だけを許可する(ほかのメールは送れない)
+      const to = (Array.isArray(b.to) ? b.to : [b.to]).map((x) => String(x || "").trim()).filter(Boolean);
+      if (!to.length || to.length > 5 || !to.every((x) => /^81\d{9,10}@efaxsend\.com$/.test(x))) return fail(res, 400, "bad_request", "宛先はFAX番号(81から始まる)@efaxsend.com だけ指定できます");
+      const att = (Array.isArray(b.attachments) ? b.attachments : []).slice(0, 5);
+      const enc = (s) => "=?UTF-8?B?" + Buffer.from(String(s), "utf8").toString("base64") + "?=";
+      const bd = "dk" + Date.now().toString(36);
+      const from = String(b.from || "").trim();
+      let mime = (/^[^@\s<>]+@[^@\s<>]+$/.test(from) ? "From: " + from + "\r\n" : "") + "To: " + to.join(", ") + "\r\nSubject: " + (b.subject ? enc(String(b.subject).slice(0, 200)) : "") + "\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"" + bd + "\"\r\n\r\n";
+      mime += "--" + bd + "\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" + Buffer.from(String(b.body || ""), "utf8").toString("base64").replace(/.{76}/g, "$&\r\n") + "\r\n";
+      for (const a of att) {
+        const c = String(a.content || "").replace(/\s+/g, ""); if (!/^[A-Za-z0-9+/=]+$/.test(c)) return fail(res, 400, "bad_request", "添付の形式が正しくありません");
+        const fn = String(a.filename || "fax.pdf").replace(/["\r\n]/g, "");
+        mime += "--" + bd + "\r\nContent-Type: " + (String(a.mimeType || "application/pdf").replace(/[^\w\/.+-]/g, "")) + "; name=\"" + enc(fn) + "\"\r\nContent-Disposition: attachment; filename=\"" + enc(fn) + "\"\r\nContent-Transfer-Encoding: base64\r\n\r\n" + c.replace(/.{76}/g, "$&\r\n") + "\r\n";
+      }
+      mime += "--" + bd + "--";
+      const raw = Buffer.from(mime, "utf8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      const r = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", { method: "POST", headers: { Authorization: "Bearer " + tok, "content-type": "application/json" }, body: JSON.stringify({ raw }) });
+      const j = await r.json();
+      if (!r.ok) {
+        const insuff = r.status === 403 || /insufficient|scope/i.test(JSON.stringify(j.error || {}));
+        return fail(res, 200, insuff ? "needs_reauth" : "upstream_error", insuff ? "FAX送信の許可がありません。Gmailを接続し直してください" : String((j.error && j.error.message) || r.status).slice(0, 200), insuff ? { connectUrl: "/api/google?op=login" } : {});
+      }
+      return res.json({ id: j.id, threadId: j.threadId, labelIds: j.labelIds });
     }
     fail(res, 400, "bad_request", "op");
   } catch (e) {
