@@ -3073,6 +3073,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-11-11",t:"エアコン見積り依頼書に回答を記入してFAX返信",d:"エアコン設置の案件一覧の「📝 見積回答」から、受信した見積り依頼書(FAX)に、ご回答日・お見積り金額(税別)・見積担当の印を書き込めます。必要なら工事項目の数量・見積金額も記入できます。「📠 FAXで返信」で依頼元の営業所へそのまま送れ、送ったら状況を「見積提出」に進められます。"},
  {v:"2026-11-11",t:"お知らせに「連絡」(連絡事項)",d:"お知らせに「連絡」タブを追加しました。「＋ 連絡事項を書く」から、全員または選んだ担当者に連絡事項を送れます。「重要」にするとホームにも表示されます。書いた人と管理者は、誰が読んだか(既読)を確認でき、編集・削除もできます。Web版では、宛先の人のスマホに通知が届きます。"},
  {v:"2026-11-11",t:"価値観共有チェックシートを編集ごとにFAX送信",d:"価値観共有チェックシートの記入画面で「保存」「PDFで保存」を押すと、記入済みのシートを付けてFAX送信画面が開きます(宛先・枚数を確認してから送信)。「保存したらFAXで送る」のチェックを外すと開きません。「📠 保存してFAX」ボタンでも送れます。案件の確認画面の「FAX送信(eFax)」からも記入済みのシートを送れます。"},
  {v:"2026-11-11",t:"FAX送信はこちらで作成した書類だけに",d:"書類ボックス(受信したFAX)からの送信ボタンをなくしました。FAXで送れるのは、報告書作成で作ったPDFや、こちらで作成・記入して選んだファイルだけです。案件の確認画面の「FAX送信(eFax)」には、受信書類の代わりにその案件の報告書(写真シート)が出ます。"},
@@ -4384,7 +4385,7 @@ function vCase(){
     (M.length?M.slice().reverse().map(function(m){return '<div class="csmemo"><div class="sub">'+esc(String(m.at||"").replace("T"," ").slice(0,16))+" ／ "+esc(m.by||"")+'<button type="button" class="csx" data-csmemodel="'+esc(m.id)+'">削除</button></div><div>'+esc(m.text).replace(/\n/g,"<br>")+"</div></div>"}).join(""):(CS.memo?"":'<div class="sub">メモはまだありません。申し送り・注意点・連絡事項などを自由に残せます。</div>')));
   var FL=Array.isArray(r.faxLog)?r.faxLog:[];
   h+=sec("FAX送信(eFax)",'<label class="btn sm pri" style="cursor:pointer">📁 ファイルを選んで送る<input type="file" accept="application/pdf,image/*" multiple data-efpick="'+esc(key)+'" style="display:none"></label>',
-    '<div class="csfax"><div class="sub" style="margin-bottom:6px">こちらで作成・編集した書類だけを送ります(受信したFAXは送り返しません)。</div>'+(col==="maint"&&r.rep&&r.rep.ph&&r.rep.ph.length?'<div class="csfaxrow"><span>📄 <b>報告書</b> <span class="sub">写真シート '+r.rep.ph.length+'枚</span></span><button type="button" class="btn sm" data-efrep="1">📠 送る</button></div>':'')+((r.docs||[]).filter(function(d){return d&&d.id&&/記入済/.test((d.name||"")+(d.typeName||""))}).slice(-1).map(function(d){return '<div class="csfaxrow"><span>📄 <b>価値観共有チェックシート(記入済)</b> <span class="sub">'+esc(d.name||"")+'</span></span><button type="button" class="btn sm" data-efvs="'+esc(d.id)+'">📠 送る</button></div>'}).join(""))+'<div class="sub">「ファイルを選んで送る」から、こちらで作成・記入した請書などのPDFや写真を送れます。</div>'+
+    '<div class="csfax"><div class="sub" style="margin-bottom:6px">こちらで作成・編集した書類だけを送ります(受信したFAXは送り返しません)。</div>'+(col==="maint"&&r.rep&&r.rep.ph&&r.rep.ph.length?'<div class="csfaxrow"><span>📄 <b>報告書</b> <span class="sub">写真シート '+r.rep.ph.length+'枚</span></span><button type="button" class="btn sm" data-efrep="1">📠 送る</button></div>':'')+(col==="ac"?'<div class="csfaxrow"><span>📝 <b>見積り依頼書に回答を記入</b> <span class="sub">回答日・金額・担当印を書き込んで返信</span></span><button type="button" class="btn sm" data-acans="'+esc(id)+'">記入して送る</button></div>':"")+((col==="jobs"?(r.docs||[]):[]).filter(function(d){return d&&d.id&&/記入済/.test((d.name||"")+(d.typeName||""))}).slice(-1).map(function(d){return '<div class="csfaxrow"><span>📄 <b>価値観共有チェックシート(記入済)</b> <span class="sub">'+esc(d.name||"")+'</span></span><button type="button" class="btn sm" data-efvs="'+esc(d.id)+'">📠 送る</button></div>'}).join(""))+'<div class="sub">「ファイルを選んで送る」から、こちらで作成・記入した請書などのPDFや写真を送れます。</div>'+
     (col==="jobs"&&(+r.status||0)<2?'<div class="sub">請書を送るときは、送信画面の「送ったら進捗を「'+esc(STAT[2].n)+'」にする」にチェックを入れると進捗も進みます。</div>':"")+
     (FL.length?'<div class="cssub" style="margin-top:8px">送信の記録</div>'+FL.slice().reverse().slice(0,10).map(function(x,xi){return '<div class="sub">'+esc((function(d){return isNaN(d)?"":d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())})(new Date(x.at)))+" ／ "+esc(x.subject||"")+" → "+esc(x.to||"")+" "+esc(efFmt(x.fax))+"("+(x.pages||"")+"枚)"+(x.by?" ／ "+esc(x.by):"")+(x.via==="app"?' <span class="tag">'+(x.state==="done"?"✔ 送信完了":x.state==="failed"?"✖ 失敗":"送信中")+"</span>"+(x.state!=="done"?' <button type="button" class="btn sm" data-efchk="'+(FL.length-1-xi)+'">結果を確認</button>':""):' <span class="sub">(eFaxアプリへ)</span>')+"</div>"}).join(""):"")+"</div>");
   if(col==="maint"){var rp=r.rep&&r.rep.ph&&r.rep.ph.length;h+=sec("報告書",'<button type="button" class="btn sm pri" id="cs-rep">＋ 報告書を作成</button>',rp?'<div>写真シート: '+r.rep.ph.length+"枚("+esc(r.rep.item||"")+")</div>":'<div class="sub">この案件の報告書はまだありません。「報告書を作成」から、写真シートと表紙を作れます。</div>')}
@@ -4662,7 +4663,7 @@ async function efDocBlob(ref){if(!ref)return null;if(ref.blob)return ref.blob;if
 function openEfax(o){
   var e=efSet(),r=null,col="",id="";if(o.key){var i=o.key.indexOf("_");col=o.key.slice(0,i);id=o.key.slice(i+1);r=phRec(col,id)}
   var cand=e.dest.slice();if(r&&r.officeFax)cand.unshift({name:(r.office||"営業所")+(r.contact?" "+r.contact:""),fax:r.officeFax});
-  EF={o:o,col:col,id:id,busy:false,msg:"",to:cand[0]?cand[0].name:"",fax:cand[0]?cand[0].fax:"",subject:o.subject||"",cover:e.cover,text:e.msg,cand:cand,st:false};
+  EF={o:o,col:col,id:id,busy:false,msg:"",to:cand[0]?cand[0].name:"",fax:cand[0]?cand[0].fax:"",subject:o.subject||"",cover:e.cover,text:e.msg,cand:cand,st:!!o.acQ};
   efDraw();
 }
 function efDraw(){
@@ -4672,7 +4673,7 @@ function efDraw(){
     o.innerHTML='<div class="mask efmask"><div class="dlg" style="width:min(520px,100%)"><h2>📠 この内容でFAXを送信しますか？</h2><table class="cstbl"><tr><th>宛先</th><td><b>'+esc(EF.to||"")+'</b></td></tr><tr><th>FAX番号</th><td><b style="font-size:18px">'+esc(efFmt(EF.fax))+'</b></td></tr><tr><th>件名</th><td>'+esc(EF.subject||"")+'</td></tr><tr><th>枚数</th><td>'+R.n+"枚"+(EF.cover?"(送付状を含む)":"")+'</td></tr><tr><th>ファイル</th><td>PDF '+phSize(R.pdf.size)+'</td></tr></table>'+
       '<div class="sub" style="margin-top:8px;line-height:1.6">eFaxの「メールでFAX送信」を使い、'+esc(efSet().from||"")+' から送ります。送信すると取り消せません。番号をもう一度確認してください。</div>'+(EF.msg?'<div class="banner" style="margin-top:8px">'+esc(EF.msg)+"</div>":"")+
       '<div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn" id="ef-back"'+(EF.busy?" disabled":"")+'>戻る</button><button type="button" class="btn" id="ef-prev2"'+(EF.busy?" disabled":"")+'>👁 PDFを確認</button><button type="button" class="btn pri" id="ef-send"'+(EF.busy?" disabled":"")+">"+(EF.busy?"送信中…":"📠 送信する")+"</button></div></div></div>";return}
-  var r=EF.id?phRec(EF.col,EF.id):null,jobQ=r&&EF.col==="jobs"&&/請書/.test(EF.o.kind||EF.subject)&&(+r.status||0)<2;
+  var r=EF.id?phRec(EF.col,EF.id):null,jobQ=r&&EF.col==="jobs"&&/請書/.test(EF.o.kind||EF.subject)&&(+r.status||0)<2,acQ=r&&EF.col==="ac"&&/見積回答/.test(EF.o.kind||"")&&(+r.status||0)===0;
   o.innerHTML='<div class="mask efmask"><div class="dlg" style="width:min(600px,100%)"><h2>📠 eFaxで送る</h2>'+
    '<div class="sub" style="margin-bottom:8px">書類に送付状を付けて1つのPDFにまとめ、eFaxアプリで送ります。'+(r?"案件: <b>"+esc(BG_T[EF.col].name(r))+"</b>":"")+"</div>"+
    '<div class="efdocs">'+EF.o.items.map(function(it){return '<span class="tag">📄 '+esc(it.name||"書類")+"</span>"}).join(" ")+"</div>"+
@@ -4682,6 +4683,7 @@ function efDraw(){
    '<label class="bgopt" style="margin-top:8px"><input type="checkbox" id="ef-cover"'+(EF.cover?" checked":"")+"> 送付状を付ける</label>"+
    (EF.cover?'<label class="repfree">通信欄<textarea id="ef-text" rows="3">'+esc(EF.text)+"</textarea></label>":"")+
    (jobQ?'<label class="bgopt"><input type="checkbox" id="ef-st"'+(EF.st?" checked":"")+'> 送ったら進捗を「'+esc(STAT[2].n)+'」にする</label>':"")+
+   (acQ?'<label class="bgopt"><input type="checkbox" id="ef-st"'+(EF.st?" checked":"")+'> 送ったら状況を「'+esc(AC_STAT[1].n)+'」にする</label>':"")+
    (EF.msg?'<div class="banner" style="margin-top:8px">'+esc(EF.msg)+"</div>":"")+
    '<div class="sub" style="margin-top:10px;line-height:1.6"><b>「アプリから送信」</b>: このアプリからeFaxで直接送ります(送る前に確認画面が出ます)。<br><b>「eFaxアプリで送る」</b>: PDFを作ってeFaxアプリに渡します。押すと、FAX番号がコピーされ、共有メニューが開きます。<b>eFax</b>を選び、宛先にFAX番号を貼り付けて送信してください。(パソコンではPDFを保存して、eFaxのサイトを開きます)</div>'+
    '<div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn" id="ef-x">キャンセル</button><button type="button" class="btn" id="ef-prev"'+(EF.busy?" disabled":"")+'>👁 PDFを確認</button><button type="button" class="btn" id="ef-go"'+(EF.busy?" disabled":"")+'>📱 eFaxアプリで送る</button><button type="button" class="btn pri" id="ef-direct"'+(EF.busy||EF.done?" disabled":"")+">"+(EF.busy?"準備中…":"📠 アプリから送信")+"</button></div>"+(EF.reauth?'<div style="text-align:right;margin-top:8px"><a class="btn sm" href="/api/google?op=login" target="_blank" rel="noopener">Gmailを接続し直す(FAX送信を許可)</a></div>':"")+"</div></div>";
@@ -4718,6 +4720,7 @@ function efLog(num,n,extra){
   if(!EF.id)return;var r=phRec(EF.col,EF.id);if(!r)return;var rr=JSON.parse(JSON.stringify(r));
   rr.faxLog=(Array.isArray(rr.faxLog)?rr.faxLog:[]).concat([Object.assign({at:new Date().toISOString(),to:EF.to,fax:num,subject:EF.subject,pages:n,by:(function(){try{return chMe()}catch(e){return ""}})()},extra||{})]).slice(-50);
   if(EF.st&&EF.col==="jobs"&&(+rr.status||0)<2)rr.status=2;
+  if(EF.st&&EF.col==="ac"&&(+rr.status||0)===0)rr.status=1;
   saveDoc(EF.col,rr,true);if(S.tab==="case")render();
 }
 // ---- アプリから直接送信(eFaxの「メールでFAX送信」: 番号@efaxsend.com 宛てにGmailで送る) ----
@@ -4991,7 +4994,7 @@ function vAc(){
   h+='<div class="tools"><input type="search" id="acq" placeholder="物件名・号室・営業所・依頼Noで検索" value="'+esc(S.acq||"")+'"></div>';
   h+='<div class="panel scroll">'+(list.length?"<table><thead><tr><th>依頼日</th><th>物件・号室</th><th>営業所</th><th>工事内容</th><th class=num>見積(税別)</th><th>施工日</th><th>状況</th><th></th></tr></thead><tbody>"+list.map(function(r){
     var c=acCalc(r),st=AC_STAT[r.status];
-    return '<tr class="row" data-acopen="'+r.id+'"><td>'+md(r.reqDate)+'</td><td><div class="site">'+esc(r.site)+" "+esc(r.room)+'</div><div class="sub">'+esc(r.bldgCd)+" "+esc(r.address)+'</div></td><td>'+esc(r.office)+'</td><td class="sub">'+esc(acItemsText(r))+'</td><td class="num">'+yen(c.sub)+'</td><td>'+md(r.workDate)+'</td><td><span class="pill s'+AC_PILL[r.status]+'">'+st.n+'</span></td><td>'+(st.next?'<button type="button" class="btn sm" data-acnext="'+r.id+'">'+esc(st.next)+"</button>":"")+"</td></tr>"}).join("")+"</tbody></table>":'<div class="empty">エアコン設置の案件はまだありません。「書類から取り込む」で見積り依頼書(PDF・FAX画像)を読み込むか、「＋ エアコン案件を追加」から登録してください。</div>')+"</div>";
+    return '<tr class="row" data-acopen="'+r.id+'"><td>'+md(r.reqDate)+'</td><td><div class="site">'+esc(r.site)+" "+esc(r.room)+'</div><div class="sub">'+esc(r.bldgCd)+" "+esc(r.address)+'</div></td><td>'+esc(r.office)+'</td><td class="sub">'+esc(acItemsText(r))+'</td><td class="num">'+yen(c.sub)+'</td><td>'+md(r.workDate)+'</td><td><span class="pill s'+AC_PILL[r.status]+'">'+st.n+'</span></td><td style="white-space:nowrap"><button type="button" class="btn sm" data-acans="'+r.id+'" title="受信した見積り依頼書に回答を記入してFAXで返す">📝 見積回答</button> '+(st.next?'<button type="button" class="btn sm" data-acnext="'+r.id+'">'+esc(st.next)+"</button>":"")+"</td></tr>"}).join("")+"</tbody></table>":'<div class="empty">エアコン設置の案件はまだありません。「書類から取り込む」で見積り依頼書(PDF・FAX画像)を読み込むか、「＋ エアコン案件を追加」から登録してください。</div>')+"</div>";
   h+='<div class="sub">大東建託パートナーズ「営業エアコン設置のみ 見積り依頼書(協力業者様専用)」に沿った管理です。工事項目と単価は、設定の「エアコン工事の単価」で変更できます。</div>';
   return h;
 }
@@ -5529,6 +5532,87 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("input",function(e){if(e.target.id==="qa-q"&&S.tab==="qa"){S.qaQ=e.target.value;var pos=e.target.selectionStart;render();var el=$("#qa-q");if(el){el.focus();try{el.setSelectionRange(pos,pos)}catch(x){}}}});
 
+/* ---------- エアコン見積り依頼書: 受信したFAXに回答を記入してFAXで返す ---------- */
+// 基準座標はeFaxの標準画像(1728×2288)。読み込んだ画像の大きさに合わせて拡大・縮小する
+var ACR={w:1728,h:2288,ry:[1088,1128,1284,1323,1362,1401,1440,1479,1518,1557,1596,1636,1675,1714],sumY:1756,qx:1218,ax:1562,dy:1843,dyX:1196,dmX:1366,ddX:1471,amX:844,amY:2015,stX:1373,stY:1995,stD:92};
+var ACE={id:"",bmp:null,ready:false,busy:false,f:{}};
+function aceRec(){return S.ac.find(function(x){return x.id===ACE.id})}
+function aceDef(r){var a=r.acAns||{},c=acCalc(r),pick=function(k,v){return a[k]!=null?a[k]:v};
+  return {date:pick("date",TODAY()),amt:pick("amt",c.sub||r.docTotal||0),stamp:pick("stamp",(S.settings.acStamp||"")),items:pick("items",false),dx:pick("dx",0),dy:pick("dy",0)}}
+function aceSrcRef(r){var ref=null;(r.docs||[]).slice().reverse().some(function(d){var t=String(d.typeName||"")+(d.name||"");if(d&&d.id&&/エアコン|見積/.test(t)&&!/記入済|回答/.test(t)){ref=d;return true}});return ref}
+async function aceSetBlob(blob,name){
+  var img=blob;
+  if(blob.type==="application/pdf"||/\.pdf$/i.test(name||"")){var old=IM.ctl;IM.ctl=new AbortController();img=null;
+    try{await eachPage(new File([blob],name||"ac.pdf",{type:"application/pdf"}),async function(b){if(!img)img=b},1,2400)}finally{IM.ctl=old}
+    if(!img)throw new Error("render")}
+  ACE.bmp=await createImageBitmap(img);ACE.ready=true;
+}
+function aceStamp(x,cx,cy,d,name){
+  var ink="#d1121f",r=d/2,s=String(name||"").replace(/\s/g,"").slice(0,4);x.save();x.strokeStyle=ink;x.fillStyle=ink;x.lineWidth=Math.max(2,d/26);
+  x.beginPath();x.arc(cx,cy,r,0,Math.PI*2);x.stroke();
+  var F='"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho",serif',n=s.length||1,fs=Math.min(d*0.5,(d*0.8)/n);x.font="700 "+fs+"px "+F;x.textAlign="center";x.textBaseline="middle";
+  if(n<=2||n===4&&false){for(var i=0;i<n;i++)x.fillText(s[i],cx,cy+(i-(n-1)/2)*fs*1.02)}
+  else{for(var j=0;j<n;j++)x.fillText(s[j],cx,cy+(j-(n-1)/2)*fs*0.98)}
+  x.restore();
+}
+function aceRender(){
+  var r=aceRec(),f=ACE.f,b=ACE.bmp,sc=Math.min(1,2400/Math.max(b.width,b.height)),W=Math.round(b.width*sc),H=Math.round(b.height*sc),c=document.createElement("canvas");c.width=W;c.height=H;
+  var x=c.getContext("2d"),K=W/ACR.w,KY=H/ACR.h,P=function(X,Y){return [(X+(+f.dx||0))*K,(Y+(+f.dy||0))*KY]},F='"Noto Sans JP","Hiragino Sans","Meiryo",sans-serif';
+  x.drawImage(b,0,0,W,H);x.fillStyle="#111";x.textBaseline="middle";
+  var txt=function(s,X,Y,fs,al){var p=P(X,Y);x.font="500 "+(fs*K)+"px "+F;x.textAlign=al||"center";x.fillText(s,p[0],p[1])};
+  var m=String(f.date||"").match(/^(\d+)-(\d+)-(\d+)$/);if(m){txt(m[1],ACR.dyX,ACR.dy,36);txt(String(+m[2]),ACR.dmX,ACR.dy,36);txt(String(+m[3]),ACR.ddX,ACR.dy,36)}
+  if(+f.amt>0)txt("¥"+(+f.amt).toLocaleString("ja-JP"),ACR.amX,ACR.amY,50);
+  if(f.items&&r){var Pr=acPrices(),sum=0;r.items.forEach(function(it){var i=Pr.findIndex(function(p){return p.id===it.id});if(i<0||!(+it.qty>0))return;var a=(+it.qty||0)*acPrice(it);sum+=a;txt(String(+it.qty),ACR.qx,ACR.ry[i],32);if(a)txt("¥"+a.toLocaleString("ja-JP"),ACR.ax,ACR.ry[i],30,"right")});if(sum)txt("¥"+sum.toLocaleString("ja-JP"),ACR.ax,ACR.sumY,30,"right")}
+  if(f.stamp){var p=P(ACR.stX,ACR.stY);aceStamp(x,p[0],p[1],ACR.stD*K,f.stamp)}
+  return new Promise(function(res){c.toBlob(function(bl){res({blob:bl,w:W,h:H})},"image/jpeg",0.9)});
+}
+var ACE_PV="";
+async function acePreview(){
+  var box=$("#ace-pv");if(!box)return;if(!ACE.ready){return}
+  try{var r=await aceRender();if(ACE_PV)try{URL.revokeObjectURL(ACE_PV)}catch(e){}ACE_PV=URL.createObjectURL(r.blob);box.innerHTML='<img src="'+ACE_PV+'" alt="記入した見積り依頼書" style="display:block;width:100%;height:auto">'}catch(e){box.innerHTML='<div class="empty">表示できませんでした</div>'}
+}
+function aceRead(){var g=function(id){var e=$(id);return e?e.value:""};ACE.f.date=g("#ace-date");ACE.f.amt=Math.max(0,Math.round(+String(g("#ace-amt")).replace(/[^\d]/g,"")||0));ACE.f.stamp=g("#ace-stamp").trim();var it=$("#ace-items");ACE.f.items=!!(it&&it.checked)}
+function aceSave(r){aceRead();r.acAns=Object.assign({},ACE.f,{at:new Date().toISOString(),by:chMe()});if(ACE.f.stamp&&S.settings.acStamp!==ACE.f.stamp){S.settings.acStamp=ACE.f.stamp;saveSettings(true)}saveAc(r)}
+async function openAce(id){
+  var r=S.ac.find(function(x){return x.id===id});if(!r)return;ACE={id:id,bmp:null,ready:false,busy:false,f:aceDef(r)};var f=ACE.f,c=acCalc(r);
+  $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg lg"><h2>📝 見積り依頼書に回答を記入</h2><div class="sub" style="margin-bottom:8px">'+esc(r.site+" "+r.room)+(r.office?" ／ "+esc(r.office):"")+'。受信した見積り依頼書(FAX)に、回答日・お見積り金額・見積担当の印を書き込み、そのままFAXで返せます。</div>'+
+   '<div class="fields"><label>ご回答日<input type="date" id="ace-date" value="'+esc(f.date)+'"></label><label>お見積り金額(税別)<input type="text" inputmode="numeric" id="ace-amt" value="'+(f.amt||"")+'"></label><label>見積担当の印(名字)<input type="text" id="ace-stamp" maxlength="4" value="'+esc(f.stamp)+'" placeholder="例: 瀬戸"></label></div>'+
+   '<div class="sub" style="margin:4px 0">アプリの工事項目から計算した見積金額: <b>'+yen(c.sub)+"</b>(税別)"+(r.docTotal&&r.docTotal!==c.sub?" ／ 書面の見積金額: "+yen(r.docTotal):"")+'</div>'+
+   '<label class="bgopt"><input type="checkbox" id="ace-items"'+(f.items?" checked":"")+'> 工事項目の「数量」「見積金額」と合計も記入する(書面に書かれていないとき)</label>'+
+   '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0"><span class="sub">記入位置がずれるとき:</span><button type="button" class="btn sm" data-acenu="0,-6">↑</button><button type="button" class="btn sm" data-acenu="0,6">↓</button><button type="button" class="btn sm" data-acenu="-6,0">←</button><button type="button" class="btn sm" data-acenu="6,0">→</button><button type="button" class="btn sm" data-acenu="r">元に戻す</button><label class="btn sm" style="cursor:pointer">📎 別の依頼書を選ぶ<input type="file" id="ace-file" accept="application/pdf,image/*" style="display:none"></label></div>'+
+   '<div id="ace-pv" class="panel" style="padding:0;overflow:hidden;max-height:70vh;overflow-y:auto"><div class="empty" id="ace-empty">見積り依頼書を読み込み中…</div></div>'+
+   '<div class="acts"><span class="sub" id="ace-msg"></span><span><button type="button" class="btn" id="ace-x">閉じる</button> <button type="button" class="btn" id="ace-save">保存</button> <button type="button" class="btn" id="ace-pdf">PDFで保存</button> <button type="button" class="btn pri" id="ace-fax">📠 FAXで返信</button></span></div></div></div>';
+  var ref=aceSrcRef(r),b=null;
+  try{if(ref)b=await efDocBlob(ref);if(b){await aceSetBlob(b,ref.name||"");acePreview();return}}catch(e){}
+  var em=$("#ace-empty");if(em)em.innerHTML="この案件に取り込んだ見積り依頼書がありません。<br>「📎 別の依頼書を選ぶ」で、届いたFAX(PDF・写真)を選んでください。";
+}
+async function aceOut(){var r=aceRec();aceRead();var o=await aceRender();return {r:r,img:o,name:"エアコン見積回答_"+((r.site||"")+(r.room||"")).replace(/[\\\/:*?"<>|\s]+/g,"_")}}
+async function aceDo(kind){
+  var r=aceRec(),msg=$("#ace-msg");if(!r||ACE.busy)return;aceSave(r);
+  if(kind==="save"){if(msg)msg.textContent="保存しました";toast("保存しました");return}
+  if(!ACE.ready){if(msg)msg.textContent="先に見積り依頼書を読み込んでください";return}
+  ACE.busy=true;
+  try{var o=await aceOut();
+    if(kind==="pdf"){var pdf=await wtfPdf(o.img.blob,o.img.w,o.img.h),d=await claude_use("downloads");if(d){try{await d.save({filename:o.name+".pdf",data:pdf});toast("PDFを保存しました")}catch(e2){if(e2&&e2.code!=="declined")toast("PDFを保存できませんでした")}}else toast("この表示ではPDFを保存できません")}
+    else{var bl=o.img.blob;
+      if(window.dsFiles){try{var ref=await docKeep(new File([bl],o.name+".jpg",{type:"image/jpeg"}),{meta:{type:"ac",typeName:"エアコン見積回答(記入済)",summary:(r.site||"")+" "+(r.room||"")}});if(ref){r.docs=(Array.isArray(r.docs)?r.docs:[]).filter(function(z){return !/見積回答/.test(String(z.typeName||"")+(z.name||""))});r.docs.push(ref);saveAc(r)}}catch(e3){}}
+      openEfax({subject:"エアコン見積回答 "+((r.site||"")+" "+(r.room||"")).trim(),kind:"エアコン見積回答",items:[{name:"見積り依頼書(回答記入済) "+(r.site||"")+" "+(r.room||""),make:async function(){return bl}}],key:"ac_"+r.id,acQ:r.status===0})}
+  }catch(e){if(msg)msg.textContent="作成できませんでした"}
+  finally{ACE.busy=false}
+}
+document.addEventListener("click",function(e){
+  var t=e.target.closest&&e.target.closest("[data-acans],#ace-x,#ace-save,#ace-pdf,#ace-fax,[data-acenu]");if(!t)return;
+  if(t.dataset.acans){e.stopPropagation();openAce(t.dataset.acans);return}
+  if(t.id==="ace-x"){$("#modal").innerHTML="";return}
+  if(t.id==="ace-save"){aceDo("save");return}
+  if(t.id==="ace-pdf"){aceDo("pdf");return}
+  if(t.id==="ace-fax"){aceDo("fax");return}
+  if(t.dataset.acenu){var v=t.dataset.acenu;if(v==="r"){ACE.f.dx=0;ACE.f.dy=0}else{var p=v.split(",");ACE.f.dx=(+ACE.f.dx||0)+(+p[0]);ACE.f.dy=(+ACE.f.dy||0)+(+p[1])}acePreview()}
+},true);
+document.addEventListener("change",function(e){var t=e.target;if(!t)return;
+  if(t.id==="ace-file"&&t.files&&t.files[0]){var fl=t.files[0];t.value="";aceSetBlob(fl,fl.name).then(function(){var r=aceRec();if(r&&window.dsFiles){docKeep(fl,{meta:{type:"ac",typeName:"エアコン見積り依頼書",summary:(r.site||"")+" "+(r.room||"")}}).then(function(ref){if(ref){r.docs=(Array.isArray(r.docs)?r.docs:[]).concat([ref]);saveAc(r)}},function(){})}acePreview()},function(){toast("読み込めませんでした")});return}
+  if(t.id==="ace-items"||t.id==="ace-date"){aceRead();acePreview()}});
+document.addEventListener("input",function(e){var t=e.target;if(t&&(t.id==="ace-amt"||t.id==="ace-stamp")){aceRead();clearTimeout(ACE.tm);ACE.tm=setTimeout(acePreview,350)}});
 /* ---------- 完了報告: 読み込んだ価値観共有チェックシートへ直接入力 ---------- */
 var VSE={id:"",f:{},chk:{},aft:{},al:{dx:0,dy:0,sx:1,sy:1},z:1,bmp:null,url:"",file:null,name:"",busy:false,ready:false};
 var VSR={w:1728,h:2288,row0:405,pitch:36.6,cx:[[1248,1307],[1367,1426],[1485,1544]],ay:[1692,1728,1763,1798],ax:[1047,1092],
