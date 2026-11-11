@@ -4554,9 +4554,10 @@ document.addEventListener("keydown",function(e){if(e.target&&e.target.id==="ai-i
 // 書類(PDF・画像)に送付状を付けて1つのPDFにまとめ、スマホの共有メニューからeFaxアプリへ渡す(PCはPDFを保存してeFaxを開く)。
 // FAX番号はクリップボードにもコピーする。送信の記録は案件の faxLog に残す。
 var EF={};
-function efSet(){var s=S.settings.efax||{};return {dest:Array.isArray(s.dest)?s.dest:[],co:s.co!=null?s.co:(repSet().co||"株式会社三桜"),tel:s.tel||"",fax:s.fax||"",cover:s.cover!==false,msg:s.msg!=null?s.msg:"いつもお世話になっております。\n下記の書類をお送りいたします。ご確認のほど、よろしくお願いいたします。"}}
+var EF_DEF=[{name:"大東建託パートナーズ 盛岡営業所",fax:"0196456210"},{name:"大東建託パートナーズ 北上営業所",fax:"0197643653"}];
+function efSet(){var s=S.settings.efax||{};return {dest:Array.isArray(s.dest)&&s.dest.length?s.dest:EF_DEF.slice(),co:s.co!=null?s.co:(repSet().co||"株式会社三桜"),tel:s.tel||"",fax:s.fax||"",cover:s.cover!==false,msg:s.msg!=null?s.msg:"いつもお世話になっております。\n下記の書類をお送りいたします。ご確認のほど、よろしくお願いいたします。"}}
 function efNum(v){return String(v||"").normalize("NFKC").replace(/[^\d]/g,"")}
-function efFmt(v){var n=efNum(v);return n.length===10?n.replace(/^(\d{2,3})(\d{3,4})(\d{4})$/,function(m,a,b,c){return a+"-"+b+"-"+c}):n.length===11?n.replace(/^(\d{3})(\d{4})(\d{4})$/,"$1-$2-$3"):n}
+function efFmt(v){var n=efNum(v);if(/^81\d{9,10}$/.test(n))n="0"+n.slice(2);return n.length===10?(/^0197|^0198|^0194|^0195|^0192|^0193|^0191/.test(n)?n.replace(/^(\d{4})(\d{2})(\d{4})$/,"$1-$2-$3"):n.replace(/^(\d{2,3})(\d{3,4})(\d{4})$/,function(m,a,b,c){return a+"-"+b+"-"+c})):n.length===11?n.replace(/^(\d{3})(\d{4})(\d{4})$/,"$1-$2-$3"):n}
 // 送付状(A4縦)をキャンバスで作る
 function efCover(o){
   var W=1240,H=1754,c=document.createElement("canvas");c.width=W;c.height=H;var g=c.getContext("2d");
