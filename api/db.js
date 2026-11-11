@@ -2,7 +2,7 @@
 const { authed, pipeline, body } = require("./_lib");
 const { maybeDaily } = require("./_backup");
 const { notify } = require("./push");
-const COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform", "ac", "photo", "budget", "chatmsg", "chatrd"];
+const COLS = ["jobs", "emerg", "maint", "mdef", "water", "settings", "wform", "ac", "photo", "budget", "chatmsg", "chatrd", "notice"];
 const key = (c) => "daito:" + c;
 const vkey = (c) => "daito:ver:" + c;
 
@@ -61,13 +61,14 @@ module.exports = async (req, res) => {
       const p = split(b.path);
       if (!p) return res.status(400).json({ error: { code: "bad_request" } });
       let before = null;
-      if (b.op === "set" && (p.col === "jobs" || p.col === "emerg" || p.col === "chatmsg")) { try { const o = (await pipeline([["HGET", key(p.col), p.id]]))[0]; before = o ? JSON.parse(o) : null; } catch (e) {} }
+      if (b.op === "set" && (p.col === "jobs" || p.col === "emerg" || p.col === "chatmsg" || p.col === "notice")) { try { const o = (await pipeline([["HGET", key(p.col), p.id]]))[0]; before = o ? JSON.parse(o) : null; } catch (e) {} }
       const cmds = b.op === "set"
         ? [["HSET", key(p.col), p.id, JSON.stringify(b.data == null ? {} : b.data)], ["INCR", vkey(p.col)]]
         : [["HDEL", key(p.col), p.id], ["INCR", vkey(p.col)]];
       const r = await pipeline(cmds);
       await maybeDaily();
       if (b.op === "set" && b.data && (p.col === "jobs" || p.col === "emerg")) { try { await pushEvents(p.col, before, b.data, authed(req)); } catch (e) {} }
+      if (b.op === "set" && b.data && p.col === "notice" && !before) { try { const n = b.data, to = Array.isArray(n.to) && n.to.length ? n.to : "*"; await notify("notice", (n.imp ? "【重要】" : "") + (n.title || ""), (n.by ? n.by + ": " : "") + String(n.body || ""), to, authed(req), true); } catch (e) {} }
       if (b.op === "set" && b.data && p.col === "chatmsg" && !before) { try { await chatPush(b.data, authed(req)); } catch (e) {} }
       return res.json({ ok: true, ver: Number(r[1]) });
     }

@@ -4,8 +4,8 @@ const crypto = require("crypto");
 const { authed, pipeline, body } = require("./_lib");
 const webpush = require("./_webpush");
 const SUBS = "daito:push", LOG = "daito:notiflog";
-const KINDS = ["job", "emerg", "status", "report", "chat"];
-const LABEL = { job: "新規案件", emerg: "緊急出動", status: "案件の進捗", report: "報告書", chat: "案件チャット" };
+const KINDS = ["job", "emerg", "status", "report", "chat", "notice"];
+const LABEL = { job: "新規案件", emerg: "緊急出動", status: "案件の進捗", report: "報告書", chat: "案件チャット", notice: "連絡事項" };
 const configured = () => !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
 const keyOf = (ep) => "s_" + crypto.createHash("sha1").update(String(ep)).digest("hex").slice(0, 24);
 const norm = (s) => String(s || "").normalize("NFKC").replace(/[\s　]+/g, "");
@@ -14,7 +14,7 @@ const cleanPrefs = (p) => { const o = {}; KINDS.forEach((k) => (o[k] = !(p && p[
 // 通知を出す。names=担当(スタッフ)の名前。管理者には常に届く。actor は自分の操作で自分に出さないため
 async function notify(kind, title, text, names, actor, skipSelf, noAdmin) {
   if (!configured() || KINDS.indexOf(kind) < 0) return 0;
-  const want = {}; (names || []).forEach((n) => { if (norm(n)) want[norm(n)] = 1; });
+  const all = names === "*", want = {}; (all ? [] : names || []).forEach((n) => { if (norm(n)) want[norm(n)] = 1; });
   const flat = (await pipeline([["HGETALL", SUBS]]))[0] || [];
   const vapid = { publicKey: process.env.VAPID_PUBLIC_KEY, privateKey: process.env.VAPID_PRIVATE_KEY, subject: "mailto:" + (process.env.VAPID_SUBJECT || "admin@example.com") };
   const payload = JSON.stringify({ title: "【" + LABEL[kind] + "】" + String(title || "").slice(0, 60), kind, body: String(text || "").replace(/\s+/g, " ").slice(0, 100), tag: kind + "-" + Date.now() });
@@ -23,7 +23,7 @@ async function notify(kind, title, text, names, actor, skipSelf, noAdmin) {
     let e; try { e = JSON.parse(flat[i + 1]); } catch (x) { continue; }
     const isAdm = e.role === "admin";
     if (isAdm && noAdmin) continue;
-    if (!isAdm && !want[norm(e.name)]) continue;
+    if (!isAdm && !all && !want[norm(e.name)]) continue;
     if (!isAdm && actor && actor.role === "staff" && norm(actor.name) === norm(e.name)) continue;
     if (skipSelf && actor && e.role === actor.role && norm(e.name) === norm(actor.name)) continue;
     if (e.prefs && e.prefs[kind] === false) continue;

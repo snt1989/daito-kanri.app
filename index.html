@@ -362,8 +362,9 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .nrow .ni{width:22px;text-align:center;flex:none}
 .nrow .nb{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .nrow.urgent .nb b{color:var(--warn)}
-.nt-tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin:4px 0 6px;overflow:visible}
-.nt-tabs .tab{padding:9px 2px;font-size:13.5px;white-space:nowrap;text-align:center}
+.ntc-card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0}.ntc-card.imp{border-color:#d9534f;border-width:2px}.ntc-card.un{background:color-mix(in srgb,var(--accent,#2b6cb0) 7%,transparent)}.ntc-hd{margin-bottom:4px}.ntc-impt{background:#d9534f;color:#fff}.ntc-bd{white-space:normal;line-height:1.7;margin:4px 0 6px;overflow-wrap:anywhere}.ntc-ft{font-size:12px}.ntc-form label{display:block;margin:6px 0}.ntc-form input[type=text],.ntc-form textarea{width:100%;box-sizing:border-box}
+.nt-tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin:4px 0 6px;overflow:visible}
+.nt-tabs .tab{padding:9px 1px;font-size:13px;white-space:nowrap;text-align:center}
 .ntc{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:11px;line-height:18px;text-align:center}
 .nt-body{min-height:260px}
 .efmask{z-index:98}.efdocs{display:flex;gap:6px;flex-wrap:wrap}
@@ -733,7 +734,7 @@ function renderTabs(){
   if(cur&&sd.scrollHeight>sd.clientHeight){var cr=cur.getBoundingClientRect(),sr=sd.getBoundingClientRect();if(cr.bottom>sr.bottom-8)sd.scrollTop+=cr.bottom-sr.bottom+16;else if(cr.top<sr.top+8)sd.scrollTop-=sr.top-cr.top+16}
   $("#menu").innerHTML=ic("menu");renderBnav(B);
   var uc=userChipHtml();if(uc!==null){var ue=document.querySelector(".user");if(ue&&ue.dataset.c!==uc){ue.innerHTML=uc;ue.dataset.c=uc}}
-  var tn=todos().length+infoBadge()+(function(){try{return chUnreadTotal()}catch(e){return 0}})();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn);try{pnCheck()}catch(e){};try{brandApply()}catch(e){};try{aiRender()}catch(e){};
+  var tn=todos().length+infoBadge()+(function(){try{return ntcUnread().length}catch(e){return 0}})()+(function(){try{return chUnreadTotal()}catch(e){return 0}})();$("#bell").innerHTML=ic("bell")+(tn?'<span class="bd">'+tn+"</span>":"");appBadge(tn);try{pnCheck()}catch(e){};try{brandApply()}catch(e){};try{aiRender()}catch(e){};
 }
 function pageHead(){
   if(S.tab==="case")return "";
@@ -3072,6 +3073,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-11-11",t:"お知らせに「連絡」(連絡事項)",d:"お知らせに「連絡」タブを追加しました。「＋ 連絡事項を書く」から、全員または選んだ担当者に連絡事項を送れます。「重要」にするとホームにも表示されます。書いた人と管理者は、誰が読んだか(既読)を確認でき、編集・削除もできます。Web版では、宛先の人のスマホに通知が届きます。"},
  {v:"2026-11-11",t:"価値観共有チェックシートを編集ごとにFAX送信",d:"価値観共有チェックシートの記入画面で「保存」「PDFで保存」を押すと、記入済みのシートを付けてFAX送信画面が開きます(宛先・枚数を確認してから送信)。「保存したらFAXで送る」のチェックを外すと開きません。「📠 保存してFAX」ボタンでも送れます。案件の確認画面の「FAX送信(eFax)」からも記入済みのシートを送れます。"},
  {v:"2026-11-11",t:"FAX送信はこちらで作成した書類だけに",d:"書類ボックス(受信したFAX)からの送信ボタンをなくしました。FAXで送れるのは、報告書作成で作ったPDFや、こちらで作成・記入して選んだファイルだけです。案件の確認画面の「FAX送信(eFax)」には、受信書類の代わりにその案件の報告書(写真シート)が出ます。"},
  {v:"2026-11-11",t:"アプリからFAXを送信",d:"「eFaxで送る」に「📠 アプリから送信」を追加しました。送付状付きのPDFを作り、確認画面で宛先・番号・枚数を確かめてから、eFaxの「メールでFAX送信」でそのまま送ります。案件の送信の記録から「結果を確認」で、送信完了したかを確かめられます。(初回のみ、GmailにFAX送信の許可を追加する操作が必要です)"},
@@ -3124,7 +3126,7 @@ function infoNew(){return infoUnseen().length}
 function infoMarkSeen(){lsSet("infoSeenK",ckey(CHANGELOG[0]));lsSet("infoSeen",CHANGELOG[0].v)}
 /* ---------- スマホ通知(Web Push。Web版のみ) ---------- */
 var PU={status:null,sub:null,prefs:null,busy:false,msg:"",failed:false,loading:false};
-var PUSH_KINDS=[["chat","案件チャット","担当している案件のチャットに新しいメッセージが届いたとき"],["job","新規案件","新しい案件が登録されたとき"],["emerg","緊急出動","緊急出動が登録されたとき"],["status","案件の進捗","案件・緊急出動の進捗が変わったとき"]];
+var PUSH_KINDS=[["notice","連絡事項","自分宛て・全員宛ての連絡事項が届いたとき"],["chat","案件チャット","担当している案件のチャットに新しいメッセージが届いたとき"],["job","新規案件","新しい案件が登録されたとき"],["emerg","緊急出動","緊急出動が登録されたとき"],["status","案件の進捗","案件・緊急出動の進捗が変わったとき"]];
 function pushSupported(){return !!(window.dsApi&&/^https?:$/.test(location.protocol)&&"serviceWorker" in navigator&&"PushManager" in window&&typeof Notification!=="undefined")}
 function pushCall(action,extra){return window.dsApi("/api/push",Object.assign({action:action},extra||{})).then(function(j){if(!j||j.error||(j.status&&j.status>=400))throw new Error((j&&j.error)||"サーバーエラー");return j})}
 function pushLoad(){
@@ -3203,7 +3205,7 @@ document.addEventListener("change",function(e){
   var pr={};document.querySelectorAll("[data-pnpref]").forEach(function(x){pr[x.getAttribute("data-pnpref")]=x.checked});PU.prefs=pr;
   pushCall("prefs",{endpoint:PU.sub.endpoint,prefs:pr}).then(function(){toast("通知の設定を保存しました")},function(){toast("保存できませんでした")});
 });
-var NOTIF_ICON={job:"🏗",emerg:"🚨",status:"🔄",report:"📝"};
+var NOTIF_ICON={notice:"📢",job:"🏗",emerg:"🚨",status:"🔄",report:"📝"};
 function histLoad(){
   var put=function(h){var el=$("#nh-body");if(el)el.innerHTML=h};
   if(!pushSupported()){put("通知の履歴は、Web版(Vercel)でのみ使えます。");return}
@@ -3278,7 +3280,7 @@ function guideHtml(){
   return out?'<div class="ngrp">ご案内</div>'+out:"";
 }
 var NTAB="";
-function ntabDefault(){if(infoUnseen().length)return "rel";if(todos().length)return "todo";if(ntUnread().length)return "mail";return "todo"}
+function ntabDefault(){try{if(ntcUnread().length)return "msg"}catch(e){}if(infoUnseen().length)return "rel";if(todos().length)return "todo";if(ntUnread().length)return "mail";return "todo"}
 function openNotices(tab){
   ntKick();
   tab=tab||NTAB||ntabDefault();NTAB=tab;
@@ -3286,9 +3288,11 @@ function openNotices(tab){
   var row=function(attr,icon,title,sub,urgent){return '<button type="button" class="nrow'+(urgent?" urgent":"")+'" '+attr+'><span class="ni">'+icon+'</span><span class="nb"><b>'+esc(title)+'</b><span class="sub">'+esc(sub)+"</span></span></button>"};
   var empty=function(t){return '<div class="empty" style="padding:30px 6px;text-align:center">'+t+"</div>"};
   var CU=[];try{var cbk=chByKey();Object.keys(cbk).forEach(function(k){if(!chMember(k)||!chRec(k))return;var u=chUnread(k,cbk[k]);if(u){var lm=cbk[k][cbk[k].length-1];CU.push({k:k,u:u,m:lm})}});CU.sort(function(a,b){return String(b.m.at).localeCompare(String(a.m.at))})}catch(e){}
-  var TABS=[["todo","対応",T.length+CU.reduce(function(a,x){return a+x.u},0)],["mail","メール",M.length],["rel","更新",U.length],["hist","履歴",0],["set","設定",0]];
+  var NU=ntcUnread();if(tab==="msg"&&!NTE.open)setTimeout(ntcMarkRead,800);
+  var TABS=[["msg","連絡",NU.length],["todo","対応",T.length+CU.reduce(function(a,x){return a+x.u},0)],["mail","メール",M.length],["rel","更新",U.length],["hist","履歴",0],["set","設定",0]];
   var bar='<div class="tabs nt-tabs" role="tablist">'+TABS.map(function(x){return '<button type="button" role="tab" class="tab'+(x[0]===tab?" on":"")+'" data-ntab="'+x[0]+'">'+x[1]+(x[2]?' <span class="ntc">'+(x[2]>99?"99+":x[2])+"</span>":"")+"</button>"}).join("")+"</div>";
-  if(tab==="todo"){
+  if(tab==="msg"){h=ntcHtml()}
+  else if(tab==="todo"){
     h=CU.map(function(x){return row('data-chopen="'+esc(x.k)+'"',"💬",chTitle(x.k)+"(未読 "+x.u+")",(x.m.by||"")+": "+(x.m.stamp?"スタンプ":x.m.img&&!x.m.text?"写真":String(x.m.text||"").slice(0,60)),true)}).join("")+(T.length||!CU.length?"":"<div></div>");
     h+=T.length?T.slice(0,MAX).map(function(t){return row('data-todo="'+t.kind+":"+esc(t.id)+'"',({j:"🏗",e:"🚨",m:"🏢",d:"⚠",w:"💧",a:"❄"})[t.kind]||"✓",t.title,t.tag+(t.note?" ／ "+t.note:""),false)}).join("")+(T.length>MAX?'<div class="sub" style="padding:8px 2px">ほか '+(T.length-MAX)+" 件はホームで確認できます。</div>":""):(CU.length?"":empty("対応が必要な案件はありません"));
   }else if(tab==="mail"){
@@ -3310,6 +3314,7 @@ function infoBanner(){
   var n=ntUnread().length,u=infoNew(),h="";
   if(u)h+='<button type="button" class="todo" id="rel-open"><span class="dt">更新</span><span class="tt">アプリが新しくなりました<small>新しい機能・変更点 '+u+'件 — タップして内容を見る</small></span><span class="go sub">見る ›</span></button>';
   if(0)h+='<button class="todo" data-tab="info"><span class="dt">お知らせ</span><span class="tt">大東建託からのメール '+n+'件<small>お知らせ画面で内容を確認できます</small></span><span class="go sub">開く ›</span></button>';
+  try{h=ntcBanner()+h}catch(e){}
   try{h+=installBanner()}catch(e){}
   try{h+=pushOffBanner()}catch(e){}
   return h}
@@ -4106,6 +4111,66 @@ document.addEventListener("change",function(e){
 document.addEventListener("input",function(e){
   if(S.tab!=="budget"||!e.target||e.target.getAttribute("data-bgf")!=="q")return;bgFilter().q=e.target.value;clearTimeout(BGS.qt);
   BGS.qt=setTimeout(function(){var el=document.querySelector('[data-bgf="q"]'),pos=el&&el.selectionStart;render();var n=document.querySelector('[data-bgf="q"]');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}},350);
+});
+/* ====================== 連絡事項(お知らせ→連絡) ====================== */
+// 連絡事項は notice(1件ずつ)。既読は chatrd(ID=nt~連絡ID~名前)に保存。宛先が空=全員
+var NTC={},NTE={open:false,id:"",to:[]};
+function ntcInit(){
+  if(!db){var v=lsGet("notice");NTC=v&&typeof v==="object"?v:{};return}
+  db.collection("notice").onSnapshot(function(snap){var o={};snap.docs.forEach(function(x){o[x.id]=x.data()});NTC=o;try{renderTabs()}catch(e){}if(NTAB==="msg"&&$("#modal .nt-dlg")&&!NTE.open)ntcDraw()},function(){});
+}
+function ntcSave(o){NTC[o.id]=o;if(db)return db.doc("notice/"+o.id).set(o);lsSet("notice",NTC);return Promise.resolve()}
+function ntcDel(id){delete NTC[id];if(db)return db.doc("notice/"+id).delete();lsSet("notice",NTC);return Promise.resolve()}
+function ntcCanSee(n){if(!n)return false;if(chIsAdmin())return true;var me=chMe();return n.by===me||!Array.isArray(n.to)||!n.to.length||n.to.indexOf(me)>=0}
+function ntcCanEdit(n){return chIsAdmin()||n.by===chMe()}
+function ntcList(){return Object.keys(NTC).map(function(k){return NTC[k]}).filter(ntcCanSee).sort(function(a,b){return (b.imp?1:0)-(a.imp?1:0)||String(b.at).localeCompare(String(a.at))})}
+function ntcRead(n,name){var r=CHR["nt~"+n.id+"~"+(name||chMe())];return !!(r&&r.at>=(n.upd||n.at))}
+function ntcUnread(){var me=chMe();return ntcList().filter(function(n){return n.by!==me&&!ntcRead(n)})}
+function ntcMarkRead(){
+  var me=chMe(),now=new Date().toISOString();
+  ntcUnread().forEach(function(n){var id="nt~"+n.id+"~"+me;CHR[id]={key:"nt~"+n.id,name:me,at:now};if(db)db.doc("chatrd/"+id).set(CHR[id]).catch(function(){})});
+  if(!db)lsSet("chatrd",CHR);try{renderTabs()}catch(e){}
+  var bt=document.querySelector('[data-ntab="msg"] .ntc');if(bt)bt.remove();
+}
+function ntcTargets(n){var a=Array.isArray(n.to)&&n.to.length?n.to.slice():(S.settings.staff||[]).slice();return a.filter(function(x){return x&&x!==n.by})}
+function ntcWhen(s){var d=new Date(s);return isNaN(d)?"":(d.getMonth()+1)+"/"+d.getDate()+" "+pad(d.getHours())+":"+pad(d.getMinutes())}
+function ntcHtml(){
+  if(NTE.open){var ex=NTE.id&&NTC[NTE.id],st=S.settings.staff||[];
+    return '<div class="ntc-form"><label>件名<input type="text" id="ntc-t" maxlength="80" value="'+esc(ex?ex.title:"")+'" placeholder="例: 年末年始の営業について"></label>'+
+     '<label>内容<textarea id="ntc-b" rows="6" maxlength="3000" placeholder="連絡したい内容">'+esc(ex?ex.body:"")+"</textarea></label>"+
+     '<label class="bgopt"><input type="checkbox" id="ntc-imp"'+(ex&&ex.imp?" checked":"")+"> 重要(一覧の上に表示し、ホームにも出します)</label>"+
+     '<div class="lab"><span>宛先</span><div class="staffs"><label><input type="checkbox" id="ntc-all"'+(NTE.to.length?"":" checked")+"> 全員</label>"+st.map(function(s){return '<label><input type="checkbox" data-ntcto="'+esc(s)+'"'+(NTE.to.indexOf(s)>=0?" checked":"")+"> "+esc(s)+"</label>"}).join("")+"</div></div>"+
+     '<div class="sub" id="ntc-msg" style="min-height:1.2em"></div><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn" id="ntc-x">やめる</button><button type="button" class="btn pri" id="ntc-save">'+(ex?"更新する":"送る")+"</button></div></div>"}
+  var L=ntcList(),me=chMe();
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:4px 0 8px"><span class="sub">社内への連絡事項です。'+(chIsAdmin()?"":"自分宛てと全員宛ての連絡が表示されます。")+'</span><button type="button" class="btn sm pri" id="ntc-new">＋ 連絡事項を書く</button></div>';
+  if(!L.length)return h+'<div class="empty" style="padding:30px 6px;text-align:center">連絡事項はまだありません</div>';
+  return h+L.map(function(n){var un=n.by!==me&&!ntcRead(n),tg=ntcTargets(n),rd=tg.filter(function(x){return ntcRead(n,x)});
+    return '<div class="ntc-card'+(n.imp?" imp":"")+(un?" un":"")+'"><div class="ntc-hd">'+(n.imp?'<span class="tag ntc-impt">重要</span> ':"")+(un?'<span class="tag">未読</span> ':"")+"<b>"+esc(n.title||"(件名なし)")+'</b></div><div class="ntc-bd">'+esc(n.body||"").replace(/\n/g,"<br>")+'</div><div class="sub ntc-ft">'+esc(n.by||"")+" ／ "+ntcWhen(n.at)+(n.upd?"(更新 "+ntcWhen(n.upd)+")":"")+" ／ 宛先: "+(Array.isArray(n.to)&&n.to.length?esc(n.to.join("・")):"全員")+
+      (ntcCanEdit(n)?' ／ <span title="'+esc(rd.join("・"))+'">既読 '+rd.length+"/"+tg.length+'</span> <button type="button" class="csx" data-ntcedit="'+esc(n.id)+'">編集</button> <button type="button" class="csx" data-ntcdel="'+esc(n.id)+'">削除</button>':"")+"</div></div>"}).join("");
+}
+function ntcDraw(){var b=$("#modal .nt-body");if(b)b.innerHTML=ntcHtml()}
+function ntcCollect(){var to=[];document.querySelectorAll("[data-ntcto]").forEach(function(c){if(c.checked)to.push(c.getAttribute("data-ntcto"))});var all=$("#ntc-all");return all&&all.checked?[]:to}
+async function ntcDoSave(){
+  var t=($("#ntc-t").value||"").trim(),b=($("#ntc-b").value||"").trim(),m=$("#ntc-msg"),to=ntcCollect();
+  if(!t){m.textContent="件名を入力してください";return}if(!b){m.textContent="内容を入力してください";return}
+  if(!$("#ntc-all").checked&&!to.length){m.textContent="宛先を選んでください";return}
+  var ex=NTE.id&&NTC[NTE.id],now=new Date().toISOString(),o=ex?Object.assign({},ex,{title:t,body:b,imp:$("#ntc-imp").checked,to:to,upd:now}):{id:nid("nt"),title:t,body:b,imp:$("#ntc-imp").checked,to:to,by:chMe(),at:now};
+  m.textContent="送信中…";
+  try{await ntcSave(o);NTE={open:false,id:"",to:[]};toast(ex?"連絡事項を更新しました":"連絡事項を送りました");ntcDraw();try{renderTabs()}catch(e){}}
+  catch(e){m.textContent="保存できませんでした"}
+}
+function ntcBanner(){var U=ntcUnread().filter(function(n){return n.imp});if(!U.length)return "";
+  return '<button type="button" class="todo" id="ntc-home"><span class="dt" style="background:var(--danger,#c0392b);color:#fff">重要</span><span class="tt">'+esc(U[0].title)+"<small>"+esc(U[0].by||"")+" からの連絡事項"+(U.length>1?" ほか"+(U.length-1)+"件":"")+' — タップして読む</small></span><span class="go sub">読む ›</span></button>'}
+document.addEventListener("click",function(e){
+  var t=e.target.closest&&e.target.closest("#ntc-new,#ntc-x,#ntc-save,#ntc-all,[data-ntcto],[data-ntcedit],[data-ntcdel],#ntc-home");if(!t)return;
+  if(t.id==="ntc-home"){NTAB="msg";openNotices("msg");return}
+  if(t.id==="ntc-new"){NTE={open:true,id:"",to:[]};ntcDraw();var i=$("#ntc-t");if(i)i.focus();return}
+  if(t.id==="ntc-x"){NTE={open:false,id:"",to:[]};ntcDraw();return}
+  if(t.id==="ntc-save"){ntcDoSave();return}
+  if(t.id==="ntc-all"){if(t.checked)document.querySelectorAll("[data-ntcto]").forEach(function(c){c.checked=false});return}
+  if(t.hasAttribute("data-ntcto")){var a=$("#ntc-all");if(a)a.checked=!document.querySelector("[data-ntcto]:checked");return}
+  if(t.dataset.ntcedit){var n=NTC[t.dataset.ntcedit];if(!n||!ntcCanEdit(n))return;NTE={open:true,id:n.id,to:Array.isArray(n.to)?n.to.slice():[]};ntcDraw();return}
+  if(t.dataset.ntcdel){var n2=NTC[t.dataset.ntcdel];if(!n2||!ntcCanEdit(n2))return;if(t.dataset.cf!=="1"){t.dataset.cf="1";t.textContent="本当に削除";return}ntcDel(n2.id).then(function(){toast("削除しました");ntcDraw();try{renderTabs()}catch(e){}},function(){toast("削除できませんでした")})}
 });
 /* ====================== 案件チャット ====================== */
 // メッセージは chatmsg(1件ずつ。ID=メッセージID)、既読は chatrd(ID=案件キー~名前)に保存。参加者=案件の担当者+管理者
@@ -6104,11 +6169,11 @@ function boot(){
   render();
   claude_use("db").then(function(d){
     if(!d){
-      S.persist=false;wtfInit();acInit();phInit();bgInit();chInit();
+      S.persist=false;wtfInit();acInit();phInit();bgInit();chInit();ntcInit();
       COLN.forEach(function(c){var v=lsGet(c);S[c]=(Array.isArray(v)?v:(c==="jobs"?sampleJobs():[])).map(function(o){return normDoc(c,String((o&&o.id)||nid("x")),o)});loaded[c]=true});
       var st=lsGet("settings");if(st&&st.prices)S.settings=st;normSettings();loaded.settings=true;ready();return;
     }
-    db=d;wtfInit();acInit();phInit();bgInit();chInit();
+    db=d;wtfInit();acInit();phInit();bgInit();chInit();ntcInit();
     COLN.forEach(function(c){
       db.collection(c).onSnapshot(function(snap){PEND[c]=snap;if(!PTM[c])PTM[c]=setTimeout(function(){PTM[c]=0;var sn=PEND[c];PEND[c]=null;if(!sn)return;S[c]=sn.docs.map(function(x){var d=x.data();try{d=JSON.parse(JSON.stringify(d))}catch(e){}return normDoc(c,x.id,d)});S.persist=true;loaded[c]=true;ready()},80)},function(){S.persist=false;loaded[c]=true;ready()});
     });
