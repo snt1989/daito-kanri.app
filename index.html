@@ -4632,7 +4632,7 @@ async function efGo(prev){
     }
     if(!shared){
       var a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){a.remove()},3000);
-      window.open("https://myaccount.efax.com/","_blank","noopener");
+      window.open("https://portal.efax.co.jp/myaccount/login","_blank","noopener");
     }
     efLog(num,b.n);
     EF.busy=false;EF.msg=(shared?"eFaxアプリに渡しました。":"PDFを保存し、eFaxのサイトを開きました。")+"FAX番号 "+efFmt(num)+" はコピー済みです。宛先に貼り付けて送信してください。";efDraw();
