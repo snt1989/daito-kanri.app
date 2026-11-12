@@ -370,9 +370,10 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .efmask{z-index:98}.efdocs{display:flex;gap:6px;flex-wrap:wrap}
 .csfax{display:flex;flex-direction:column;gap:6px}.csfaxrow{display:flex;gap:8px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:8px 10px}.csfaxrow>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-#ai-fab{position:fixed;right:16px;bottom:18px;border:none;background:none;padding:0;cursor:pointer;z-index:80;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 4px 6px rgba(0,0,0,.22));animation:ai-bob 2.6s ease-in-out infinite}
+#ai-fab{position:fixed;right:14px;bottom:16px;border:none;background:none;padding:0;cursor:pointer;z-index:80;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 3px 4px rgba(0,0,0,.2));opacity:.82;touch-action:none;transition:opacity .2s,transform .2s}#ai-fab svg{width:40px;height:44px}#ai-fab .ai-tag{display:none}#ai-fab .ai-arm-r,#ai-fab .ai-eyes{animation:none}#ai-fab.ai-dim{opacity:.12;pointer-events:none}#ai-fab.ai-drag{opacity:1;transform:scale(1.1);cursor:grabbing}
+#ai-fab.ai-edge{right:0!important;left:auto!important;background:var(--accent);border-radius:12px 0 0 12px;padding:5px 2px 5px 4px;opacity:.6}#ai-fab.ai-edge svg{width:17px;height:19px}
 #ai-fab .ai-tag{margin-top:-2px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:2px 9px;border-radius:99px;border:2px solid #fff;letter-spacing:.05em}
-#ai-fab:hover{animation-play-state:paused;transform:scale(1.08)}
+#ai-fab:hover{opacity:1}
 @keyframes ai-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes ai-blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}@keyframes ai-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-22deg)}}
 .ai-eyes{transform-box:fill-box;transform-origin:center;animation:ai-blink 4.2s infinite}.ai-arm-r{transform-box:fill-box;transform-origin:20% 90%;animation:ai-wave 1.8s ease-in-out infinite}
 #ai-panel{position:fixed;right:16px;bottom:84px;width:400px;max-width:calc(100vw - 24px);height:min(620px,calc(100vh - 110px));background:var(--surface,#fff);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 34px rgba(0,0,0,.28);z-index:81;display:flex;flex-direction:column;overflow:hidden}
@@ -384,7 +385,7 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .ai-chips{display:flex;flex-wrap:wrap;gap:6px}.ai-chips .chip2{font-size:12.5px;padding:5px 10px;text-align:left}
 .ai-ft{padding:8px 10px;border-top:1px solid var(--line)}.ai-ft textarea{flex:1;resize:none;font:inherit;font-size:15px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
 .ai-note{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.5}
-@media(max-width:760px){#ai-fab{bottom:calc(82px + env(safe-area-inset-bottom));right:10px}#ai-fab svg{width:44px;height:48px}#ai-panel{right:0;left:0;bottom:0;width:100%;max-width:100%;height:88vh;border-radius:16px 16px 0 0;z-index:120}}
+@media(max-width:760px){#ai-fab{bottom:calc(82px + env(safe-area-inset-bottom));right:8px}#ai-fab svg{width:34px;height:38px}#ai-panel{right:0;left:0;bottom:0;width:100%;max-width:100%;height:88vh;border-radius:16px 16px 0 0;z-index:120}}
 @media print{#ai-fab,#ai-panel{display:none!important}}
 
 .rpsum{padding:14px 16px}.rpstat{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.rpstat>div{display:flex;flex-direction:column;gap:2px}.rpstat b{font-size:22px}.rpstat small{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
@@ -3073,6 +3074,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-11-12",t:"AIロボを邪魔にならないように",d:"AIロボを小さく、静かにしました(動きなし・少し透明)。指やマウスでドラッグして好きな場所へ動かせます。画面の右端まで動かすか、AIロボの画面の「しまう」を押すと、端に小さなつまみになります(押すと戻ります)。スクロール中は薄くなり、案件や写真などの画面を開いている間は隠れます。"},
  {v:"2026-11-11",t:"エアコン見積り依頼書に回答を記入してFAX返信",d:"エアコン設置の案件一覧の「📝 見積回答」から、受信した見積り依頼書(FAX)に、ご回答日・お見積り金額(税別)・見積担当の印を書き込めます。必要なら工事項目の数量・見積金額も記入できます。「📠 FAXで返信」で依頼元の営業所へそのまま送れ、送ったら状況を「見積提出」に進められます。"},
  {v:"2026-11-11",t:"お知らせに「連絡」(連絡事項)",d:"お知らせに「連絡」タブを追加しました。「＋ 連絡事項を書く」から、全員または選んだ担当者に連絡事項を送れます。「重要」にするとホームにも表示されます。書いた人と管理者は、誰が読んだか(既読)を確認でき、編集・削除もできます。Web版では、宛先の人のスマホに通知が届きます。"},
  {v:"2026-11-11",t:"価値観共有チェックシートを編集ごとにFAX送信",d:"価値観共有チェックシートの記入画面で「保存」「PDFで保存」を押すと、記入済みのシートを付けてFAX送信画面が開きます(宛先・枚数を確認してから送信)。「保存したらFAXで送る」のチェックを外すと開きません。「📠 保存してFAX」ボタンでも送れます。案件の確認画面の「FAX送信(eFax)」からも記入済みのシートを送れます。"},
@@ -4572,12 +4574,30 @@ function aiRun(a){
   if(a.tool==="add_memo"){var rr=JSON.parse(JSON.stringify(r));rr.memos=(Array.isArray(rr.memos)?rr.memos:[]).concat([{id:"mm"+Date.now().toString(36),at:new Date().toISOString(),by:(function(){try{return chMe()}catch(e){return ""}})(),text:String(a.text).slice(0,2000)}]);saveDoc(col,rr,true);toast("メモを追加しました");if(S.tab==="case")render();return true}
   return false;
 }
+// ---- AIロボを邪魔にしない: ドラッグで移動・端にしまう・スクロール中は薄く・画面を開いている間は隠す ----
+function aiPosApply(f){var p=lsGet("aiPos");if(p&&typeof p.r==="number"&&typeof p.b==="number"&&!AI.edge){var r=Math.min(Math.max(0,p.r),window.innerWidth-50),b=Math.min(Math.max(0,p.b),window.innerHeight-60);f.style.right=r+"px";f.style.bottom=b+"px"}else if(AI.edge){var p2=lsGet("aiPos");f.style.right="0px";f.style.bottom=(p2&&typeof p2.b==="number"?Math.min(Math.max(0,p2.b),window.innerHeight-60):140)+"px"}else{f.style.right="";f.style.bottom=""}}
+function aiCovered(){var m=$("#modal");if(m&&m.children.length)return true;return ["#phl","#bgl","#chl","#efl"].some(function(q){var e=$(q);return e&&e.style.display!=="none"&&e.children.length&&getComputedStyle(e).display!=="none"})}
+function aiDragInit(f){var st=null;
+  f.addEventListener("pointerdown",function(e){if(e.button)return;var r=f.getBoundingClientRect();st={x:e.clientX,y:e.clientY,r:window.innerWidth-r.right,b:window.innerHeight-r.bottom,mv:false};try{f.setPointerCapture(e.pointerId)}catch(x){}});
+  f.addEventListener("pointermove",function(e){if(!st)return;var dx=e.clientX-st.x,dy=e.clientY-st.y;if(!st.mv&&Math.abs(dx)+Math.abs(dy)<8)return;st.mv=true;f.classList.add("ai-drag");
+    var r=Math.min(Math.max(0,st.r-dx),window.innerWidth-50),b=Math.min(Math.max(0,st.b-dy),window.innerHeight-60);f.style.right=r+"px";f.style.bottom=b+"px"});
+  var end=function(){if(!st)return;if(st.mv){AI.dragged=true;var r=parseFloat(f.style.right)||0,b=parseFloat(f.style.bottom)||0;
+      if(r<12&&!AI.edge){AI.edge=true;lsSet("aiEdge",true)}else if(AI.edge&&r>=12){AI.edge=false;lsSet("aiEdge",false)}
+      lsSet("aiPos",{r:r,b:b});f.classList.remove("ai-drag");aiRender();setTimeout(function(){AI.dragged=false},300)}st=null};
+  f.addEventListener("pointerup",end);f.addEventListener("pointercancel",end);
+}
+(function(){var tm=0;window.addEventListener("scroll",function(){var f=$("#ai-fab");if(!f||AI.edge)return;f.classList.add("ai-dim");clearTimeout(tm);tm=setTimeout(function(){f.classList.remove("ai-dim")},700)},true);
+  setInterval(function(){var f=$("#ai-fab");if(!f||!S.ready||S.loginNeeded)return;var hide=(AI.open&&window.innerWidth<=760)||aiCovered();var want=hide?"none":"flex";if(f.style.display!==want)f.style.display=want},500);
+  window.addEventListener("resize",function(){var f=$("#ai-fab");if(f)aiPosApply(f)})})();
 function aiRender(){
   var fab=$("#ai-fab"),box=$("#ai-panel");
   if(!S.ready||S.loginNeeded){if(fab)fab.style.display="none";if(box)box.style.display="none";return}
-  if(!fab){fab=document.createElement("button");fab.id="ai-fab";fab.type="button";fab.title="AIアシスタント";fab.innerHTML=aiKunSvg(52)+'<span class="ai-tag">AIロボ</span>';
-    fab.addEventListener("click",function(){AI.open=!AI.open;aiRender()});document.body.appendChild(fab)}
-  fab.style.display=AI.open&&window.innerWidth<=760?"none":"flex";
+  if(!fab){fab=document.createElement("button");fab.id="ai-fab";fab.type="button";fab.innerHTML=aiKunSvg(52)+'<span class="ai-tag">AIロボ</span>';
+    fab.addEventListener("click",function(e){if(AI.dragged){AI.dragged=false;return}if(AI.edge){AI.edge=false;lsSet("aiEdge",false);aiRender();return}AI.open=!AI.open;aiRender()});
+    aiDragInit(fab);document.body.appendChild(fab)}
+  if(AI.edge===undefined)AI.edge=lsGet("aiEdge")===true;
+  fab.classList.toggle("ai-edge",!!AI.edge);fab.title=AI.edge?"AIロボを出す":"AIロボ(ドラッグで移動できます)";aiPosApply(fab);
+  fab.style.display=(AI.open&&window.innerWidth<=760)||aiCovered()?"none":"flex";
   if(!AI.open){if(box)box.style.display="none";return}
   if(!box){box=document.createElement("div");box.id="ai-panel";document.body.appendChild(box)}
   box.style.display="flex";
@@ -4589,7 +4609,7 @@ function aiRender(){
   if(AI.busy)body+='<div class="ai-b ai-a sub">考えています…</div>';
   if(!AI.msgs.length)body='<div class="ai-b ai-a">こんにちは、AIロボです！案件・予定・お知らせについての質問、連絡文の下書き、アプリの使い方の質問ができます。メモの追加や案件を開く操作も、確認してから実行します。</div><div class="ai-chips">'+chips.map(function(c){return '<button type="button" class="chip2" data-ai-chip="'+esc(c)+'">'+esc(c)+"</button>"}).join("")+"</div>";
   var keep=$("#ai-in")?$("#ai-in").value:"";
-  box.innerHTML='<div class="ai-hd"><span style="display:inline-flex">'+aiKunSvg(28)+'</span><b style="flex:1">AIロボ(アシスタント)</b><button type="button" class="btn sm" id="ai-clear">新しい会話</button><button type="button" class="btn sm" id="ai-close">閉じる</button></div>'+
+  box.innerHTML='<div class="ai-hd"><span style="display:inline-flex">'+aiKunSvg(28)+'</span><b style="flex:1">AIロボ(アシスタント)</b><button type="button" class="btn sm" id="ai-clear">新しい会話</button><button type="button" class="btn sm" id="ai-tuck" title="画面の端に小さくしまいます">しまう</button><button type="button" class="btn sm" id="ai-close">閉じる</button></div>'+
     '<div class="ai-msgs" id="ai-msgs">'+body+'</div><div class="ai-ft"><div style="display:flex;gap:6px;align-items:flex-end"><textarea id="ai-in" rows="2" placeholder="AIロボに質問や依頼を入力(Ctrl+Enterで送信)"></textarea>'+(AI.busy?'<button type="button" class="btn" id="ai-stop">止める</button>':'<button type="button" class="btn pri" id="ai-send">送信</button>')+'</div><div class="ai-note">入居者様の氏名・電話番号は送信しません。AIの回答は間違うことがあります。重要な内容は画面で確認してください。</div></div>';
   var inp=$("#ai-in");inp.value=keep;var ms=$("#ai-msgs");ms.scrollTop=ms.scrollHeight;
 }
@@ -4612,6 +4632,7 @@ async function aiSend(txt){
 document.addEventListener("click",function(e){
   var t=e.target&&e.target.closest?e.target:null;if(!t||!t.closest("#ai-panel"))return;var x,id=(t.closest("button")||{}).id||"";
   if(id==="ai-close"){AI.open=false;aiRender();return}
+  if(id==="ai-tuck"){AI.open=false;AI.edge=true;lsSet("aiEdge",true);aiRender();toast("AIロボを右端にしまいました。つまみを押すと戻ります");return}
   if(id==="ai-clear"){if(AI.ctl)AI.ctl.abort();AI.msgs=[];AI.busy=false;aiRender();return}
   if(id==="ai-send"){aiSend($("#ai-in").value);return}
   if(id==="ai-stop"){if(AI.ctl)AI.ctl.abort();return}
