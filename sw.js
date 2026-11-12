@@ -1,5 +1,5 @@
 // 最小のサービスワーカー: スマホ通知(プッシュ)の受信と、ホーム画面アイコンの件数バッジ
-var CACHE = "daito-shell-v2";
+var CACHE = "daito-shell-v3";
 var SHELL = ["/", "/icons/icon-192.png", "/icons/icon-512.png"];
 self.addEventListener("install", function (e) { e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).catch(function () {}).then(function () { return self.skipWaiting(); })); });
 self.addEventListener("activate", function (e) {

@@ -370,6 +370,7 @@ h2.sec{font-family:var(--f-head);font-size:16px;margin:0}
 .efmask{z-index:98}.efdocs{display:flex;gap:6px;flex-wrap:wrap}
 .csfax{display:flex;flex-direction:column;gap:6px}.csfaxrow{display:flex;gap:8px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:8px 10px}.csfaxrow>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+.mv-dlg{width:min(720px,100%)}.mv-hd{border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:8px}.mv-att{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}.mv-bd{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.75;font-size:14.5px;max-height:62vh;overflow-y:auto;padding:4px 2px}
 #ai-fab{position:fixed;right:14px;bottom:16px;border:none;background:none;padding:0;cursor:pointer;z-index:80;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 3px 4px rgba(0,0,0,.2));opacity:.82;touch-action:none;transition:opacity .2s,transform .2s}#ai-fab svg{width:40px;height:44px}#ai-fab .ai-tag{display:none}#ai-fab .ai-arm-r,#ai-fab .ai-eyes{animation:none}#ai-fab.ai-dim{opacity:.12;pointer-events:none}#ai-fab.ai-drag{opacity:1;transform:scale(1.1);cursor:grabbing}
 #ai-fab.ai-edge{right:0!important;left:auto!important;background:var(--accent);border-radius:12px 0 0 12px;padding:5px 2px 5px 4px;opacity:.6}#ai-fab.ai-edge svg{width:17px;height:19px}
 #ai-fab .ai-tag{margin-top:-2px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:2px 9px;border-radius:99px;border:2px solid #fff;letter-spacing:.05em}
@@ -2618,6 +2619,61 @@ document.addEventListener("click",function(e){
 },true);
 var bkDelTm=0;
 
+/* ---------- メールをアプリ内で開く(スマホではGmailのリンクで目的のメールに行けないため) ---------- */
+var MV={id:"",url:"",st:"",m:null,ctl:null,urls:[]};
+function mvDec(bin,cs){var u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i)&255;cs=String(cs||"utf-8").toLowerCase().replace(/^"|"$/g,"");if(cs==="cp932"||cs==="windows-31j"||cs==="x-sjis")cs="shift_jis";try{return new TextDecoder(cs).decode(u)}catch(e){try{return new TextDecoder("utf-8").decode(u)}catch(e2){return bin}}}
+function mvQP(s,hdr){if(hdr)s=s.replace(/_/g," ");return s.replace(/=\r?\n/g,"").replace(/=([0-9A-Fa-f]{2})/g,function(_,h){return String.fromCharCode(parseInt(h,16))})}
+function mvWords(s){return String(s||"").replace(/\?=\s+=\?/g,"?==?").replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g,function(_,cs,e,t){return mvDec(/b/i.test(e)?b64bin(t):mvQP(t,true),cs)})}
+function mvHdr(head,n){var m=head.match(new RegExp("^"+n+":\\s*(.*)$","im"));return m?mvWords(m[1].trim()):""}
+function mvBody(p){var cs=(p.head.match(/charset="?([^";\s]+)"?/i)||[])[1]||"utf-8",b=p.enc==="base64"?b64bin(p.body):p.enc==="quoted-printable"?mvQP(p.body):p.body;return mvDec(b,cs)}
+function mvHtmlText(h){try{var d=new DOMParser().parseFromString(h,"text/html");d.querySelectorAll("script,style,head").forEach(function(x){x.remove()});d.querySelectorAll("br").forEach(function(x){x.replaceWith("\n")});d.querySelectorAll("p,div,tr,li,h1,h2,h3,table").forEach(function(x){x.append("\n")});return (d.body.textContent||"").replace(/[ \t ]+\n/g,"\n").replace(/\n{3,}/g,"\n\n").trim()}catch(e){return h.replace(/<[^>]+>/g," ")}}
+function mvParse(raw){
+  var str=b64bin(raw),m0=str.search(/\r?\n\r?\n/),head=(m0<0?str:str.slice(0,m0)).replace(/\r?\n[ \t]+/g," "),parts=[];
+  (function walk(s){var i=s.search(/\r?\n\r?\n/);if(i<0)return;var h=s.slice(0,i).replace(/\r?\n[ \t]+/g," "),body=s.slice(i).replace(/^\r?\n\r?\n/,"");
+    var ct=((h.match(/^content-type:\s*([^;\r\n]+)/im)||[])[1]||"text/plain").trim().toLowerCase();
+    if(ct.indexOf("multipart/")===0){var bm=h.match(/boundary="?([^";\r\n]+)"?/i);if(!bm)return;body.split("--"+bm[1]).slice(1).forEach(function(sg){if(sg.indexOf("--")===0)return;walk(sg.replace(/^\r?\n/,""))});return}
+    parts.push({ct:ct,head:h,enc:((h.match(/^content-transfer-encoding:\s*(\S+)/im)||[])[1]||"").toLowerCase(),name:(function(){var x=h.match(/(?:file)?name\*=(?:"?)([^'";\r\n]*)'[^']*'([^";\r\n]+)/i);if(x){try{return decodeURIComponent(x[2])}catch(e){return x[2]}}return mvWords((h.match(/(?:file)?name="?([^";\r\n]+)"?/i)||[])[1]||"")})(),disp:/^content-disposition:\s*attachment/im.test(h),body:body})})(str);
+  var txt=parts.find(function(p){return p.ct==="text/plain"&&!p.disp}),html=parts.find(function(p){return p.ct==="text/html"&&!p.disp});
+  var text=txt?mvBody(txt):html?mvHtmlText(mvBody(html)):"";
+  var att=parts.filter(function(p){return p.name&&p.enc==="base64"&&!/^text\/(plain|html)$/.test(p.ct)||p.disp&&p.enc==="base64"}).map(function(p){var bin=b64bin(p.body),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);var nm=p.name;try{nm=decodeURIComponent(nm)}catch(e){}return {name:nm||"添付ファイル",type:p.ct,blob:new Blob([u],{type:p.ct})}});
+  return {subject:mvHdr(head,"Subject"),from:mvHdr(head,"From"),to:mvHdr(head,"To"),date:mvHdr(head,"Date"),text:text,att:att};
+}
+function mvLinkify(s){return esc(s).replace(/(https?:\/\/[^\s<>"'）)」]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>')}
+function mvDraw(){
+  var o=$("#mvl");if(!o){o=document.createElement("div");o.id="mvl";document.body.appendChild(o)}
+  if(!MV.id){o.innerHTML="";MV.urls.forEach(function(u){try{URL.revokeObjectURL(u)}catch(e){}});MV.urls=[];return}
+  var m=MV.m,gm=MV.url?'<a class="btn" href="'+esc(MV.url)+'" target="_blank" rel="noopener">Gmailで開く</a>':"",body;
+  if(MV.st==="load")body='<div class="empty" style="padding:30px 6px;text-align:center">メールを読み込み中…</div>';
+  else if(MV.st==="err")body='<div class="banner">'+esc(MV.err||"メールを読み込めませんでした")+(MV.connect?' <a href="'+esc(MV.connect)+'" target="_blank" rel="noopener">Gmailを接続する</a>':"")+'</div><div class="sub" style="margin-top:8px">「Gmailで開く」からも見られます(スマホではGmailの受信トレイが開くことがあります)。</div>';
+  else{var d=m.date?new Date(m.date):null,ds=d&&!isNaN(d)?d.toLocaleString("ja-JP",{year:"numeric",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}):m.date;
+    body='<div class="mv-hd"><b style="font-size:16px;line-height:1.5">'+esc(m.subject||"(件名なし)")+'</b><div class="sub">差出人: '+esc(m.from)+'</div><div class="sub">日時: '+esc(ds||"")+"</div></div>"+
+     (m.att.length?'<div class="mv-att">'+m.att.map(function(a,i){return '<button type="button" class="btn sm" data-mvatt="'+i+'">📎 '+esc(a.name)+" <span class=\"sub\">"+phSize(a.blob.size)+"</span></button>"}).join("")+"</div>":"")+
+     '<div class="mv-bd">'+(m.text?mvLinkify(m.text):'<span class="sub">(本文はありません)</span>')+"</div>"}
+  o.innerHTML='<div class="mask" style="z-index:99"><div class="dlg lg mv-dlg"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><b style="flex:1">📩 メール</b>'+gm+'<button type="button" class="btn" id="mv-x">閉じる</button></div>'+body+"</div></div>";
+}
+async function mvOpen(id,url){
+  if(!id){if(url)window.open(url,"_blank","noopener");return}
+  if(MV.ctl)try{MV.ctl.abort()}catch(e){}
+  MV={id:id,url:url||"",st:"load",m:null,ctl:new AbortController(),urls:[]};mvDraw();
+  try{var mcp=await claude_use("mcp");if(!mcp)throw {code:"server_not_connected"};
+    var g=await mcp.callTool("Gmail","get_message",{messageId:id,messageFormat:"RAW"},{signal:MV.ctl.signal}),gp=g&&g.payload;if(typeof gp==="string"){try{gp=JSON.parse(gp)}catch(e){gp=null}}
+    if(MV.id!==id)return;if(!gp||!gp.raw)throw new Error("empty");
+    MV.m=mvParse(gp.raw);MV.st="ok";
+  }catch(e){if(e&&(e.name==="AbortError"||e.code==="cancelled"))return;if(MV.id!==id)return;MV.st="err";MV.connect=e&&e.connectUrl||"";
+    MV.err=e&&(e.code==="needs_reauth"||e.code==="server_not_connected"||e.code==="server_not_found")?"Gmailにつながっていないため、アプリ内で開けませんでした。":"メールを読み込めませんでした。"}
+  mvDraw();
+}
+document.addEventListener("click",function(e){
+  var a=e.target.closest&&e.target.closest("a[data-mv]");
+  if(a){e.preventDefault();e.stopPropagation();mvOpen(a.getAttribute("data-mv"),a.getAttribute("href"));return}
+  var t=e.target.closest&&e.target.closest("#mvl");if(!t)return;
+  var b=e.target.closest("#mv-x,[data-mvatt]");
+  if(!b){if(e.target.classList&&e.target.classList.contains("mask")){MV.id="";mvDraw()}return}
+  if(b.id==="mv-x"){MV.id="";if(MV.ctl)try{MV.ctl.abort()}catch(x){}mvDraw();return}
+  var at=MV.m&&MV.m.att[+b.getAttribute("data-mvatt")];if(!at)return;
+  var u=URL.createObjectURL(at.blob);MV.urls.push(u);var w=window.open(u,"_blank","noopener");
+  if(!w){var l=document.createElement("a");l.href=u;l.download=at.name;document.body.appendChild(l);l.click();l.remove()}
+},true);
 /* ---------- eFax取込 ---------- */
 var FX={rows:[],busy:false,ctl:null,err:""};
 var FX_TYPES={koji:"工事予定書",request:"出動要請書",notice:"金額確定通知書",order:"注文書・作業依頼書",annual:"年間発注予定一覧表",ac:"エアコン設置の見積り依頼書",value:"価値観共有チェックシート",daito:"大東建託(その他の書類)",other:"対象外"};
@@ -2998,7 +3054,7 @@ function ntHtml(){
   else{
     h+=L.slice(0,8).map(function(x){var d=x.date?new Date(x.date):null,ds=d&&!isNaN(d)?(d.getMonth()+1)+"/"+d.getDate():"";
       return '<div class="up" style="align-items:flex-start"><span class="d">'+ds+'</span><span style="flex:1;min-width:0"><b>'+esc(x.subject||"(件名なし)")+'</b><div class="sub">'+esc(x.sender)+(x.snippet?" — "+esc(x.snippet.slice(0,90)):"")+'</div></span>'+
-       '<span style="display:flex;gap:4px;flex-shrink:0"><a class="btn sm" href="'+esc(x.url)+'" target="_blank" rel="noopener">開く</a><button type="button" class="btn sm" data-nt="'+esc(x.id)+'">既読</button></span></div>'}).join("");
+       '<span style="display:flex;gap:4px;flex-shrink:0"><a class="btn sm" href="'+esc(x.url)+'" data-mv="'+esc(x.id)+'" target="_blank" rel="noopener">開く</a><button type="button" class="btn sm" data-nt="'+esc(x.id)+'">既読</button></span></div>'}).join("");
     if(L.length>8)h+='<div class="sub">ほか '+(L.length-8)+" 件</div>";
     h+='<div style="text-align:right;margin-top:6px"><button type="button" class="btn sm" id="nt-all">すべて既読にする</button></div>';
   }
@@ -3074,6 +3130,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-11-12",t:"メールをアプリの中で開く",d:"お知らせ・大東建託からのお知らせ・会議予定の「開く」「メールを開く」で、メールをアプリの中で表示するようにしました。スマホでGmailが受信トレイを開いてしまい、目的のメールに行けない問題の対策です。添付ファイルも開けます。「Gmailで開く」でGmailでも見られます。"},
  {v:"2026-11-12",t:"アプリ名を「大東建託案件管理」に変更",d:"アプリの名前を「大東受注ナビ」から「大東建託案件管理」に変えました。ホーム画面に追加したアプリの名前は、一度アプリを開き直すと(端末によっては追加し直すと)変わります。"},
  {v:"2026-11-12",t:"AIロボを邪魔にならないように",d:"AIロボを小さく、静かにしました(動きなし・少し透明)。指やマウスでドラッグして好きな場所へ動かせます。画面の右端まで動かすか、AIロボの画面の「しまう」を押すと、端に小さなつまみになります(押すと戻ります)。スクロール中は薄くなり、案件や写真などの画面を開いている間は隠れます。"},
  {v:"2026-11-11",t:"エアコン見積り依頼書に回答を記入してFAX返信",d:"エアコン設置の案件一覧の「📝 見積回答」から、受信した見積り依頼書(FAX)に、ご回答日・お見積り金額(税別)・見積担当の印を書き込めます。必要なら工事項目の数量・見積金額も記入できます。「📠 FAXで返信」で依頼元の営業所へそのまま送れ、送ったら状況を「見積提出」に進められます。"},
@@ -3302,7 +3359,7 @@ function openNotices(tab){
   }else if(tab==="mail"){
     if(NT.state==="off")h=empty("大東建託からのメールは、Claude版(Gmail連携)でのみ表示されます。");
     else if(NT.state==="load"||NT.state==="idle")h=empty("読み込み中…");
-    else h=M.length?M.slice(0,MAX).map(function(x){var d=x.date?new Date(x.date):null,ds=d&&!isNaN(d)?(d.getMonth()+1)+"/"+d.getDate()+" ":"";return '<a class="nrow" href="'+esc(x.url)+'" target="_blank" rel="noopener"><span class="ni">📩</span><span class="nb"><b>'+esc(x.subject||"(件名なし)")+'</b><span class="sub">'+ds+esc(x.sender)+"</span></span></a>"}).join(""):empty("新しいメールはありません");
+    else h=M.length?M.slice(0,MAX).map(function(x){var d=x.date?new Date(x.date):null,ds=d&&!isNaN(d)?(d.getMonth()+1)+"/"+d.getDate()+" ":"";return '<a class="nrow" href="'+esc(x.url)+'" data-mv="'+esc(x.id)+'" target="_blank" rel="noopener"><span class="ni">📩</span><span class="nb"><b>'+esc(x.subject||"(件名なし)")+'</b><span class="sub">'+ds+esc(x.sender)+"</span></span></a>"}).join(""):empty("新しいメールはありません");
   }else if(tab==="rel"){
     h=(U.length?'<div class="sub" style="margin:6px 0">新しい機能・変更点が '+U.length+" 件あります。</div>":"")+'<div class="rel-list">'+relHtml()+"</div>";
   }else if(tab==="hist"){
@@ -4577,7 +4634,7 @@ function aiRun(a){
 }
 // ---- AIロボを邪魔にしない: ドラッグで移動・端にしまう・スクロール中は薄く・画面を開いている間は隠す ----
 function aiPosApply(f){var p=lsGet("aiPos");if(p&&typeof p.r==="number"&&typeof p.b==="number"&&!AI.edge){var r=Math.min(Math.max(0,p.r),window.innerWidth-50),b=Math.min(Math.max(0,p.b),window.innerHeight-60);f.style.right=r+"px";f.style.bottom=b+"px"}else if(AI.edge){var p2=lsGet("aiPos");f.style.right="0px";f.style.bottom=(p2&&typeof p2.b==="number"?Math.min(Math.max(0,p2.b),window.innerHeight-60):140)+"px"}else{f.style.right="";f.style.bottom=""}}
-function aiCovered(){var m=$("#modal");if(m&&m.children.length)return true;return ["#phl","#bgl","#chl","#efl"].some(function(q){var e=$(q);return e&&e.style.display!=="none"&&e.children.length&&getComputedStyle(e).display!=="none"})}
+function aiCovered(){var m=$("#modal");if(m&&m.children.length)return true;return ["#phl","#bgl","#chl","#efl","#mvl"].some(function(q){var e=$(q);return e&&e.style.display!=="none"&&e.children.length&&getComputedStyle(e).display!=="none"})}
 function aiDragInit(f){var st=null;
   f.addEventListener("pointerdown",function(e){if(e.button)return;var r=f.getBoundingClientRect();st={x:e.clientX,y:e.clientY,r:window.innerWidth-r.right,b:window.innerHeight-r.bottom,mv:false};try{f.setPointerCapture(e.pointerId)}catch(x){}});
   f.addEventListener("pointermove",function(e){if(!st)return;var dx=e.clientX-st.x,dy=e.clientY-st.y;if(!st.mv&&Math.abs(dx)+Math.abs(dy)<8)return;st.mv=true;f.classList.add("ai-drag");
@@ -5239,7 +5296,7 @@ function mtgCard(){
   return '<div class="card2"><h3>会議・予定 <button type="button" class="btn sm" id="mtg-sync" style="float:right"'+(MTG.busy?" disabled":"")+'>'+(MTG.busy?"確認中…":"📧 メールを確認")+'</button></h3>'+
    (L.length?L.map(function(x){var d=new Date(x.date+"T00:00:00"),dd=daysTo(x.date),lab=dd===0?"今日":dd===1?"明日":"あと"+dd+"日";
      return '<div class="up" style="align-items:flex-start"><span class="d">'+md(x.date)+"("+WD[d.getDay()]+")<br>"+lab+'</span><span style="flex:1;min-width:0"><b>'+esc(x.title)+(x.office?"("+esc(x.office)+")":"")+'</b><div class="sub">'+esc(x.start)+(x.end?"〜"+esc(x.end):"")+(/災害防止/.test(x.title)?"(品質会議は協議会の終了後)":"")+'</div>'+
-     (x.url?'<a href="'+esc(x.url)+'" target="_blank" rel="noopener" class="btn sm" style="margin-top:4px">Teamsで参加</a>':'<a href="https://mail.google.com/mail/#all/'+esc(x.mail)+'" target="_blank" rel="noopener" class="btn sm" style="margin-top:4px">メールを開く</a>')+"</span></div>"}).join(""):'<div class="empty">予定されている会議はありません。</div>')+
+     (x.url?'<a href="'+esc(x.url)+'" target="_blank" rel="noopener" class="btn sm" style="margin-top:4px">Teamsで参加</a>':'<a href="https://mail.google.com/mail/#all/'+esc(x.mail)+'" data-mv="'+esc(x.mail)+'" target="_blank" rel="noopener" class="btn sm" style="margin-top:4px">メールを開く</a>')+"</span></div>"}).join(""):'<div class="empty">予定されている会議はありません。</div>')+
    (MTG.msg?'<div class="sub" style="padding:4px 0">'+esc(MTG.msg)+"</div>":"")+"</div>";
 }
 document.addEventListener("click",function(e){var vt=e.target.closest&&e.target.closest("#vs-open");if(vt){e.preventDefault();openVs()}});
