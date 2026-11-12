@@ -1,5 +1,5 @@
 // 最小のサービスワーカー: スマホ通知(プッシュ)の受信と、ホーム画面アイコンの件数バッジ
-var CACHE = "daito-shell-v1";
+var CACHE = "daito-shell-v2";
 var SHELL = ["/", "/icons/icon-192.png", "/icons/icon-512.png"];
 self.addEventListener("install", function (e) { e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).catch(function () {}).then(function () { return self.skipWaiting(); })); });
 self.addEventListener("activate", function (e) {
@@ -21,7 +21,7 @@ self.addEventListener("message", function (e) { if (e.data && e.data.type === "b
 self.addEventListener("push", function (e) {
   var d = {}; try { d = e.data ? e.data.json() : {}; } catch (_) { d = { body: e.data ? e.data.text() : "" }; }
   e.waitUntil(badgeGet().then(function (n) { n += 1; return badgeSet(n).then(function () { return badgeShow(n); }); }).catch(function () {}).then(function () {
-    return self.registration.showNotification(d.title || "大東受注ナビ", { body: d.body || "", tag: d.tag || "daito", renotify: true });
+    return self.registration.showNotification(d.title || "大東建託案件管理", { body: d.body || "", tag: d.tag || "daito", renotify: true });
   }));
 });
 self.addEventListener("notificationclick", function (e) {

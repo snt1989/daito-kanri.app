@@ -1,6 +1,6 @@
 <!doctype html>
-<html lang="ja" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="/api/brand?manifest=1"><meta name="theme-color" content="#c8102e"><link rel="icon" type="image/png" href="/api/brand?s=192"><link rel="apple-touch-icon" href="/api/brand?s=180"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="大東受注ナビ"><meta name="apple-mobile-web-app-status-bar-style" content="default"><script src="/shim.js"></script><script>try{if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js")}catch(e){}window.__bip=null;addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__bip=e;try{if(window.__bipCb)window.__bipCb()}catch(x){}});addEventListener("appinstalled",function(){window.__bip=null;try{if(window.__bipCb)window.__bipCb()}catch(x){}});</script></head><body>
-<title>大東受注ナビ</title>
+<html lang="ja" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="/api/brand?manifest=1"><meta name="theme-color" content="#c8102e"><link rel="icon" type="image/png" href="/api/brand?s=192"><link rel="apple-touch-icon" href="/api/brand?s=180"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="大東建託案件管理"><meta name="apple-mobile-web-app-status-bar-style" content="default"><script src="/shim.js"></script><script>try{if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js")}catch(e){}window.__bip=null;addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__bip=e;try{if(window.__bipCb)window.__bipCb()}catch(x){}});addEventListener("appinstalled",function(){window.__bip=null;try{if(window.__bipCb)window.__bipCb()}catch(x){}});</script></head><body>
+<title>大東建託案件管理</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
 <style>
@@ -556,7 +556,7 @@ a.btn{color:inherit;text-decoration:none}
   <div class="mainwrap">
     <header class="topbar"><div class="tb-in">
       <button class="icon-btn menu" id="menu" aria-label="メニューを開く"></button>
-      <span class="tb-brand"><i class="tb-logo"></i>大東受注ナビ</span><span class="tb-sp"></span>
+      <span class="tb-brand"><i class="tb-logo"></i>大東建託案件管理</span><span class="tb-sp"></span>
       <button class="btn out" id="qa-f" style="margin-right:8px" aria-label="FAX取込">📠<span class="tb-t"> FAX取込</span></button>
       <button class="icon-btn" id="bell" aria-label="お知らせ"></button>
       <div class="user"><span class="av">三</span><span class="un">株式会社三桜</span></div>
@@ -3074,6 +3074,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-11-12",t:"アプリ名を「大東建託案件管理」に変更",d:"アプリの名前を「大東受注ナビ」から「大東建託案件管理」に変えました。ホーム画面に追加したアプリの名前は、一度アプリを開き直すと(端末によっては追加し直すと)変わります。"},
  {v:"2026-11-12",t:"AIロボを邪魔にならないように",d:"AIロボを小さく、静かにしました(動きなし・少し透明)。指やマウスでドラッグして好きな場所へ動かせます。画面の右端まで動かすか、AIロボの画面の「しまう」を押すと、端に小さなつまみになります(押すと戻ります)。スクロール中は薄くなり、案件や写真などの画面を開いている間は隠れます。"},
  {v:"2026-11-11",t:"エアコン見積り依頼書に回答を記入してFAX返信",d:"エアコン設置の案件一覧の「📝 見積回答」から、受信した見積り依頼書(FAX)に、ご回答日・お見積り金額(税別)・見積担当の印を書き込めます。必要なら工事項目の数量・見積金額も記入できます。「📠 FAXで返信」で依頼元の営業所へそのまま送れ、送ったら状況を「見積提出」に進められます。"},
  {v:"2026-11-11",t:"お知らせに「連絡」(連絡事項)",d:"お知らせに「連絡」タブを追加しました。「＋ 連絡事項を書く」から、全員または選んだ担当者に連絡事項を送れます。「重要」にするとホームにも表示されます。書いた人と管理者は、誰が読んだか(既読)を確認でき、編集・削除もできます。Web版では、宛先の人のスマホに通知が届きます。"},
@@ -3202,7 +3203,7 @@ function pushOff(){
   Promise.resolve(sub&&sub.unsubscribe()).then(function(){return ep&&pushCall("unsubscribe",{endpoint:ep})})
     .then(function(){PU.sub=null;PU.msg="通知をオフにしました。"},function(e){PU.msg=e.message}).then(function(){PU.busy=false;openPushSet()});
 }
-function pushTest(){navigator.serviceWorker.ready.then(function(r){return r.showNotification("大東受注ナビ",{body:"テスト通知です。この表示が出れば設定できています。"})}).then(function(){toast("テスト通知を出しました")},function(){toast("通知を表示できませんでした")})}
+function pushTest(){navigator.serviceWorker.ready.then(function(r){return r.showNotification("大東建託案件管理",{body:"テスト通知です。この表示が出れば設定できています。"})}).then(function(){toast("テスト通知を出しました")},function(){toast("通知を表示できませんでした")})}
 document.addEventListener("change",function(e){
   var k=e.target&&e.target.getAttribute&&e.target.getAttribute("data-pnpref");if(!k||!PU.sub)return;
   var pr={};document.querySelectorAll("[data-pnpref]").forEach(function(x){pr[x.getAttribute("data-pnpref")]=x.checked});PU.prefs=pr;
@@ -3241,7 +3242,7 @@ function pnCheck(){
   var nw=keys.filter(function(k){return seen.indexOf(k)<0});
   if(!nw.length)return;
   lsSet("pnSeen",keys.concat(seen.filter(function(k){return keys.indexOf(k)<0})).slice(0,1500));
-  pnShow("大東受注ナビ: 新着"+nw.length+"件",nw.slice(0,3).map(function(k){return names[k]}).join("\n"),"daito-new");
+  pnShow("大東建託案件管理: 新着"+nw.length+"件",nw.slice(0,3).map(function(k){return names[k]}).join("\n"),"daito-new");
 }
 async function pnToggle(){
   if(!pnOk()){toast("この端末・ブラウザは通知に対応していません(iPhoneは「ホーム画面に追加」してから開くと使えます)");return}
@@ -3450,7 +3451,7 @@ function vBackup(){
 /* ====================== ロゴ・アイコン ====================== */
 var BR={key:"",logoUrl:"",busy:false,msg:"",syncT:0};
 function brand(){var b=S.settings.brand;return b&&typeof b==="object"?b:{}}
-function brandName(){return String(brand().name||"").trim()||"大東受注ナビ"}
+function brandName(){var n=String(brand().name||"").trim();return n&&n!=="大東受注ナビ"?n:"大東建託案件管理"}
 function brandIconSlot(){var b=brand();return b.same===false?(b.icon||null):(b.logo||null)}
 function brLoadImg(src){return new Promise(function(ok,ng){var im=new Image();im.onload=function(){ok(im)};im.onerror=ng;im.src=src})}
 // 画像を正方形に合成(背景色・余白)。extra=マスク用に足す余白
@@ -3495,7 +3496,7 @@ function vBrandTab(){
   var prevIcon=function(u,r,sz){return '<span style="display:inline-block;width:'+sz+'px;height:'+sz+'px;border-radius:'+r+';overflow:hidden;background:#c8102e;box-shadow:0 1px 4px rgba(0,0,0,.18);vertical-align:middle">'+(u?'<img src="'+u+'" alt="" style="width:100%;height:100%;display:block">':'<img src="data:image/svg+xml;utf8,'+encodeURIComponent(BRANDSVG.replace('width="22" height="22"','width="100%" height="100%"').replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" style="padding:18%;box-sizing:border-box" '))+'" alt="" style="width:100%;height:100%;display:block">')+"</span>"};
   var h='';
   if(ro)h+='<div class="panel"><div class="empty">ロゴ・アイコンの変更は、管理者でログインしたときだけできます。</div></div>';
-  h+='<div class="panel"><h3>アプリ名</h3><div class="set-row"><input type="text" id="br-name" maxlength="30" value="'+esc(b.name||"")+'" placeholder="大東受注ナビ" style="flex:1"'+(ro?" disabled":"")+'></div><div class="sub" style="padding:0 12px 10px">画面左上・ブラウザのタブ・インストールしたアプリの名前に使われます。空欄にすると「大東受注ナビ」です。</div></div>';
+  h+='<div class="panel"><h3>アプリ名</h3><div class="set-row"><input type="text" id="br-name" maxlength="30" value="'+esc(b.name||"")+'" placeholder="大東建託案件管理" style="flex:1"'+(ro?" disabled":"")+'></div><div class="sub" style="padding:0 12px 10px">画面左上・ブラウザのタブ・インストールしたアプリの名前に使われます。空欄にすると「大東建託案件管理」です。</div></div>';
   h+='<div class="panel"><h3>ロゴ(画面左上)</h3><div class="set-row" style="gap:16px"><span class="brand" style="padding:0;color:inherit"><span id="br-pv-logo">'+brandLogoHtml()+'</span><span>'+esc(brandName())+'</span></span></div>'+(ro?"":brSlotHtml("logo",b.logo))+'</div>';
   var same=b.same!==false;
   h+='<div class="panel"><h3>アプリのアイコン(ホーム画面・インストール・ブラウザのタブ)</h3><div class="set-row" style="gap:18px;align-items:flex-end;flex-wrap:wrap" id="br-pv-icon">'+

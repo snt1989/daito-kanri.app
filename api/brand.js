@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
   if (req.method === "GET") {
     let r = null;
     try { r = await pipeline([["HMGET", KEY, "name", "v", SIZES[q.s] || "i192"]]); r = r[0]; } catch (e) { r = null; }
-    const name = (r && r[0]) || "大東受注ナビ", v = (r && r[1]) || "0";
+    const name = (r && r[0] && r[0] !== "大東受注ナビ" && r[0]) || "大東建託案件管理", v = (r && r[1]) || "0";
     if (q.manifest) {
       res.setHeader("Content-Type", "application/manifest+json; charset=utf-8");
       res.setHeader("Cache-Control", "no-cache");
@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
   try {
     if (b.op === "reset") { await pipeline([["DEL", KEY]]); return res.json({ ok: true }); }
     if (b.op === "set") {
-      const name = String(b.name || "").normalize("NFKC").trim().slice(0, 30) || "大東受注ナビ";
+      const name = String(b.name || "").normalize("NFKC").trim().slice(0, 30) || "大東建託案件管理";
       const cmd = ["HSET", KEY, "name", name, "v", String(Date.now())];
       let icons = 0;
       ["i192", "i512", "i180", "m512"].forEach((k) => { if (b[k] != null) { if (!b64ok(b[k])) throw new Error("画像の形式が正しくありません"); cmd.push(k, b[k]); icons++; } });

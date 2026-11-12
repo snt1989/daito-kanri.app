@@ -86,7 +86,7 @@
       box.style.cssText = "background:#fff;border-radius:12px;padding:28px 26px;width:min(360px,92vw);box-shadow:0 8px 30px #0006";
       var t = document.createElement("div"); t.style.cssText = "font-weight:700;font-size:18px;color:#b33;margin-bottom:8px"; t.textContent = "アクセスできません";
       var m = document.createElement("div"); m.style.cssText = "font-size:14px;color:#33443c;line-height:1.7;margin-bottom:16px";
-      m.textContent = (name ? "「" + name + "」さんの" : "あなたの") + "大東受注ナビのアカウントがありません。管理者に、担当の登録とパスワードの発行を依頼してください。";
+      m.textContent = (name ? "「" + name + "」さんの" : "あなたの") + "大東建託案件管理のアカウントがありません。管理者に、担当の登録とパスワードの発行を依頼してください。";
       var bt = document.createElement("button"); bt.textContent = "ログイン画面へ"; bt.style.cssText = "width:100%;padding:10px;border:0;border-radius:8px;background:#1b6847;color:#fff;font-size:15px;cursor:pointer";
       bt.onclick = function () { w.remove(); resolve(loginUi()); };
       box.appendChild(t); box.appendChild(m); box.appendChild(bt); w.appendChild(box); document.body.appendChild(w);
@@ -97,7 +97,7 @@
       var w = document.createElement("div");
       w.style.cssText = "position:fixed;inset:0;z-index:99998;background:#14201b;display:flex;align-items:center;justify-content:center;font-family:'Noto Sans JP',sans-serif";
       w.innerHTML = '<form style="background:#fff;border-radius:12px;padding:28px 26px;width:min(340px,92vw);box-shadow:0 8px 30px #0006">' +
-        '<div style="font-weight:700;font-size:18px;color:#1b6847;margin-bottom:4px">大東受注ナビ</div>' +
+        '<div style="font-weight:700;font-size:18px;color:#1b6847;margin-bottom:4px">大東建託案件管理</div>' +
         '<div style="font-size:13px;color:#62736b;margin-bottom:14px">担当名とパスワードを入力してください<br>(管理者は担当名を空欄のまま)</div>' +
         '<input class="nm" type="text" placeholder="担当名(管理者は空欄)" autocomplete="username" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #c9d3ce;border-radius:8px;font-size:16px;margin-bottom:8px">' +
         '<input class="pw" type="password" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #c9d3ce;border-radius:8px;font-size:16px" autofocus>' +
