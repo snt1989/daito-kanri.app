@@ -39,6 +39,19 @@ function hashPw(pw, salt) {
   salt = salt || crypto.randomBytes(16).toString("hex");
   return { salt, hash: crypto.scryptSync(String(pw), salt, 32).toString("hex") };
 }
+// 管理者が担当のパスワードを確認できるよう、暗号化した控えも保存する(AES-256-GCM。鍵はサーバーの秘密値から作る)
+function pwKey() { return crypto.createHash("sha256").update("pwview:" + secret()).digest(); }
+function encPw(pw) {
+  const iv = crypto.randomBytes(12), c = crypto.createCipheriv("aes-256-gcm", pwKey(), iv);
+  const ct = Buffer.concat([c.update(String(pw), "utf8"), c.final()]);
+  return [iv.toString("base64"), c.getAuthTag().toString("base64"), ct.toString("base64")].join(".");
+}
+function decPw(enc) {
+  try { const [iv, tag, ct] = String(enc || "").split(".").map((x) => Buffer.from(x, "base64"));
+    const d = crypto.createDecipheriv("aes-256-gcm", pwKey(), iv); d.setAuthTag(tag);
+    return Buffer.concat([d.update(ct), d.final()]).toString("utf8"); } catch (e) { return null; }
+}
+function pwRec(pw) { return Object.assign(hashPw(pw), { enc: encPw(pw) }); }
 function checkPw(pw, rec) {
   if (!rec || !rec.salt || !rec.hash) return false;
   const a = Buffer.from(crypto.scryptSync(String(pw), rec.salt, 32).toString("hex")), b = Buffer.from(rec.hash);
@@ -81,4 +94,4 @@ function body(req) {
   if (typeof b === "string") { try { b = JSON.parse(b); } catch (e) { b = {}; } }
   return b || {};
 }
-module.exports = { hashPw, checkPw, authed, makeToken, setCookie, origin, pipeline, redis, body, sign };
+module.exports = { hashPw, checkPw, pwRec, decPw, authed, makeToken, setCookie, origin, pipeline, redis, body, sign };

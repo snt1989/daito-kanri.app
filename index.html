@@ -3130,6 +3130,7 @@ function psSync(){var n=$("#ps-n");if(n)n.textContent="選択 "+psCount()+" 件"
 
 /* ---------- お知らせ(通知・更新履歴) ---------- */
 var CHANGELOG=[
+ {v:"2026-11-18",t:"管理者が担当のパスワードを確認できるように",d:"設定の担当一覧と、各担当の「パスワード」画面で、管理者が現在のパスワードを「👁 表示」で確認できるようになりました(Web版・管理者のみ。表示は1分で自動的に隠れます)。この変更より前に設定したパスワードは表示できないため、一度設定し直してください。管理者のパスワードはVercelの設定で管理しているため表示しません。"},
  {v:"2026-11-12",t:"メールをアプリの中で開く",d:"お知らせ・大東建託からのお知らせ・会議予定の「開く」「メールを開く」で、メールをアプリの中で表示するようにしました。スマホでGmailが受信トレイを開いてしまい、目的のメールに行けない問題の対策です。添付ファイルも開けます。「Gmailで開く」でGmailでも見られます。"},
  {v:"2026-11-12",t:"アプリ名を「大東建託案件管理」に変更",d:"アプリの名前を「大東受注ナビ」から「大東建託案件管理」に変えました。ホーム画面に追加したアプリの名前は、一度アプリを開き直すと(端末によっては追加し直すと)変わります。"},
  {v:"2026-11-12",t:"AIロボを邪魔にならないように",d:"AIロボを小さく、静かにしました(動きなし・少し透明)。指やマウスでドラッグして好きな場所へ動かせます。画面の右端まで動かすか、AIロボの画面の「しまう」を押すと、端に小さなつまみになります(押すと戻ります)。スクロール中は薄くなり、案件や写真などの画面を開いている間は隠れます。"},
@@ -3385,10 +3386,18 @@ function isStaff(){var m=ME();return !!(m&&m.role==="staff"&&m.name)}
 function isAdmin(){var m=ME();return !!(m&&m.role==="admin")}
 function mineOn(){return isStaff()&&S.mine!==false}
 function mineOk(x){if(!mineOn())return true;var st=x&&x.staff;return !Array.isArray(st)||!st.length||st.indexOf(ME().name)>=0}
-var PWU={names:[],state:"idle"};
-function pwKick(){if(!window.dsAuth||!isAdmin()||PWU.state!=="idle")return;PWU.state="load";window.dsAuth.call({op:"users"}).then(function(j){PWU.names=(j&&j.names)||[];PWU.state="ok";if(S.tab==="set")render()}).catch(function(){PWU.state="err"})}
+var PWU={names:[],view:[],state:"idle",shown:{}};
+function pwKick(){if(!window.dsAuth||!isAdmin()||PWU.state!=="idle")return;PWU.state="load";window.dsAuth.call({op:"users"}).then(function(j){PWU.names=(j&&j.names)||[];PWU.view=(j&&j.view)||[];PWU.state="ok";if(S.tab==="set")render()}).catch(function(){PWU.state="err"})}
 function pwHtml(s,i){if(!window.dsAuth||!isAdmin())return "";pwKick();var on=PWU.names.indexOf(String(s).normalize("NFKC").trim())>=0;
-  return '<span class="sub" style="white-space:nowrap">'+(on?"🔑 ログイン可":"ログイン未設定")+'</span><button type="button" class="btn sm" data-pwset="'+i+'">パスワード</button>'}
+  var nm=String(s).normalize("NFKC").trim(),sh=PWU.shown[nm];
+  return '<span class="sub" style="white-space:nowrap">'+(on?"🔑 ログイン可":"ログイン未設定")+'</span>'+(on?'<span class="pwshow" data-pwname="'+esc(nm)+'" style="font-family:ui-monospace,Menlo,monospace;white-space:nowrap">'+(sh?esc(sh):"••••••")+'</span><button type="button" class="btn sm" data-pwshow="'+esc(nm)+'" title="パスワードを表示(管理者のみ)">'+(sh?"隠す":"👁 表示")+"</button>":"")+'<button type="button" class="btn sm" data-pwset="'+i+'">パスワード</button>'}
+async function pwShow(nm,el){
+  if(PWU.shown[nm]){delete PWU.shown[nm];render();return}
+  if(el)el.textContent="…";
+  try{var j=await window.dsAuth.call({op:"showpw",name:nm});
+    if(j&&j.ok){PWU.shown[nm]=j.password;render();var o=$("#pw-cur");if(o){o.textContent=j.password}setTimeout(function(){if(PWU.shown[nm]){delete PWU.shown[nm];if(S.tab==="set")render()}},60000);return j.password}
+    toast((j&&j.error)||"表示できませんでした")}catch(e){toast("通信に失敗しました")}
+  if(el)el.textContent="👁 表示";return null}
 function userChipHtml(){
   var m=ME();if(!m)return null;
   var nm=m.role==="staff"?m.name:"管理者";
@@ -3403,6 +3412,7 @@ function openMe(){
 function openPw(i){
   var nm=S.settings.staff[+i];if(nm==null)return;nm=String(nm).normalize("NFKC").trim();var on=PWU.names.indexOf(nm)>=0;
   $("#modal").innerHTML='<div class="mask" id="mask"><div class="dlg" style="width:min(420px,100%)"><h2>'+esc(nm)+' のログイン</h2><div class="sub">この担当名とパスワードでログインできるようになります(現在: '+(on?"ログイン可":"未設定")+')。パスワードは6文字以上。担当名を変更したときは設定し直してください。</div>'+
+   (on?'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px"><span class="sub">現在のパスワード 🔒</span><b id="pw-cur" style="font-family:ui-monospace,Menlo,monospace;font-size:16px;letter-spacing:.04em">'+(PWU.shown[nm]?esc(PWU.shown[nm]):"••••••")+'</b><button type="button" class="btn sm" id="pw-view" data-name="'+esc(nm)+'">👁 表示</button></div>':"")+
    '<div class="fields" style="margin-top:10px"><label class="wide">新しいパスワード<input type="text" id="pw-new" autocomplete="off" data-name="'+esc(nm)+'"></label></div><div class="sub" id="pw-msg" style="min-height:18px"></div>'+
    '<div class="acts"><span>'+(on?'<button type="button" class="btn danger" id="pw-del">ログインを停止</button>':"")+'</span><span><button type="button" class="btn" id="pw-close">閉じる</button> <button type="button" class="btn pri" id="pw-ok">設定する</button></span></div></div></div>'}
 async function pwCall(data,msgId,okMsg){
@@ -6265,6 +6275,9 @@ function modClick(e,t,d){
   if(t.id==="me-out"){window.dsAuth.logout();return true}
   if(t.id==="me-pw"){pwCall({op:"chpw",old:$("#me-old").value,password:$("#me-new").value},"me-msg","パスワードを変更しました");return true}
   if(d.pwset!==undefined){openPw(d.pwset);return true}
+  if(t.id==="pw-view"){var nv=t.dataset.name;pwShow(nv).then(function(pw){if(pw){var o=$("#pw-cur");if(o)o.textContent=pw;t.textContent="📋 コピー";t.id="pw-copy"}});return true}
+  if(t.id==="pw-copy"){var c=$("#pw-cur");try{navigator.clipboard.writeText(c.textContent);toast("コピーしました")}catch(e){}return true}
+  if(d.pwshow){pwShow(d.pwshow,t);return true}
   if(t.id==="pw-ok"){var pe=$("#pw-new");pwCall({op:"setpw",name:pe.dataset.name,password:pe.value},"pw-msg","設定しました。この担当名でログインできます").then(function(ok){if(ok){var n0=pe.dataset.name.normalize("NFKC").trim();if(PWU.names.indexOf(n0)<0)PWU.names.push(n0);setTimeout(function(){$("#modal").innerHTML="";render()},700)}});return true}
   if(t.id==="pw-del"){var pn=$("#pw-new").dataset.name;pwCall({op:"delpw",name:pn},"pw-msg","ログインを停止しました").then(function(ok){if(ok){PWU.names=PWU.names.filter(function(x){return x!==pn.normalize("NFKC").trim()});setTimeout(function(){$("#modal").innerHTML="";render()},700)}});return true}
   if(t.id==="fct-clr"||t.id==="fcd-clr"){if(!t.dataset.sure){t.dataset.sure="1";t.textContent="本当にすべて削除する";return true}
